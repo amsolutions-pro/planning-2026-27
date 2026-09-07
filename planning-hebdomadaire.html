@@ -1,0 +1,949 @@
+<title>Planning Narek &amp; Annie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#F1F0F6;
+  --surface:#FFFFFF;
+  --surface-2:#FAFAFC;
+  --ink:#1F1D33;
+  --ink-soft:#403D57;
+  --muted:#6E6A85;
+  --line:#DFDDE9;
+  --accent:#2E2A5C;
+  --accent-soft:#E7E5F3;
+  --narek:#0E6E78;
+  --narek-bg:#E1F1F2;
+  --narek-line:#A3D3D6;
+  --annie:#AB2F63;
+  --annie-bg:#FAE5ED;
+  --annie-line:#EDABC6;
+  --hold:#8C6112;
+  --hold-bg:#F9EFDB;
+  --hold-line:#E1C083;
+  --go:#3C6B33;
+  --go-bg:#E5EFDF;
+  --go-line:#AFCBA4;
+  --shadow:0 1px 1px rgba(31,29,51,.05), 0 10px 26px -18px rgba(31,29,51,.45);
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#131220;
+    --surface:#1D1B2B;
+    --surface-2:#232134;
+    --ink:#ECEAF6;
+    --ink-soft:#C7C3DA;
+    --muted:#948FAC;
+    --line:#332F49;
+    --accent:#C4BEF0;
+    --accent-soft:#2A2746;
+    --narek:#5FC8CF;
+    --narek-bg:#14313A;
+    --narek-line:#2C626C;
+    --annie:#F498BB;
+    --annie-bg:#38202D;
+    --annie-line:#6E3853;
+    --hold:#E4B667;
+    --hold-bg:#372D19;
+    --hold-line:#6B552A;
+    --go:#93C583;
+    --go-bg:#1F2E1C;
+    --go-line:#48653F;
+    --shadow:0 1px 1px rgba(0,0,0,.5), 0 10px 26px -18px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#131220;
+  --surface:#1D1B2B;
+  --surface-2:#232134;
+  --ink:#ECEAF6;
+  --ink-soft:#C7C3DA;
+  --muted:#948FAC;
+  --line:#332F49;
+  --accent:#C4BEF0;
+  --accent-soft:#2A2746;
+  --narek:#5FC8CF;
+  --narek-bg:#14313A;
+  --narek-line:#2C626C;
+  --annie:#F498BB;
+  --annie-bg:#38202D;
+  --annie-line:#6E3853;
+  --hold:#E4B667;
+  --hold-bg:#372D19;
+  --hold-line:#6B552A;
+  --go:#93C583;
+  --go-bg:#1F2E1C;
+  --go-line:#48653F;
+  --shadow:0 1px 1px rgba(0,0,0,.5), 0 10px 26px -18px rgba(0,0,0,.9);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"Public Sans","Helvetica Neue",Arial,sans-serif;
+  font-size:15px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:"Bricolage Grotesque","Public Sans",Arial,sans-serif;font-weight:700;text-wrap:balance;margin:0}
+p{margin:0}
+ul{margin:0;padding:0;list-style:none}
+svg{display:block}
+.icon{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+/* ---------- masthead ---------- */
+.masthead{
+  background:var(--surface);
+  border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:20;
+}
+.masthead__inner{
+  max-width:1180px;margin:0 auto;padding:16px 20px 0;
+  display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;
+}
+.brand{display:flex;flex-direction:column;gap:4px}
+.eyebrow{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+}
+.brand h1{font-size:26px;line-height:1.1;letter-spacing:-.015em}
+.kids{display:flex;gap:14px;flex-wrap:wrap;margin-top:2px}
+.kid{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-soft);font-weight:500}
+.kid::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--dot)}
+.kid--n{--dot:var(--narek)}
+.kid--a{--dot:var(--annie)}
+.kid span{color:var(--muted);font-weight:400}
+
+.tools{display:flex;gap:8px;align-items:center;padding-bottom:2px}
+.btn{
+  font:inherit;font-size:13px;font-weight:500;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 12px;border-radius:8px;cursor:pointer;
+  background:var(--surface-2);color:var(--ink-soft);
+  border:1px solid var(--line);
+  transition:background .15s ease,color .15s ease;
+}
+.btn:hover{background:var(--accent-soft);color:var(--ink)}
+.btn .icon{width:15px;height:15px}
+
+.tabs{
+  max-width:1180px;margin:0 auto;padding:12px 20px 0;
+  display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  font:inherit;font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:10px 14px;border:0;background:none;color:var(--muted);
+  border-bottom:2px solid transparent;
+  transition:color .15s ease,border-color .15s ease;
+}
+.tab .icon{width:15px;height:15px}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ---------- layout ---------- */
+.page{max-width:1180px;margin:0 auto;padding:26px 20px 56px;display:flex;flex-direction:column;gap:22px}
+.panel{display:flex;flex-direction:column;gap:20px}
+.panel[hidden]{display:none}
+.section-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px}
+.section-head h2{font-size:19px;letter-spacing:-.01em}
+.section-head p{font-size:13px;color:var(--muted)}
+
+.stats{display:flex;flex-wrap:wrap;gap:8px}
+.stat{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;
+  padding:5px 10px;border-radius:99px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink-soft);
+}
+.stat b{font-weight:600;color:var(--ink)}
+
+/* ---------- filter bar ---------- */
+.filters{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  padding:12px 14px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+}
+.filters__label{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+}
+.chip{
+  font:inherit;font-size:13px;font-weight:500;cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:6px 12px;border-radius:99px;
+  border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);
+  transition:all .15s ease;
+}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--dot,var(--muted))}
+.chip--n{--dot:var(--narek)}
+.chip--a{--dot:var(--annie)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+:root[data-theme="dark"] .chip[aria-pressed="true"],
+:root:not([data-theme="light"]) .chip[aria-pressed="true"]{color:var(--ground)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-left:auto;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.swatch{width:12px;height:12px;border-radius:3px;border:1px solid var(--line);background:var(--surface-2)}
+.swatch--n{background:var(--narek-bg);border-color:var(--narek-line)}
+.swatch--a{background:var(--annie-bg);border-color:var(--annie-line)}
+.swatch--o{background:transparent;border:1px dashed var(--hold-line)}
+
+/* ---------- week grid ---------- */
+.week{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.day{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  display:flex;flex-direction:column;min-height:150px;box-shadow:var(--shadow);
+}
+.day--rest{background:var(--surface-2)}
+.day__head{
+  padding:10px 12px 8px;border-bottom:1px solid var(--line);
+  display:flex;align-items:baseline;justify-content:space-between;gap:6px;
+}
+.day__name{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:14px}
+.day__note{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
+}
+.day__body{padding:10px;display:flex;flex-direction:column;gap:9px;flex:1}
+.day__empty{
+  margin:auto;font-size:12px;color:var(--muted);font-style:italic;
+}
+
+/* ---------- event cards ---------- */
+.ev{
+  --c:var(--muted);--c-bg:var(--surface-2);--c-line:var(--line);
+  background:var(--c-bg);border:1px solid var(--c-line);border-radius:8px;
+  padding:9px 10px;display:flex;flex-direction:column;gap:3px;
+}
+.ev--n{--c:var(--narek);--c-bg:var(--narek-bg);--c-line:var(--narek-line)}
+.ev--a{--c:var(--annie);--c-bg:var(--annie-bg);--c-line:var(--annie-line)}
+.ev--option{background:transparent;border-style:dashed}
+.ev__top{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.ev__who{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--c);
+}
+.ev__title{
+  font-size:13.5px;font-weight:700;line-height:1.25;color:var(--ink);
+  display:flex;align-items:center;gap:6px;
+}
+.ev__title .icon{width:14px;height:14px;color:var(--c);flex:none}
+.ev__time{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-size:12px;font-weight:500;color:var(--ink-soft);
+}
+.ev__meta{font-size:11.5px;color:var(--muted);display:flex;align-items:flex-start;gap:5px}
+.ev__meta .icon{width:12px;height:12px;margin-top:2px;flex:none}
+
+.tag{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 6px;border-radius:4px;white-space:nowrap;
+  background:var(--hold-bg);color:var(--hold);border:1px solid var(--hold-line);
+}
+.tag--fixed{background:var(--go-bg);color:var(--go);border-color:var(--go-line)}
+.tag--date{background:transparent;border-color:transparent;color:var(--muted);padding-left:0;padding-right:0}
+
+.ev--relay{
+  --c:var(--accent);
+  background:var(--accent-soft);border:1px solid var(--line);
+  align-items:flex-start;
+}
+.ev--relay .ev__who{color:var(--accent)}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--surface);border:1px solid var(--hold-line);border-radius:var(--radius);
+  padding:16px 18px;display:flex;gap:14px;box-shadow:var(--shadow);
+}
+.callout__icon{color:var(--hold);flex:none}
+.callout__icon .icon{width:20px;height:20px}
+.callout h3{font-size:15px;margin-bottom:10px}
+.callout__list{display:flex;flex-direction:column;gap:8px}
+.callout__list li{display:flex;gap:12px;align-items:baseline;font-size:13.5px;color:var(--ink-soft)}
+.callout__hour{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-size:12.5px;font-weight:600;color:var(--hold);flex:none;width:46px;
+}
+.callout__list em{font-style:normal;color:var(--muted);font-size:12.5px}
+
+/* ---------- activities ---------- */
+.two-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;
+}
+.card__head{
+  padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  border-bottom:1px solid var(--line);
+}
+.card__id{display:flex;align-items:center;gap:11px}
+.initial{
+  width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex:none;
+  font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:16px;
+  background:var(--c-bg);color:var(--c);border:1px solid var(--c-line);
+}
+.card--n{--c:var(--narek);--c-bg:var(--narek-bg);--c-line:var(--narek-line)}
+.card--a{--c:var(--annie);--c-bg:var(--annie-bg);--c-line:var(--annie-line)}
+.card__id h3{font-size:16px}
+.card__id p{font-size:12px;color:var(--muted)}
+.total{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-size:14px;font-weight:600;color:var(--c);
+}
+.card__body{padding:16px;display:flex;flex-direction:column;gap:14px}
+.act{display:flex;flex-direction:column;gap:7px;padding-bottom:14px;border-bottom:1px dashed var(--line)}
+.act:last-child{padding-bottom:0;border-bottom:0}
+.act__top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.act__name{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.act__name .icon{width:15px;height:15px;color:var(--c);flex:none}
+.act__price{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-size:13px;font-weight:500;color:var(--ink-soft);white-space:nowrap;
+}
+.rows{display:flex;flex-direction:column;gap:5px}
+.row{display:flex;gap:10px;font-size:13px;color:var(--ink-soft)}
+.row dt{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  width:74px;flex:none;padding-top:2px;
+}
+.row dd{margin:0}
+.options{display:flex;flex-direction:column;gap:5px;margin-top:2px}
+.option{
+  display:flex;align-items:baseline;gap:10px;font-size:12.5px;color:var(--ink-soft);
+  padding:6px 9px;border:1px dashed var(--line);border-radius:7px;
+}
+.option b{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-weight:500;color:var(--ink);
+}
+.option em{font-style:normal;color:var(--c);font-weight:600;font-size:11.5px;margin-left:auto;text-align:right}
+
+/* ---------- custody ---------- */
+.banner{
+  background:var(--accent);color:var(--surface);
+  border-radius:var(--radius);padding:20px 22px;display:flex;flex-direction:column;gap:8px;
+}
+:root[data-theme="dark"] .banner,
+:root:not([data-theme="light"]) .banner{color:var(--ground)}
+.banner h2{font-size:19px}
+.banner p{font-size:13.5px;opacity:.85;max-width:62ch}
+.banner__tag{
+  align-self:flex-start;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;
+  padding:4px 9px;border-radius:5px;background:var(--hold-bg);color:var(--hold);
+}
+.timeline{display:flex;flex-direction:column;gap:0}
+.period{
+  display:flex;gap:16px;align-items:flex-start;
+  padding:16px 0;border-bottom:1px solid var(--line);
+}
+.period:last-child{border-bottom:0}
+.period__marker{
+  width:64px;flex:none;text-align:center;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:6px 0;border-radius:6px;
+  background:var(--c-bg);color:var(--c);border:1px solid var(--c-line);
+}
+.period--pere{--c:var(--narek);--c-bg:var(--narek-bg);--c-line:var(--narek-line)}
+.period--mere{--c:var(--annie);--c-bg:var(--annie-bg);--c-line:var(--annie-line)}
+.period--norme{--c:var(--go);--c-bg:var(--go-bg);--c-line:var(--go-line)}
+.period__body{flex:1;display:flex;flex-direction:column;gap:3px}
+.period__dates{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.period__desc{font-size:13px;color:var(--muted)}
+.period__len{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-size:12px;color:var(--c);font-weight:500;white-space:nowrap;padding-top:2px;
+}
+
+/* ---------- budget ---------- */
+.budget-top{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:22px;
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px;
+}
+.budget-top__fig{display:flex;flex-direction:column;gap:2px}
+.budget-top__fig strong{
+  font-family:"Bricolage Grotesque",sans-serif;font-size:38px;line-height:1;
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em;
+}
+.budget-top__fig p{font-size:12.5px;color:var(--muted)}
+.funding{
+  display:flex;gap:12px;align-items:flex-start;max-width:340px;
+  padding:12px 14px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);
+}
+.funding .icon{width:17px;height:17px;color:var(--accent);flex:none;margin-top:1px}
+.funding strong{display:block;font-size:12.5px;margin-bottom:2px}
+.funding span{font-size:12px;color:var(--muted)}
+.three-col{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.money{display:flex;flex-direction:column;gap:10px;padding:16px}
+.money h3{font-size:14px;display:flex;align-items:center;gap:8px}
+.money h3::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c,var(--accent))}
+.money--n{--c:var(--narek)}
+.money--a{--c:var(--annie)}
+.money--split h3::before{display:none}
+.money__head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.money__sum{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-size:16px;font-weight:600;color:var(--c,var(--ink));
+}
+.money ul{display:flex;flex-direction:column;gap:7px}
+.money li{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--ink-soft)}
+.money li b{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-weight:500;color:var(--ink);
+}
+.bar{display:flex;flex-direction:column;gap:5px}
+.bar__top{display:flex;justify-content:space-between;gap:10px;font-size:12.5px}
+.bar__top b{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;font-weight:500;color:var(--muted)}
+.bar__track{height:7px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.bar__fill{height:100%;background:var(--c)}
+.bar--music{--c:var(--accent)}
+.bar--sport{--c:var(--narek)}
+.bar--arts{--c:var(--annie)}
+
+.footnote{font-size:12px;color:var(--muted);text-align:center;padding-top:6px}
+
+/* ---------- responsive ---------- */
+@media (max-width:1000px){
+  .week{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .three-col{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .two-col{grid-template-columns:1fr}
+  .legend{margin-left:0;width:100%}
+}
+@media (max-width:560px){
+  .week{grid-template-columns:1fr}
+  .day{min-height:0}
+  .brand h1{font-size:22px}
+  .budget-top__fig strong{font-size:32px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none !important;animation:none !important}
+}
+
+/* ---------- print ---------- */
+@media print{
+  :root{
+    --ground:#fff;--surface:#fff;--surface-2:#fff;--ink:#111;--ink-soft:#333;
+    --muted:#555;--line:#bbb;--accent:#222;--accent-soft:#f2f2f2;--shadow:none;
+  }
+  .masthead{position:static;border-bottom:1px solid #bbb}
+  .tabs,.tools,.filters{display:none !important}
+  .panel[hidden]{display:flex !important}
+  .page{padding:12px 0;gap:26px}
+  .week{grid-template-columns:repeat(6,1fr)}
+  .banner{border:1px solid #bbb}
+  .card,.day,.callout,.budget-top{break-inside:avoid}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-week" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M12 10v11"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/></symbol>
+    <symbol id="i-money" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 8V3h10v5M6 18H4v-8h16v8h-2"/><rect x="7" y="14" width="10" height="7" rx="1"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21c4-4.4 6-7.6 6-10a6 6 0 1 0-12 0c0 2.4 2 5.6 6 10z"/><circle cx="12" cy="11" r="2.2"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5 21.5 20.5H2.5z"/><path d="M12 10v4.5M12 17.6h.01"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8h.01"/></symbol>
+    <symbol id="i-ball" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M4.6 8.5c4.6.6 8.9 3.6 10.9 8.4M8.5 4.6c.6 4.6 3.6 8.9 8.4 10.9"/></symbol>
+    <symbol id="i-paddle" viewBox="0 0 24 24"><circle cx="10" cy="9" r="6.2"/><path d="M13.6 14.2 20 20.6"/><circle cx="17.6" cy="6.4" r="1.6"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 17.5V5.2l10-1.7v12.3"/><circle cx="6.6" cy="17.8" r="2.4"/><circle cx="16.6" cy="15.8" r="2.4"/></symbol>
+    <symbol id="i-keys" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M9 5v9M15 5v9M3 14h18"/></symbol>
+    <symbol id="i-stage" viewBox="0 0 24 24"><path d="M4 4h16v7a8 8 0 0 1-16 0z"/><path d="M9 8.5h.01M15 8.5h.01M9.5 13c1.6 1.2 3.4 1.2 5 0"/></symbol>
+    <symbol id="i-dance" viewBox="0 0 24 24"><circle cx="13" cy="4.6" r="2.1"/><path d="M13 7v5.5M13 12.5 9.5 20M13 12.5 17 20M8 9.5l5 1 4.5-2.5"/></symbol>
+    <symbol id="i-solfege" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/><circle cx="9" cy="14" r="2"/><path d="M11 14V7"/></symbol>
+    <symbol id="i-relay" viewBox="0 0 24 24"><path d="M3 12h7l-2.5-2.5M21 12h-7l2.5 2.5"/><circle cx="12" cy="12" r="1.6"/></symbol>
+  </defs>
+</svg>
+
+<header class="masthead">
+  <div class="masthead__inner">
+    <div class="brand">
+      <span class="eyebrow">Année scolaire 2026 – 2027</span>
+      <h1>Planning hebdomadaire</h1>
+      <div class="kids">
+        <span class="kid kid--n">Narek <span>· 11 ans</span></span>
+        <span class="kid kid--a">Annie <span>· 13 ans</span></span>
+      </div>
+    </div>
+    <div class="tools">
+      <button class="btn" type="button" onclick="window.print()">
+        <svg class="icon"><use href="#i-print"></use></svg> Imprimer
+      </button>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Sections du planning">
+    <button class="tab" role="tab" id="tab-semaine" aria-controls="panel-semaine" aria-selected="true" onclick="showPanel('semaine')">
+      <svg class="icon"><use href="#i-week"></use></svg> Semaine type
+    </button>
+    <button class="tab" role="tab" id="tab-activites" aria-controls="panel-activites" aria-selected="false" onclick="showPanel('activites')">
+      <svg class="icon"><use href="#i-list"></use></svg> Activités &amp; inscriptions
+    </button>
+    <button class="tab" role="tab" id="tab-garde" aria-controls="panel-garde" aria-selected="false" onclick="showPanel('garde')">
+      <svg class="icon"><use href="#i-swap"></use></svg> Garde · septembre
+    </button>
+    <button class="tab" role="tab" id="tab-budget" aria-controls="panel-budget" aria-selected="false" onclick="showPanel('budget')">
+      <svg class="icon"><use href="#i-money"></use></svg> Budget
+    </button>
+  </nav>
+</header>
+
+<main class="page">
+
+  <!-- ============ SEMAINE TYPE ============ -->
+  <section class="panel" id="panel-semaine" role="tabpanel" aria-labelledby="tab-semaine">
+
+    <div class="section-head">
+      <div>
+        <h2>La semaine type</h2>
+        <p>Créneaux fixés et options encore à confirmer, du lundi au samedi.</p>
+      </div>
+      <div class="stats">
+        <span class="stat"><b>5</b> activités</span>
+        <span class="stat"><b>6</b> créneaux à confirmer</span>
+        <span class="stat">Mardi <b>libre</b></span>
+      </div>
+    </div>
+
+    <div class="filters">
+      <span class="filters__label">Afficher</span>
+      <button class="chip" type="button" id="chip-tous" aria-pressed="true" onclick="filterChild('tous')">Les deux</button>
+      <button class="chip chip--n" type="button" id="chip-narek" aria-pressed="false" onclick="filterChild('narek')">Narek</button>
+      <button class="chip chip--a" type="button" id="chip-annie" aria-pressed="false" onclick="filterChild('annie')">Annie</button>
+      <div class="legend">
+        <span><i class="swatch swatch--n"></i> Narek</span>
+        <span><i class="swatch swatch--a"></i> Annie</span>
+        <span><i class="swatch swatch--o"></i> Option à confirmer</span>
+      </div>
+    </div>
+
+    <div class="week">
+
+      <!-- LUNDI -->
+      <div class="day" data-day="Lundi">
+        <div class="day__head"><span class="day__name">Lundi</span><span class="day__note">1 créneau</span></div>
+        <div class="day__body">
+          <article class="ev ev--n ev--option" data-child="narek">
+            <div class="ev__top"><span class="ev__who">Narek</span><span class="tag">Option A</span></div>
+            <h4 class="ev__title"><svg class="icon"><use href="#i-paddle"></use></svg> Ping-pong</h4>
+            <p class="ev__time">17:45 – 19:00</p>
+          </article>
+        </div>
+      </div>
+
+      <!-- MARDI -->
+      <div class="day day--rest" data-day="Mardi">
+        <div class="day__head"><span class="day__name">Mardi</span><span class="day__note">libre</span></div>
+        <div class="day__body"><p class="day__empty">Aucune activité</p></div>
+      </div>
+
+      <!-- MERCREDI -->
+      <div class="day" data-day="Mercredi">
+        <div class="day__head"><span class="day__name">Mercredi</span><span class="day__note">4 créneaux</span></div>
+        <div class="day__body">
+          <article class="ev ev--a ev--option" data-child="annie">
+            <div class="ev__top"><span class="ev__who">Annie</span><span class="tag">Option 1</span></div>
+            <h4 class="ev__title"><svg class="icon"><use href="#i-note"></use></svg> Flûte</h4>
+            <p class="ev__time">16:00 – 16:30</p>
+            <p class="ev__meta">Créneau préféré</p>
+          </article>
+          <article class="ev ev--n" data-child="narek">
+            <div class="ev__top"><span class="ev__who">Narek</span><span class="tag tag--fixed">Confirmé</span></div>
+            <h4 class="ev__title"><svg class="icon"><use href="#i-ball"></use></svg> Tennis</h4>
+            <p class="ev__time">16:00 – 17:00</p>
+            <p class="ev__meta"><svg class="icon"><use href="#i-clock"></use></svg> Dès le mercredi 23 septembre</p>
+          </article>
+          <article class="ev ev--a" data-child="annie">
+            <div class="ev__top"><span class="ev__who">Annie</span><span class="tag tag--fixed">Confirmé</span></div>
+            <h4 class="ev__title"><svg class="icon"><use href="#i-solfege"></use></svg> Solfège</h4>
+            <p class="ev__time">16:30</p>
+            <p class="ev__meta"><svg class="icon"><use href="#i-pin"></use></svg> Académie des Arts</p>
+          </article>
+          <article class="ev ev--a ev--option" data-child="annie">
+            <div class="ev__top"><span class="ev__who">Annie</span><span class="tag">Option 2</span></div>
+            <h4 class="ev__title"><svg class="icon"><use href="#i-note"></use></svg> Flûte</h4>
+            <p class="ev__time">17:30</p>
+            <p class="ev__meta">Enchaîné après le solfège</p>
+          </article>
+        </div>
+      </div>
+
+      <!-- JEUDI -->
+      <div class="day" data-day="Jeudi">
+        <div class="day__head"><span class="day__name">Jeudi</span><span class="day__note">4 créneaux</span></div>
+        <div class="day__body">
+          <article class="ev ev--a ev--option" data-child="annie">
+            <div class="ev__top"><span class="ev__who">Annie</span><span class="tag">Option 3</span></div>
+            <h4 class="ev__title"><svg class="icon"><use href="#i-note"></use></svg> Flûte</h4>
+            <p class="ev__time">18:00 – 18:30</p>
+            <p class="ev__meta"><svg class="icon"><use href="#i-pin"></use></svg> Académie des Arts</p>
+          </article>
+          <article class="ev ev--a ev--option" data-child="annie">
+            <div class="ev__top"><span class="ev__who">Annie</span><span class="tag">À bloquer</span></div>
+            <h4 class="ev__title"><svg class="icon"><use href="#i-keys"></use></svg> Piano · Mme Jun</h4>
+            <p class="ev__time">18:30 – 19:00</p>
+            <p class="ev__meta">Mme Jun n'enseigne que mardi et jeudi</p>
+          </article>
+          <article class="ev ev--n ev--option" data-child="narek">
+            <div class="ev__top"><span class="ev__who">Narek</span><span class="tag">Option B</span></div>
+            <h4 class="ev__title"><svg class="icon"><use href="#i-paddle"></use></svg> Ping-pong</h4>
+            <p class="ev__time">18:30 – 20:00</p>
+            <p class="ev__meta">Préféré si le mercredi n'est pas possible</p>
+          </article>
+          <article class="ev ev--a" data-child="annie">
+            <div class="ev__top"><span class="ev__who">Annie</span><span class="tag tag--fixed">Dès cette semaine</span></div>
+            <h4 class="ev__title"><svg class="icon"><use href="#i-stage"></use></svg> Théâtre</h4>
+            <p class="ev__time">19:15</p>
+          </article>
+        </div>
+      </div>
+
+      <!-- VENDREDI -->
+      <div class="day" data-day="Vendredi">
+        <div class="day__head"><span class="day__name">Vendredi</span><span class="day__note">relais</span></div>
+        <div class="day__body">
+          <article class="ev ev--relay" data-child="tous">
+            <div class="ev__top"><span class="ev__who">Les deux</span></div>
+            <h4 class="ev__title"><svg class="icon"><use href="#i-relay"></use></svg> Changement de garde</h4>
+            <p class="ev__time">en soirée</p>
+            <p class="ev__meta">Alternance 1 semaine sur 2</p>
+          </article>
+        </div>
+      </div>
+
+      <!-- SAMEDI -->
+      <div class="day" data-day="Samedi">
+        <div class="day__head"><span class="day__name">Samedi</span><span class="day__note">2 créneaux</span></div>
+        <div class="day__body">
+          <article class="ev ev--n ev--option" data-child="narek">
+            <div class="ev__top"><span class="ev__who">Narek</span><span class="tag">Option C</span></div>
+            <h4 class="ev__title"><svg class="icon"><use href="#i-paddle"></use></svg> Ping-pong</h4>
+            <p class="ev__time">11:30 – 12:30</p>
+          </article>
+          <article class="ev ev--a" data-child="annie">
+            <div class="ev__top"><span class="ev__who">Annie</span><span class="tag tag--fixed">Dès le 12 sept.</span></div>
+            <h4 class="ev__title"><svg class="icon"><use href="#i-dance"></use></svg> Danse arménienne</h4>
+            <p class="ev__time">17:00 – 18:30</p>
+            <p class="ev__meta"><svg class="icon"><use href="#i-pin"></use></svg> Cie Yeraz · Alfortville</p>
+          </article>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="callout">
+      <span class="callout__icon"><svg class="icon"><use href="#i-alert"></use></svg></span>
+      <div>
+        <h3>Jeudi 10 septembre — les rendez-vous qui décident des créneaux</h3>
+        <ul class="callout__list">
+          <li><span class="callout__hour">18:00</span> Académie des Arts — professeur de flûte, M. Parent</li>
+          <li><span class="callout__hour">18:30</span> <span>Demander le créneau piano du jeudi à Mme Jun <em>(idéalement à ce moment-là)</em></span></li>
+          <li><span class="callout__hour">19:00</span> Académie des Arts — professeure de piano, Mme Jun</li>
+          <li><span class="callout__hour">18:00</span> <span>Réunion collective du collège pour Annie <em>(info obtenue auprès d'autres parents)</em></span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ACTIVITÉS ============ -->
+  <section class="panel" id="panel-activites" role="tabpanel" aria-labelledby="tab-activites" hidden>
+    <div class="section-head">
+      <div>
+        <h2>Activités &amp; inscriptions</h2>
+        <p>Ce qui est réservé, ce qui reste à arbitrer, et le coût annuel de chaque activité.</p>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <!-- NAREK -->
+      <div class="card card--n">
+        <div class="card__head">
+          <div class="card__id">
+            <span class="initial">N</span>
+            <div>
+              <h3>Narek</h3>
+              <p>11 ans · 2 activités sportives</p>
+            </div>
+          </div>
+          <span class="total">665 €</span>
+        </div>
+        <div class="card__body">
+          <div class="act">
+            <div class="act__top">
+              <span class="act__name"><svg class="icon"><use href="#i-ball"></use></svg> Tennis</span>
+              <span class="act__price">380 €</span>
+            </div>
+            <dl class="rows">
+              <div class="row"><dt>Créneau</dt><dd>Mercredi 16:00 – 17:00</dd></div>
+              <div class="row"><dt>Début</dt><dd>Mercredi 23 septembre 2026</dd></div>
+              <div class="row"><dt>Statut</dt><dd><span class="tag tag--fixed">Confirmé</span></dd></div>
+            </dl>
+          </div>
+
+          <div class="act">
+            <div class="act__top">
+              <span class="act__name"><svg class="icon"><use href="#i-paddle"></use></svg> Ping-pong</span>
+              <span class="act__price">285 €</span>
+            </div>
+            <dl class="rows">
+              <div class="row"><dt>Début</dt><dd>Cette semaine</dd></div>
+              <div class="row"><dt>Statut</dt><dd><span class="tag">Créneau à choisir</span></dd></div>
+            </dl>
+            <div class="options">
+              <div class="option"><b>Lundi 17:45 – 19:00</b><em>Option A</em></div>
+              <div class="option"><b>Jeudi 18:30 – 20:00</b><em>Option B · préféré</em></div>
+              <div class="option"><b>Samedi 11:30 – 12:30</b><em>Option C</em></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANNIE -->
+      <div class="card card--a">
+        <div class="card__head">
+          <div class="card__id">
+            <span class="initial">A</span>
+            <div>
+              <h3>Annie</h3>
+              <p>13 ans · théâtre, danse et musique</p>
+            </div>
+          </div>
+          <span class="total">~ 990 €</span>
+        </div>
+        <div class="card__body">
+          <div class="act">
+            <div class="act__top">
+              <span class="act__name"><svg class="icon"><use href="#i-stage"></use></svg> Théâtre</span>
+              <span class="act__price">220 €</span>
+            </div>
+            <dl class="rows">
+              <div class="row"><dt>Créneau</dt><dd>Jeudi à 19:15</dd></div>
+              <div class="row"><dt>Début</dt><dd>Cette semaine</dd></div>
+            </dl>
+          </div>
+
+          <div class="act">
+            <div class="act__top">
+              <span class="act__name"><svg class="icon"><use href="#i-dance"></use></svg> Danse arménienne</span>
+              <span class="act__price">320 €</span>
+            </div>
+            <dl class="rows">
+              <div class="row"><dt>Créneau</dt><dd>Samedi 17:00 – 18:30</dd></div>
+              <div class="row"><dt>Début</dt><dd>Samedi 12 septembre</dd></div>
+              <div class="row"><dt>Lieu</dt><dd>Cie Yeraz — Centre culturel « Le marché du Dahomey », 2 bis rue des Camélias, Alfortville</dd></div>
+            </dl>
+          </div>
+
+          <div class="act">
+            <div class="act__top">
+              <span class="act__name"><svg class="icon"><use href="#i-note"></use></svg> Musique — Académie des Arts</span>
+              <span class="act__price">~ 450 €</span>
+            </div>
+            <div class="options">
+              <div class="option"><b>Solfège — mercredi 16:30</b><em>Fixé</em></div>
+              <div class="option"><b>Piano — jeudi 18:30</b><em>Souhaité · Mme Jun mar/jeu</em></div>
+              <div class="option"><b>Flûte — mer. 16:00 ou 17:30, ou jeu. 18:00</b><em>M. Parent</em></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GARDE ============ -->
+  <section class="panel" id="panel-garde" role="tabpanel" aria-labelledby="tab-garde" hidden>
+    <div class="banner">
+      <span class="banner__tag">Ajustement exceptionnel</span>
+      <h2>Garde — septembre 2026</h2>
+      <p>Aménagement ponctuel lié au déplacement de la mère du 10 au 22 septembre, puis retour au cadre habituel : une semaine sur deux, relais le vendredi soir.</p>
+    </div>
+
+    <div class="card">
+      <div class="card__body">
+        <div class="timeline">
+          <div class="period period--pere">
+            <span class="period__marker">Père</span>
+            <div class="period__body">
+              <span class="period__dates">9 septembre → vendredi 25 septembre (soir)</span>
+              <span class="period__desc">Prise en charge exceptionnelle pendant le déplacement maternel</span>
+            </div>
+            <span class="period__len">16 jours</span>
+          </div>
+          <div class="period period--mere">
+            <span class="period__marker">Mère</span>
+            <div class="period__body">
+              <span class="period__dates">Vendredi 25 septembre (soir) → vendredi 2 octobre</span>
+              <span class="period__desc">Retour de déplacement et reprise de sa semaine de garde</span>
+            </div>
+            <span class="period__len">7 jours</span>
+          </div>
+          <div class="period period--norme">
+            <span class="period__marker">1 / 2</span>
+            <div class="period__body">
+              <span class="period__dates">À partir du vendredi 2 octobre</span>
+              <span class="period__desc">Retour au rythme officiel : une semaine sur deux, changement le vendredi soir</span>
+            </div>
+            <span class="period__len">cadre rétabli</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BUDGET ============ -->
+  <section class="panel" id="panel-budget" role="tabpanel" aria-labelledby="tab-budget" hidden>
+    <div class="budget-top">
+      <div class="budget-top__fig">
+        <span class="eyebrow">Budget annuel estimé</span>
+        <strong>~ 1 655 €</strong>
+        <p>5 activités pour les deux enfants — année scolaire 2026-2027</p>
+      </div>
+      <div class="funding">
+        <svg class="icon"><use href="#i-info"></use></svg>
+        <div>
+          <strong>Financement</strong>
+          <span>Pension annuelle 3 000 € · CAF ~224 €/mois · ARS ~890 €</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="three-col">
+      <div class="card money money--n">
+        <div class="money__head">
+          <h3>Narek</h3>
+          <span class="money__sum">665 €</span>
+        </div>
+        <ul>
+          <li><span>Tennis</span><b>380 €</b></li>
+          <li><span>Ping-pong</span><b>285 €</b></li>
+        </ul>
+      </div>
+
+      <div class="card money money--a">
+        <div class="money__head">
+          <h3>Annie</h3>
+          <span class="money__sum">~ 990 €</span>
+        </div>
+        <ul>
+          <li><span>Théâtre</span><b>220 €</b></li>
+          <li><span>Danse arménienne</span><b>320 €</b></li>
+          <li><span>Musique (solfège, piano, flûte)</span><b>~ 450 €</b></li>
+        </ul>
+      </div>
+
+      <div class="card money money--split">
+        <div class="money__head">
+          <h3>Répartition par poste</h3>
+        </div>
+        <div class="bar bar--music">
+          <div class="bar__top"><span>Musique &amp; conservatoire</span><b>450 € · 27 %</b></div>
+          <div class="bar__track"><div class="bar__fill" style="width:27%"></div></div>
+        </div>
+        <div class="bar bar--sport">
+          <div class="bar__top"><span>Sports</span><b>665 € · 40 %</b></div>
+          <div class="bar__track"><div class="bar__fill" style="width:40%"></div></div>
+        </div>
+        <div class="bar bar--arts">
+          <div class="bar__top"><span>Théâtre &amp; danse</span><b>540 € · 33 %</b></div>
+          <div class="bar__track"><div class="bar__fill" style="width:33%"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="footnote">Planning des enfants · année scolaire 2026-2027</p>
+</main>
+
+<script>
+  var PANELS = ['semaine', 'activites', 'garde', 'budget'];
+
+  function showPanel(id) {
+    PANELS.forEach(function (p) {
+      var panel = document.getElementById('panel-' + p);
+      var tab = document.getElementById('tab-' + p);
+      var active = (p === id);
+      if (panel) panel.hidden = !active;
+      if (tab) tab.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    try { localStorage.setItem('planning.panel', id); } catch (e) {}
+  }
+
+  function filterChild(who) {
+    ['tous', 'narek', 'annie'].forEach(function (c) {
+      var chip = document.getElementById('chip-' + c);
+      if (chip) chip.setAttribute('aria-pressed', c === who ? 'true' : 'false');
+    });
+
+    document.querySelectorAll('.week .day').forEach(function (day) {
+      var shown = 0;
+      day.querySelectorAll('.ev').forEach(function (ev) {
+        var child = ev.getAttribute('data-child');
+        var visible = (who === 'tous') || (child === who) || (child === 'tous');
+        ev.hidden = !visible;
+        if (visible) shown++;
+      });
+
+      var body = day.querySelector('.day__body');
+      var empty = body.querySelector('.day__empty');
+      if (shown === 0) {
+        if (!empty) {
+          empty = document.createElement('p');
+          empty.className = 'day__empty';
+          empty.textContent = 'Aucune activité';
+          body.appendChild(empty);
+        }
+        empty.hidden = false;
+        day.classList.add('day--rest');
+      } else {
+        if (empty) empty.hidden = true;
+        day.classList.remove('day--rest');
+      }
+
+      var note = day.querySelector('.day__note');
+      if (note) {
+        if (day.getAttribute('data-day') === 'Vendredi' && shown > 0) {
+          note.textContent = 'relais';
+        } else {
+          note.textContent = shown === 0 ? 'libre' : shown + (shown > 1 ? ' créneaux' : ' créneau');
+        }
+      }
+    });
+
+    try { localStorage.setItem('planning.child', who); } catch (e) {}
+  }
+
+  (function restore() {
+    var panel = null, child = null;
+    try {
+      panel = localStorage.getItem('planning.panel');
+      child = localStorage.getItem('planning.child');
+    } catch (e) {}
+    if (panel && PANELS.indexOf(panel) !== -1) showPanel(panel);
+    if (child && ['tous', 'narek', 'annie'].indexOf(child) !== -1 && child !== 'tous') filterChild(child);
+  })();
+
+  window.addEventListener('beforeprint', function () {
+    PANELS.forEach(function (p) {
+      var panel = document.getElementById('panel-' + p);
+      if (panel) panel.hidden = false;
+    });
+  });
+  window.addEventListener('afterprint', function () {
+    var current = document.querySelector('.tab[aria-selected="true"]');
+    if (current) showPanel(current.id.replace('tab-', ''));
+  });
+</script>
