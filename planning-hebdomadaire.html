@@ -26,6 +26,15 @@
   --go:#3C6B33;
   --go-bg:#E5EFDF;
   --go-line:#AFCBA4;
+  --sem-v:#2F7A3E;
+  --sem-r:#BE3A2B;
+  --m1:#3A5BA0;
+  --m2:#5B7A26;
+  --m3:#96660F;
+  --m4:#A8452E;
+  --m5:#6055B8;
+  --m6:#9E3F7C;
+  --m7:#1E7A6C;
   --shadow:0 1px 1px rgba(31,29,51,.05), 0 10px 26px -18px rgba(31,29,51,.45);
   --radius:10px;
 }
@@ -52,6 +61,15 @@
     --go:#93C583;
     --go-bg:#1F2E1C;
     --go-line:#48653F;
+    --sem-v:#79C489;
+    --sem-r:#F0887C;
+    --m1:#93ADEA;
+    --m2:#AEC873;
+    --m3:#E0B25C;
+    --m4:#EC9179;
+    --m5:#AA9EF2;
+    --m6:#E890C6;
+    --m7:#68CBB8;
     --shadow:0 1px 1px rgba(0,0,0,.5), 0 10px 26px -18px rgba(0,0,0,.9);
   }
 }
@@ -77,6 +95,15 @@
   --go:#93C583;
   --go-bg:#1F2E1C;
   --go-line:#48653F;
+  --sem-v:#79C489;
+  --sem-r:#F0887C;
+  --m1:#93ADEA;
+  --m2:#AEC873;
+  --m3:#E0B25C;
+  --m4:#EC9179;
+  --m5:#AA9EF2;
+  --m6:#E890C6;
+  --m7:#68CBB8;
   --shadow:0 1px 1px rgba(0,0,0,.5), 0 10px 26px -18px rgba(0,0,0,.9);
 }
 
@@ -273,6 +300,101 @@ svg{display:block}
 }
 .callout__list em{font-style:normal;color:var(--muted);font-size:12.5px}
 
+/* ---------- collège ---------- */
+.tt-bar{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  padding:12px 14px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow);
+}
+.wk{
+  font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 12px;border-radius:8px;
+  border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);
+  transition:all .15s ease;
+}
+.wk::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--sem)}
+.wk--v{--sem:var(--sem-v)}
+.wk--r{--sem:var(--sem-r)}
+.wk[aria-pressed="true"]{border-color:var(--sem);color:var(--ink);background:var(--surface)}
+.wk[aria-pressed="true"]::before{box-shadow:0 0 0 3px color-mix(in srgb,var(--sem) 25%,transparent)}
+.wk small{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;
+}
+.tt-note{margin-left:auto;font-size:12px;color:var(--muted)}
+
+.tt-wrap{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow-x:auto;
+}
+.tt{border-collapse:separate;border-spacing:0;width:100%;min-width:760px}
+.tt th,.tt td{padding:4px;vertical-align:top}
+.tt tbody td{height:1px}
+.tt thead th{
+  position:sticky;top:0;background:var(--surface);z-index:1;
+  padding:12px 8px 10px;border-bottom:1px solid var(--line);text-align:left;
+}
+.tt__day{display:flex;flex-direction:column;gap:2px}
+.tt__day b{font-family:"Bricolage Grotesque",sans-serif;font-size:14px}
+.tt__day span{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-size:10.5px;color:var(--muted);
+}
+.tt__hour{
+  width:62px;white-space:nowrap;border-right:1px solid var(--line);
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-size:11px;color:var(--muted);text-align:right;padding-right:10px;font-weight:400;
+}
+.tt__hour b{display:block;font-weight:600;color:var(--ink-soft);font-size:12px}
+.tt__lunch td{
+  padding:5px 8px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  background:var(--surface-2);
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center;
+}
+.lesson{
+  display:flex;flex-direction:column;gap:1px;height:100%;
+  padding:7px 9px;border-radius:7px;
+  background:color-mix(in srgb,var(--m) 12%,var(--surface));
+  border:1px solid color-mix(in srgb,var(--m) 34%,transparent);
+}
+.lesson b{font-size:12.5px;font-weight:700;color:var(--m);line-height:1.25}
+.lesson span{font-size:11px;color:var(--ink-soft)}
+.lesson em{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-style:normal;font-size:10.5px;color:var(--muted);
+}
+.lesson .both{
+  align-self:flex-start;margin-top:3px;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:9px;font-weight:600;letter-spacing:.08em;
+  padding:1px 5px;border-radius:4px;
+  background:var(--surface);color:var(--muted);border:1px solid var(--line);
+}
+.m-lettres{--m:var(--m1)}
+.m-langues{--m:var(--m2)}
+.m-maths{--m:var(--m3)}
+.m-sciences{--m:var(--m4)}
+.m-hist{--m:var(--m5)}
+.m-arts{--m:var(--m6)}
+.m-sport{--m:var(--m7)}
+
+.subjects{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:var(--muted)}
+.subjects span{display:inline-flex;align-items:center;gap:5px}
+.subjects i{width:9px;height:9px;border-radius:2px;background:var(--m)}
+
+.tt-insights{display:flex;flex-direction:column;gap:8px;padding:16px;font-size:13px}
+.tt-insights h3{font-size:14px;margin-bottom:4px}
+.tt-insights li{display:flex;gap:10px;align-items:baseline;color:var(--ink-soft)}
+.tt-insights b{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--c,var(--muted));width:78px;flex:none;
+}
+.ins--n{--c:var(--narek)}
+.ins--a{--c:var(--annie)}
+
 /* ---------- activities ---------- */
 .two-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
 .card{
@@ -432,7 +554,8 @@ svg{display:block}
     --muted:#555;--line:#bbb;--accent:#222;--accent-soft:#f2f2f2;--shadow:none;
   }
   .masthead{position:static;border-bottom:1px solid #bbb}
-  .tabs,.tools,.filters{display:none !important}
+  .tabs,.tools,.filters,.tt-bar{display:none !important}
+  .tt thead th{position:static}
   .panel[hidden]{display:flex !important}
   .page{padding:12px 0;gap:26px}
   .week{grid-template-columns:repeat(6,1fr)}
@@ -444,6 +567,7 @@ svg{display:block}
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
     <symbol id="i-week" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M12 10v11"/></symbol>
+    <symbol id="i-school" viewBox="0 0 24 24"><path d="M12 7c-2.2-1.6-5.2-1.9-8.5-1.3v12.6C6.8 17.7 9.8 18 12 19.6c2.2-1.6 5.2-1.9 8.5-1.3V5.7C17.2 5.1 14.2 5.4 12 7z"/><path d="M12 7v12.6"/></symbol>
     <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
     <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/></symbol>
     <symbol id="i-money" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></symbol>
@@ -481,6 +605,9 @@ svg{display:block}
   <nav class="tabs" role="tablist" aria-label="Sections du planning">
     <button class="tab" role="tab" id="tab-semaine" aria-controls="panel-semaine" aria-selected="true" onclick="showPanel('semaine')">
       <svg class="icon"><use href="#i-week"></use></svg> Semaine type
+    </button>
+    <button class="tab" role="tab" id="tab-college" aria-controls="panel-college" aria-selected="false" onclick="showPanel('college')">
+      <svg class="icon"><use href="#i-school"></use></svg> Collège
     </button>
     <button class="tab" role="tab" id="tab-activites" aria-controls="panel-activites" aria-selected="false" onclick="showPanel('activites')">
       <svg class="icon"><use href="#i-list"></use></svg> Activités &amp; inscriptions
@@ -648,6 +775,53 @@ svg{display:block}
           <li><span class="callout__hour">18:00</span> <span>Réunion collective du collège pour Annie <em>(info obtenue auprès d'autres parents)</em></span></li>
         </ul>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ COLLÈGE ============ -->
+  <section class="panel" id="panel-college" role="tabpanel" aria-labelledby="tab-college" hidden>
+    <div class="section-head">
+      <div>
+        <h2>Emploi du temps au collège</h2>
+        <p>Semestre 1 — la quinzaine alterne entre semaine rouge (Q1) et semaine verte (Q2). La semaine en cours est déduite de l'alternance depuis la semaine du 7 septembre.</p>
+      </div>
+    </div>
+
+    <div class="tt-bar">
+      <span class="filters__label">Élève</span>
+      <button class="chip chip--n" type="button" id="tt-narek" aria-pressed="true" onclick="pickPupil('narek')">Narek · 5C</button>
+      <button class="chip chip--a" type="button" id="tt-annie" aria-pressed="false" onclick="pickPupil('annie')">Annie · 3F</button>
+      <span class="filters__label" style="margin-left:8px">Semaine</span>
+      <button class="wk wk--v" type="button" id="wk-V" aria-pressed="true" onclick="pickWeek('V')">Verte <small id="wk-V-now"></small></button>
+      <button class="wk wk--r" type="button" id="wk-R" aria-pressed="false" onclick="pickWeek('R')">Rouge <small id="wk-R-now"></small></button>
+      <span class="tt-note" id="tt-regime"></span>
+    </div>
+
+    <div class="tt-wrap">
+      <table class="tt" id="tt-grid"></table>
+    </div>
+
+    <div class="subjects">
+      <span class="m-lettres"><i></i> Lettres</span>
+      <span class="m-langues"><i></i> Langues</span>
+      <span class="m-maths"><i></i> Mathématiques</span>
+      <span class="m-sciences"><i></i> Sciences &amp; techno</span>
+      <span class="m-hist"><i></i> Histoire-géo</span>
+      <span class="m-arts"><i></i> Arts</span>
+      <span class="m-sport"><i></i> EPS</span>
+      <span><i style="background:var(--muted)"></i> « V + R » = toutes les semaines</span>
+    </div>
+
+    <div class="card tt-insights">
+      <h3>Ce que l'emploi du temps impose aux activités</h3>
+      <ul>
+        <li class="ins--n"><b>Narek</b> Mercredi, cours de 8h10 à 12h10 : après-midi libre, le tennis de 16h00 passe.</li>
+        <li class="ins--a"><b>Annie</b> Lundi, LCA latin jusqu'à 17h45 — le jour le plus long de la semaine.</li>
+        <li class="ins--n"><b>Narek</b> Jeudi, sortie à 16h50 : compatible avec le ping-pong de 18h30.</li>
+        <li class="ins--a"><b>Annie</b> Jeudi, sortie à 16h50 : piano 18h30 puis théâtre 19h15 s'enchaînent.</li>
+        <li class="ins--a"><b>Annie</b> Mercredi, cours jusqu'à 12h10 : le solfège de 16h30 reste dégagé.</li>
+        <li><b>Samedi</b> Aucun cours pour les deux : ping-pong 11h30 et danse 17h00 sans contrainte.</li>
+      </ul>
     </div>
   </section>
 
@@ -854,7 +1028,7 @@ svg{display:block}
 </main>
 
 <script>
-  var PANELS = ['semaine', 'activites', 'garde', 'budget'];
+  var PANELS = ['semaine', 'college', 'activites', 'garde', 'budget'];
 
   function showPanel(id) {
     PANELS.forEach(function (p) {
@@ -910,6 +1084,256 @@ svg{display:block}
 
     try { localStorage.setItem('planning.child', who); } catch (e) {}
   }
+
+
+  // ---------- Emploi du temps du collège ----------
+  // Une entrée = [créneau, semaines, matière, professeur, salle, nb de créneaux].
+  // Semaines : 'R' = quinzaine Q1 (rouge), 'V' = Q2 (verte), 'RV' = toutes les semaines.
+  var SLOTS = [
+    ['08:10', '09:05'], ['09:05', '10:00'], ['10:20', '11:15'], ['11:15', '12:10'],
+    ['13:45', '14:40'], ['14:40', '15:35'], ['15:55', '16:50'], ['16:50', '17:45']
+  ];
+  var DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+
+  var FAMILLES = {
+    'Français': 'lettres', 'LCA latin': 'lettres', 'HVC': 'lettres',
+    'Anglais LV1': 'langues', 'Espagnol LV2': 'langues', 'Allemand LV2': 'langues',
+    'Mathématiques': 'maths',
+    'SVT': 'sciences', 'Physique-chimie': 'sciences', 'Technologie': 'sciences',
+    'Histoire-géo': 'hist',
+    'Éd. musicale': 'arts', 'Arts plastiques': 'arts',
+    'EPS': 'sport'
+  };
+
+  var PUPILS = {
+    narek: {
+      nom: 'Narek', classe: '5C', regime: 'Externe libre — pas de repas au collège',
+      jours: {
+        Lundi: [
+          [0, 'V', 'Français', 'Laurencin M.', '110'],
+          [1, 'R', 'Éd. musicale', 'Bourelly E.', '202 – Musique'],
+          [1, 'V', 'Espagnol LV2', 'Alva Medina M.', '203 – SVT'],
+          [2, 'RV', 'Physique-chimie', 'Issid A.', '205 – PC'],
+          [3, 'R', 'Espagnol LV2', 'Alva Medina M.', '110'],
+          [3, 'V', 'Mathématiques', 'Foerster F.', '102 – Techno'],
+          [4, 'R', 'Français', 'Laurencin M.', '110'],
+          [4, 'V', 'Éd. musicale', 'Bourelly E.', '202 – Musique'],
+          [5, 'V', 'Français', 'Laurencin M.', '110'],
+          [6, 'V', 'Technologie', 'Hammachi R.', '102 – Techno']
+        ],
+        Mardi: [
+          [0, 'R', 'Anglais LV1', 'Jegou M.', '207'],
+          [0, 'V', 'Mathématiques', 'Foerster F.', '102 – Techno'],
+          [1, 'R', 'Français', 'Laurencin M.', '110'],
+          [1, 'V', 'Espagnol LV2', 'Alva Medina M.', '104 – Techno'],
+          [2, 'R', 'Technologie', 'Hammachi R.', '102 – Techno'],
+          [2, 'V', 'SVT', 'Dostert N.', '203 – SVT'],
+          [3, 'R', 'Espagnol LV2', 'Alva Medina M.', '209'],
+          [3, 'V', 'Anglais LV1', 'Jegou M.', '207'],
+          [4, 'RV', 'Histoire-géo', 'Burret V.', '111'],
+          [5, 'R', 'Français', 'Laurencin M.', '110'],
+          [6, 'R', 'Espagnol LV2', 'Alva Medina M.', '209']
+        ],
+        Mercredi: [
+          [0, 'RV', 'EPS', 'Pourre M.', '', 2],
+          [2, 'R', 'Anglais LV1', 'Jegou M.', '207'],
+          [2, 'V', 'Mathématiques', 'Foerster F.', '102 – Techno'],
+          [3, 'R', 'Mathématiques', 'Foerster F.', '102 – Techno'],
+          [3, 'V', 'Physique-chimie', 'Issid A.', '205 – PC']
+        ],
+        Jeudi: [
+          [0, 'V', 'Français', 'Laurencin M.', '110'],
+          [1, 'R', 'Anglais LV1', 'Jegou M.', '207'],
+          [1, 'V', 'Mathématiques', 'Foerster F.', '205 – PC'],
+          [2, 'RV', 'Arts plastiques', 'Khatchikian A.', '201 – Arts pla', 2],
+          [4, 'R', 'Français', 'Laurencin M.', '110'],
+          [4, 'V', 'SVT', 'Dostert N.', '203 – SVT'],
+          [5, 'R', 'Français', 'Laurencin M.', '110'],
+          [5, 'V', 'Anglais LV1', 'Jegou M.', '207'],
+          [6, 'RV', 'Histoire-géo', 'Burret V.', '111']
+        ],
+        Vendredi: [
+          [0, 'R', 'SVT', 'Dostert N.', '203 – SVT'],
+          [0, 'V', 'Technologie', 'Hammachi R.', '102 – Techno'],
+          [1, 'R', 'Histoire-géo', 'Burret V.', '111'],
+          [1, 'V', 'Anglais LV1', 'Jegou M.', '207'],
+          [2, 'R', 'Français', 'Laurencin M.', '111'],
+          [2, 'V', 'Mathématiques', 'Foerster F.', '205 – PC'],
+          [3, 'R', 'Mathématiques', 'Foerster F.', '106'],
+          [3, 'V', 'Histoire-géo', 'Burret V.', '111']
+        ]
+      }
+    },
+    annie: {
+      nom: 'Annie', classe: '3F', regime: 'Demi-pensionnaire — repas au collège',
+      jours: {
+        Lundi: [
+          [1, 'R', 'Anglais LV1', 'Khelladi S.', '214'],
+          [2, 'R', 'Mathématiques', 'Saugnac I.', '111'],
+          [2, 'V', 'Anglais LV1', 'Khelladi S.', '214'],
+          [3, 'R', 'Français', 'Laurencin M.', '208'],
+          [3, 'V', 'Français', 'Laurencin M.', '110'],
+          [4, 'RV', 'Allemand LV2', 'Lejeune Y.', '208'],
+          [5, 'R', 'Technologie', 'Megherbi E.', '104 – Techno'],
+          [5, 'V', 'Mathématiques', 'Saugnac I.', '211'],
+          [6, 'RV', 'HVC', 'Laurencin M.', '110'],
+          [7, 'RV', 'LCA latin', 'Plaud S.', '103 – UPE2A']
+        ],
+        Mardi: [
+          [0, 'RV', 'EPS', 'Saadi Y.', '', 2],
+          [2, 'R', 'Français', 'Laurencin M.', '110', 2],
+          [2, 'V', 'Allemand LV2', 'Lejeune Y.', '208'],
+          [3, 'V', 'Histoire-géo', 'Burret V.', '111'],
+          [4, 'R', 'Mathématiques', 'Saugnac I.', '213'],
+          [4, 'V', 'Éd. musicale', 'Bourelly E.', '202 – Musique'],
+          [5, 'R', 'Éd. musicale', 'Bourelly E.', '202 – Musique'],
+          [5, 'V', 'Mathématiques', 'Saugnac I.', '213'],
+          [6, 'R', 'Physique-chimie', 'Balazi Atchy Nilla', '206 – PC'],
+          [6, 'V', 'Anglais LV1', 'Khelladi S.', '214']
+        ],
+        Mercredi: [
+          [1, 'RV', 'LCA latin', 'Plaud S.', '218'],
+          [2, 'RV', 'Histoire-géo', 'Burret V.', '111'],
+          [3, 'RV', 'Technologie', 'Megherbi E.', '104 – Techno']
+        ],
+        Jeudi: [
+          [1, 'R', 'Mathématiques', 'Saugnac I.', '212'],
+          [1, 'V', 'Histoire-géo', 'Burret V.', '111'],
+          [2, 'R', 'Anglais LV1', 'Khelladi S.', '214'],
+          [2, 'V', 'Mathématiques', 'Saugnac I.', '212'],
+          [3, 'R', 'Histoire-géo', 'Burret V.', '111'],
+          [4, 'R', 'Physique-chimie', 'Balazi Atchy Nilla', '206 – PC'],
+          [4, 'V', 'SVT', 'Taillandier P.', '204 – SVT'],
+          [5, 'R', 'SVT', 'Taillandier P.', '204 – SVT'],
+          [5, 'V', 'Physique-chimie', 'Balazi Atchy Nilla', '206 – PC'],
+          [6, 'RV', 'Français', 'Laurencin M.', '110']
+        ],
+        Vendredi: [
+          [0, 'R', 'Histoire-géo', 'Burret V.', '111'],
+          [0, 'V', 'Français', 'Laurencin M.', '110', 2],
+          [1, 'R', 'SVT', 'Taillandier P.', '204 – SVT'],
+          [2, 'R', 'Mathématiques', 'Saugnac I.', '212'],
+          [2, 'V', 'Histoire-géo', 'Burret V.', '111'],
+          [3, 'RV', 'Allemand LV2', 'Lejeune Y.', '208'],
+          [4, 'RV', 'EPS', 'Saadi Y.', '', 2],
+          [6, 'RV', 'Anglais LV1', 'Khelladi S.', '214']
+        ]
+      }
+    }
+  };
+
+  // Semaine du lundi 7 septembre 2026 = verte ; l'alternance suit de quinzaine en quinzaine.
+  var ANCRAGE = Date.UTC(2026, 8, 7);
+
+  function semaineCourante(today) {
+    var d = today || new Date();
+    var lundi = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
+    var ecart = Math.round((lundi - ANCRAGE) / 604800000);
+    return (((ecart % 2) + 2) % 2) === 0 ? 'V' : 'R';
+  }
+
+  var ttState = { pupil: 'narek', week: semaineCourante() };
+
+  function pickPupil(who) {
+    ttState.pupil = who;
+    ['narek', 'annie'].forEach(function (p) {
+      var b = document.getElementById('tt-' + p);
+      if (b) b.setAttribute('aria-pressed', p === who ? 'true' : 'false');
+    });
+    drawTimetable();
+    try { localStorage.setItem('planning.pupil', who); } catch (e) {}
+  }
+
+  function pickWeek(w) {
+    ttState.week = w;
+    ['V', 'R'].forEach(function (x) {
+      var b = document.getElementById('wk-' + x);
+      if (b) b.setAttribute('aria-pressed', x === w ? 'true' : 'false');
+    });
+    drawTimetable();
+    try { localStorage.setItem('planning.week', w); } catch (e) {}
+  }
+
+  function drawTimetable() {
+    var table = document.getElementById('tt-grid');
+    if (!table) return;
+    var data = PUPILS[ttState.pupil];
+    var week = ttState.week;
+
+    var grid = {};
+    var bornes = {};
+    DAYS.forEach(function (day) {
+      grid[day] = new Array(SLOTS.length).fill(null);
+      (data.jours[day] || []).forEach(function (e) {
+        if (e[1].indexOf(week) === -1) return;
+        var span = e[5] || 1;
+        grid[day][e[0]] = { matiere: e[2], prof: e[3], salle: e[4], span: span, both: e[1].length === 2 };
+        for (var k = 1; k < span; k++) grid[day][e[0] + k] = 'occupe';
+      });
+      var occupes = [];
+      grid[day].forEach(function (c, i) { if (c) occupes.push(i); });
+      bornes[day] = occupes.length
+        ? SLOTS[occupes[0]][0] + ' → ' + SLOTS[occupes[occupes.length - 1]][1]
+        : 'pas de cours';
+    });
+
+    var premier = SLOTS.length, dernier = 0;
+    DAYS.forEach(function (day) {
+      grid[day].forEach(function (c, i) {
+        if (!c) return;
+        if (i < premier) premier = i;
+        if (i > dernier) dernier = i;
+      });
+    });
+
+    var html = '<thead><tr><th class="tt__hour"></th>';
+    DAYS.forEach(function (day) {
+      html += '<th><span class="tt__day"><b>' + day + '</b><span>' + bornes[day] + '</span></span></th>';
+    });
+    html += '</tr></thead><tbody>';
+
+    SLOTS.forEach(function (slot, i) {
+      if (i < premier || i > dernier) return;
+      if (i === 4) {
+        html += '<tr class="tt__lunch"><td colspan="' + (DAYS.length + 1) + '">12:10 — pause déjeuner — 13:45</td></tr>';
+      }
+      html += '<tr><th class="tt__hour"><b>' + slot[0] + '</b>' + slot[1] + '</th>';
+      DAYS.forEach(function (day) {
+        var cell = grid[day][i];
+        if (cell === 'occupe') return;
+        if (!cell) { html += '<td></td>'; return; }
+        var famille = FAMILLES[cell.matiere] || 'lettres';
+        var plage = cell.span > 1 ? SLOTS[i][0] + ' – ' + SLOTS[i + cell.span - 1][1] : '';
+        html += '<td' + (cell.span > 1 ? ' rowspan="' + cell.span + '"' : '') + '>'
+          + '<div class="lesson m-' + famille + '">'
+          + '<b>' + cell.matiere + '</b>'
+          + '<span>' + cell.prof + '</span>'
+          + (cell.salle ? '<em>' + cell.salle + '</em>' : '')
+          + (plage ? '<em>' + plage + '</em>' : '')
+          + (cell.both ? '<span class="both">V + R</span>' : '')
+          + '</div></td>';
+      });
+      html += '</tr>';
+    });
+
+    table.innerHTML = html + '</tbody>';
+
+    var regime = document.getElementById('tt-regime');
+    if (regime) regime.textContent = data.nom + ' · ' + data.classe + ' — ' + data.regime;
+  }
+
+  (function initTimetable() {
+    var courante = semaineCourante();
+    var marque = document.getElementById('wk-' + courante + '-now');
+    if (marque) marque.textContent = 'en cours';
+    var pupil = null, week = null;
+    try {
+      pupil = localStorage.getItem('planning.pupil');
+      week = localStorage.getItem('planning.week');
+    } catch (e) {}
+    pickPupil(pupil === 'annie' ? 'annie' : 'narek');
+    pickWeek(week === 'R' || week === 'V' ? week : courante);
+  })();
 
   (function restore() {
     var panel = null, child = null;
