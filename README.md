@@ -22,16 +22,17 @@ déduite de l'alternance, la semaine du lundi 7 septembre 2026 étant verte
 
 Site : https://amsolutions-pro.github.io/planning-2026-27/
 
-### Activation (une seule fois)
-
-GitHub Pages doit être activé à la main dans **Settings → Pages** : le jeton des
-GitHub Actions n'a pas le droit de créer le site (`Resource not accessible by
-integration`). Les deux modes fonctionnent :
+Pages est activé sur le dépôt et chaque push sur la branche par défaut
+redéploie le site. Les deux modes de publication sont couverts :
 
 - **Source « GitHub Actions »** — le workflow `.github/workflows/pages.yml`
-  publie à chaque push sur la branche par défaut ;
+  construit et publie le site ;
 - **Source « Deploy from a branch »** — branche `claude/deploy-html-page-sdarke`,
   dossier `/ (root)` : `index.html` et `.nojekyll` sont versionnés à la racine.
+
+L'activation initiale de Pages reste un geste manuel dans **Settings → Pages** :
+le jeton des GitHub Actions n'a pas le droit de créer le site (`Resource not
+accessible by integration`). Le workflow ne tente donc pas de l'activer.
 
 ### Génération de `index.html`
 
