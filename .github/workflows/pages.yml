@@ -19,14 +19,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build the standalone page
-        run: python3 build.py
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
+
+      - name: Vérifier que index.html est à jour
+        run: |
+          python3 build.py
+          git diff --exit-code index.html \
+            || { echo "::error::index.html n'est pas à jour — lancez 'python3 build.py' et committez le résultat."; exit 1; }
+
+      - name: Préparer le site
+        run: |
+          mkdir -p _site
+          cp index.html .nojekyll _site/
+
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: _site
 
   deploy:
     needs: build

@@ -12,17 +12,31 @@ et inscriptions, calendrier de garde de septembre, budget annuel.
 
 ## Déploiement GitHub Pages
 
-Le workflow `.github/workflows/pages.yml` construit et publie le site à chaque
-push sur la branche par défaut :
-
-1. `build.py` enveloppe `planning-hebdomadaire.html` dans un document HTML
-   autonome et écrit `dist/index.html` ;
-2. `actions/configure-pages` active GitHub Pages sur le dépôt si besoin ;
-3. `actions/deploy-pages` publie `dist/`.
-
 Site : https://amsolutions-pro.github.io/planning-2026-27/
 
-`dist/` est généré, donc non versionné (`.gitignore`).
+### Activation (une seule fois)
+
+GitHub Pages doit être activé à la main dans **Settings → Pages** : le jeton des
+GitHub Actions n'a pas le droit de créer le site (`Resource not accessible by
+integration`). Les deux modes fonctionnent :
+
+- **Source « GitHub Actions »** — le workflow `.github/workflows/pages.yml`
+  publie à chaque push sur la branche par défaut ;
+- **Source « Deploy from a branch »** — branche `claude/deploy-html-page-sdarke`,
+  dossier `/ (root)` : `index.html` et `.nojekyll` sont versionnés à la racine.
+
+### Génération de `index.html`
+
+`index.html` est produit par `build.py`, qui enveloppe
+`planning-hebdomadaire.html` dans un document HTML complet. Après toute
+modification de la page :
+
+```
+python3 build.py
+```
+
+Le workflow échoue si `index.html` n'a pas été régénéré après un changement de
+la source.
 
 ## Contraintes respectées
 
