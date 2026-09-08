@@ -22,6 +22,14 @@ SHELL = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Planning hebdomadaire des activites de Narek et Annie, garde de septembre et budget de l'annee scolaire 2026-2027.">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#F1F0F6">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#131220">
+<!-- Chemins relatifs : le site est servi sous /planning-2026-27/, pas a la racine du domaine. -->
+<link rel="icon" href="./favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+<link rel="manifest" href="./site.webmanifest">
 <!-- Genere par build.py a partir de planning-hebdomadaire.html - ne pas editer a la main. -->
 <style>
 :root{{color-scheme:light dark}}

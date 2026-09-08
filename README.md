@@ -49,6 +49,18 @@ L'activation initiale de Pages reste un geste manuel dans **Settings → Pages**
 le jeton des GitHub Actions n'a pas le droit de créer le site (`Resource not
 accessible by integration`). Le workflow ne tente donc pas de l'activer.
 
+### Favicon
+
+Les icônes (`favicon.ico`, `favicon-16x16.png`, `favicon-32x32.png`,
+`apple-touch-icon.png`, `android-chrome-192x192.png`,
+`android-chrome-512x512.png`) et `site.webmanifest` sont à la racine ; les
+balises `<link>` sont ajoutées par `build.py`. Tous les chemins sont **relatifs**
+(`./favicon.ico`) : le site étant servi sous `/planning-2026-27/`, un chemin
+absolu pointerait hors du projet.
+
+L'artifact Claude garde son icône emoji : sa politique de sécurité n'autorise
+pas d'image externe, et son onglet est celui de claude.ai.
+
 ### Génération de `index.html`
 
 `index.html` est produit par `build.py`, qui enveloppe

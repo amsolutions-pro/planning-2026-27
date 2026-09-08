@@ -1,0 +1,13 @@
+{
+  "name": "Planning Narek & Annie",
+  "short_name": "Planning",
+  "icons": [
+    { "src": "./android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "start_url": "./",
+  "scope": "./",
+  "theme_color": "#2E2A5C",
+  "background_color": "#F1F0F6",
+  "display": "standalone"
+}

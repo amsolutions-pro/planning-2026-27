@@ -29,7 +29,9 @@ jobs:
       - name: Préparer le site
         run: |
           mkdir -p _site
-          cp index.html .nojekyll _site/
+          cp index.html .nojekyll site.webmanifest _site/
+          cp favicon.ico favicon-16x16.png favicon-32x32.png _site/
+          cp apple-touch-icon.png android-chrome-192x192.png android-chrome-512x512.png _site/
 
       - uses: actions/upload-pages-artifact@v3
         with:
