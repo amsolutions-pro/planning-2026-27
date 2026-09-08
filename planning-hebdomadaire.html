@@ -380,6 +380,44 @@ svg{display:block}
 .m-arts{--m:var(--m6)}
 .m-sport{--m:var(--m7)}
 
+/* ---------- emploi du temps en liste (petits écrans) ---------- */
+.tt-list{display:none;flex-direction:column;gap:12px}
+.ttl__day{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden;
+}
+.ttl__head{
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface-2);
+}
+.ttl__head b{font-family:"Bricolage Grotesque",sans-serif;font-size:14px}
+.ttl__head span{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-size:10.5px;color:var(--muted);
+}
+.ttl__day ul{display:flex;flex-direction:column}
+.ttl__row{
+  display:flex;gap:10px;padding:9px 12px;align-items:flex-start;
+  border-top:1px solid var(--line);
+}
+.ttl__row:first-child{border-top:0}
+.ttl__h{
+  flex:none;width:52px;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-size:11.5px;font-weight:600;color:var(--m);
+}
+.ttl__h i{display:block;font-style:normal;font-weight:400;font-size:10.5px;color:var(--muted)}
+.ttl__c{display:flex;flex-direction:column;gap:1px;min-width:0}
+.ttl__c b{font-size:13px;color:var(--ink)}
+.ttl__c > span{font-size:11.5px;color:var(--muted)}
+.ttl__c .both{
+  align-self:flex-start;margin-top:3px;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:9px;font-weight:600;letter-spacing:.08em;
+  padding:1px 5px;border-radius:4px;
+  background:var(--surface-2);color:var(--muted);border:1px solid var(--line);
+}
+
 .subjects{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:var(--muted)}
 .subjects span{display:inline-flex;align-items:center;gap:5px}
 .subjects i{width:9px;height:9px;border-radius:2px;background:var(--m)}
@@ -407,6 +445,7 @@ svg{display:block}
 :root[data-theme="dark"] .seg button[aria-pressed="true"],
 :root:not([data-theme="light"]) .seg button[aria-pressed="true"]{color:var(--ground)}
 
+.ov{display:flex;flex-direction:column;gap:12px}
 .ov-wrap{
   background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
   box-shadow:var(--shadow);padding:14px;overflow-x:auto;
@@ -429,7 +468,11 @@ svg{display:block}
   font-family:"IBM Plex Mono",ui-monospace,monospace;
   font-variant-numeric:tabular-nums;font-size:10px;color:var(--muted);
 }
+.ovj{display:contents}
+.ovv__body{display:flex;gap:6px}
+.ovv__rail--local{display:none;flex:none;width:40px}
 .ovv__plot{
+  flex:1;height:100%;
   position:relative;border:1px solid var(--line);border-radius:8px;
   background:var(--surface-2);
   background-image:
@@ -655,6 +698,26 @@ svg{display:block}
   .brand h1{font-size:22px}
   .budget-top__fig strong{font-size:32px}
 }
+
+@media (max-width:720px){
+  /* La grille horaire horizontale demandait un long défilement latéral :
+     sur petit écran, chaque journée se lit de haut en bas. */
+  .tt-wrap{display:none}
+  .tt-list{display:flex}
+  .ov-wrap{padding:4px 10px}
+  .ovv{display:block;min-width:0}
+  .ovv__rail--global{display:none}
+  .ovv__rail--local{display:block}
+  .ovj{display:block;padding:12px 0;border-bottom:1px solid var(--line)}
+  .ovj:last-child{border-bottom:0}
+  .ovv__title{padding-bottom:8px}
+  .ovv__body{height:300px !important}
+  .ovv__foot{padding-top:10px}
+  .ovf{font-size:12px}
+  /* la clé de lecture gauche/droite passe avant les journées */
+  .ov-legend{order:-1}
+}
+
 @media (prefers-reduced-motion:reduce){
   *{transition:none !important;animation:none !important}
 }
@@ -807,6 +870,8 @@ svg{display:block}
       <div class="tt-wrap">
         <table class="tt" id="tt-grid"></table>
       </div>
+
+      <div class="tt-list" id="tt-list"></div>
 
       <div class="subjects">
       <span class="m-lettres"><i></i> Lettres</span>
@@ -1205,6 +1270,30 @@ svg{display:block}
 
     table.innerHTML = html + '</tbody>';
 
+    // Sur petit écran, la même journée se lit en liste plutôt qu'en colonnes.
+    var liste = document.getElementById('tt-list');
+    if (liste) {
+      var lhtml = '';
+      DAYS.forEach(function (day) {
+        var cours = '';
+        grid[day].forEach(function (cell, i) {
+          if (!cell || cell === 'occupe') return;
+          var famille = FAMILLES[cell.matiere] || 'lettres';
+          var fin = SLOTS[i + (cell.span || 1) - 1][1];
+          cours += '<li class="ttl__row m-' + famille + '">'
+            + '<span class="ttl__h">' + SLOTS[i][0] + '<i>' + fin + '</i></span>'
+            + '<span class="ttl__c"><b>' + cell.matiere + '</b>'
+            + '<span>' + cell.prof + (cell.salle ? ' · ' + cell.salle : '') + '</span>'
+            + (cell.both ? '<span class="both">V + R</span>' : '') + '</span></li>';
+        });
+        lhtml += '<div class="ttl__day">'
+          + '<div class="ttl__head"><b>' + day + '</b><span>' + bornes[day] + '</span></div>'
+          + (cours ? '<ul>' + cours + '</ul>' : '<p class="day__empty">Pas de cours</p>')
+          + '</div>';
+      });
+      liste.innerHTML = lhtml;
+    }
+
     var regime = document.getElementById('tt-regime');
     if (regime) regime.textContent = data.nom + ' · ' + data.classe + ' — ' + data.regime;
   }
@@ -1598,7 +1687,8 @@ svg{display:block}
     }
 
     var html = '<div class="ovv" style="--pas:' + (100 / (amplitude / 60)).toFixed(3) + '%">'
-      + '<div class="ovv__rail" style="grid-column:1;grid-row:2;height:' + haut_px + 'px">' + rail + '</div>';
+      + '<div class="ovv__rail ovv__rail--global" style="grid-column:1;grid-row:2;height:'
+      + haut_px + 'px">' + rail + '</div>';
 
     JOURS_SEMAINE.forEach(function (jour, index) {
       var col = index + 2;
@@ -1645,12 +1735,15 @@ svg{display:block}
         pied += '<div class="ovf">' + a.titre + ' ' + horaireDe(a) + '</div>';
       });
 
-      html += '<div class="ovv__title" style="grid-column:' + col + ';grid-row:1"><b>' + jour + '</b>'
+      html += '<div class="ovj">'
+        + '<div class="ovv__title" style="grid-column:' + col + ';grid-row:1"><b>' + jour + '</b>'
         + '<span>' + (jour === 'Samedi' ? 'sans collège' : '') + '</span></div>'
-        + '<div class="ovv__plot" style="grid-column:' + col + ';grid-row:2;height:' + haut_px + 'px">'
-        + blocs + '</div>'
+        + '<div class="ovv__body" style="grid-column:' + col + ';grid-row:2;height:' + haut_px + 'px">'
+        + '<div class="ovv__rail ovv__rail--local">' + rail + '</div>'
+        + '<div class="ovv__plot">' + blocs + '</div></div>'
         + '<div class="ovv__foot" style="grid-column:' + col + ';grid-row:3">'
-        + (pied || '<span class="ovf">rien de prévu</span>') + '</div>';
+        + (pied || '<span class="ovf">rien de prévu</span>') + '</div>'
+        + '</div>';
     });
 
     zone.innerHTML = '<div class="ov-wrap">' + html + '</div></div>'

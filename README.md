@@ -19,6 +19,12 @@ battement entre les deux.
 Les âges sont calculés à partir des dates de naissance inscrites dans la
 constante `ENFANTS`, afin de rester justes au fil de l'année.
 
+Sous 720 px, les deux grilles horaires abandonnent la lecture en colonnes, qui
+imposait un long défilement latéral : l'emploi du temps devient une liste jour
+par jour (rendue par le même `drawTimetable`, en plus du tableau, le CSS
+choisissant laquelle afficher) et les journées superposées s'empilent, chacune
+avec son propre rail d'heures.
+
 L'onglet « Collège » reprend les emplois du temps du semestre 1 de Narek (5C) et
 Annie (3F). La quinzaine y est notée `R` pour la semaine rouge (colonne Q1 des
 emplois du temps papier) et `V` pour la semaine verte (colonne Q2) ; un cours
