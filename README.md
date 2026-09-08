@@ -4,14 +4,20 @@ Page interactive du planning hebdomadaire des enfants : semaine type, emploi du
 temps au collège, activités et inscriptions, calendrier de garde de septembre,
 budget annuel.
 
-L'onglet « Choix » sert à retenir un créneau parmi les options d'une activité
-(ping-pong, flûte, piano) : les options écartées disparaissent alors de la
-semaine type et des journées superposées. Les choix sont conservés dans le
-`localStorage` du navigateur, donc propres à chaque appareil.
+L'onglet « Activités & créneaux » réunit le coût des inscriptions et le choix
+des créneaux : pour le ping-pong, la flûte et le piano, on coche les créneaux
+retenus — plusieurs sont possibles pour une même activité — et les autres
+disparaissent de la semaine type et des journées superposées. Les choix sont
+conservés dans le `localStorage` du navigateur, donc propres à chaque appareil.
 
 L'onglet « Collège » propose deux vues : la grille des cours, et « Journées
-superposées » qui met les deux enfants sur une même échelle horaire (cours,
-activités, battement entre la sortie et l'activité) sans le détail des matières.
+superposées », où les jours sont en colonnes et le temps en vertical. L'échelle
+ne couvre que la fin de journée (elle démarre une heure avant la première sortie
+de cours) et affiche, pour chaque enfant, la fin des cours, les activités et le
+battement entre les deux.
+
+Les âges sont calculés à partir des dates de naissance inscrites dans la
+constante `ENFANTS`, afin de rester justes au fil de l'année.
 
 L'onglet « Collège » reprend les emplois du temps du semestre 1 de Narek (5C) et
 Annie (3F). La quinzaine y est notée `R` pour la semaine rouge (colonne Q1 des
