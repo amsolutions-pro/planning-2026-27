@@ -418,6 +418,39 @@ svg{display:block}
   background:var(--surface-2);color:var(--muted);border:1px solid var(--line);
 }
 
+/* ---------- jour en cours ---------- */
+.day.is-today,
+.ttl__day.is-today{
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px var(--accent),var(--shadow);
+}
+[data-jl]::after{
+  content:attr(data-jl);
+  display:block;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent);margin-top:1px;
+}
+.tt thead th.is-today{background:var(--accent-soft)}
+.tt tbody td.col-today{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.ovv__title.is-today b{color:var(--accent)}
+.ovv__body.is-today .ovv__plot{
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent);
+}
+
+.today-fab{
+  position:fixed;right:16px;bottom:16px;z-index:30;
+  display:inline-flex;align-items:center;gap:7px;cursor:pointer;
+  padding:10px 15px;border-radius:99px;
+  border:1px solid var(--accent);background:var(--accent);color:var(--surface);
+  font:inherit;font-size:13px;font-weight:600;
+  box-shadow:0 8px 24px -10px rgba(31,29,51,.65);
+}
+:root[data-theme="dark"] .today-fab,
+:root:not([data-theme="light"]) .today-fab{color:var(--ground)}
+.today-fab .icon{width:15px;height:15px}
+
 .subjects{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:var(--muted)}
 .subjects span{display:inline-flex;align-items:center;gap:5px}
 .subjects i{width:9px;height:9px;border-radius:2px;background:var(--m)}
@@ -729,7 +762,7 @@ svg{display:block}
     --muted:#555;--line:#bbb;--accent:#222;--accent-soft:#f2f2f2;--shadow:none;
   }
   .masthead{position:static;border-bottom:1px solid #bbb}
-  .tabs,.tools,.filters,.tt-bar{display:none !important}
+  .tabs,.tools,.filters,.tt-bar,.today-fab{display:none !important}
   .tt thead th{position:static}
   .panel[hidden]{display:flex !important}
   .page{padding:12px 0;gap:26px}
@@ -1019,6 +1052,10 @@ svg{display:block}
   </section>
 
   <p class="footnote">Planning des enfants · année scolaire 2026-2027</p>
+
+  <button class="today-fab" type="button" id="today-fab" hidden onclick="allerAujourdhui()">
+    <svg class="icon"><use href="#i-week"></use></svg> <span id="today-fab-label">Aujourd’hui</span>
+  </button>
 </main>
 
 <script>
@@ -1032,6 +1069,7 @@ svg{display:block}
       if (panel) panel.hidden = !active;
       if (tab) tab.setAttribute('aria-selected', active ? 'true' : 'false');
     });
+    majAujourdhui();
     try { localStorage.setItem('planning.panel', id); } catch (e) {}
   }
 
@@ -1240,7 +1278,9 @@ svg{display:block}
 
     var html = '<thead><tr><th class="tt__hour"></th>';
     DAYS.forEach(function (day) {
-      html += '<th><span class="tt__day"><b>' + day + '</b><span>' + bornes[day] + '</span></span></th>';
+      html += '<th class="' + (classeJour(day) ? 'is-today' : '') + '"' + attrJour(day)
+        + '><span class="tt__day"><b' + libelleJour(day) + '>'
+        + day + '</b><span>' + bornes[day] + '</span></span></th>';
     });
     html += '</tr></thead><tbody>';
 
@@ -1252,11 +1292,12 @@ svg{display:block}
       html += '<tr><th class="tt__hour"><b>' + slot[0] + '</b>' + slot[1] + '</th>';
       DAYS.forEach(function (day) {
         var cell = grid[day][i];
+        var jourJ = classeJour(day) ? ' class="col-today"' : '';
         if (cell === 'occupe') return;
-        if (!cell) { html += '<td></td>'; return; }
+        if (!cell) { html += '<td' + jourJ + '></td>'; return; }
         var famille = FAMILLES[cell.matiere] || 'lettres';
         var plage = cell.span > 1 ? SLOTS[i][0] + ' – ' + SLOTS[i + cell.span - 1][1] : '';
-        html += '<td' + (cell.span > 1 ? ' rowspan="' + cell.span + '"' : '') + '>'
+        html += '<td' + jourJ + (cell.span > 1 ? ' rowspan="' + cell.span + '"' : '') + '>'
           + '<div class="lesson m-' + famille + '">'
           + '<b>' + cell.matiere + '</b>'
           + '<span>' + cell.prof + '</span>'
@@ -1286,13 +1327,16 @@ svg{display:block}
             + '<span>' + cell.prof + (cell.salle ? ' · ' + cell.salle : '') + '</span>'
             + (cell.both ? '<span class="both">V + R</span>' : '') + '</span></li>';
         });
-        lhtml += '<div class="ttl__day">'
-          + '<div class="ttl__head"><b>' + day + '</b><span>' + bornes[day] + '</span></div>'
+        lhtml += '<div class="ttl__day' + classeJour(day) + '"' + attrJour(day) + '>'
+          + '<div class="ttl__head"><b' + libelleJour(day) + '>' + day + '</b>'
+          + '<span>' + bornes[day] + '</span></div>'
           + (cours ? '<ul>' + cours + '</ul>' : '<p class="day__empty">Pas de cours</p>')
           + '</div>';
       });
       liste.innerHTML = lhtml;
     }
+
+    majAujourdhui();
 
     var regime = document.getElementById('tt-regime');
     if (regime) regime.textContent = data.nom + ' · ' + data.classe + ' — ' + data.regime;
@@ -1465,8 +1509,9 @@ svg{display:block}
             : duJour.length + (duJour.length > 1 ? ' créneaux' : ' créneau'))
         : 'libre';
 
-      html += '<div class="day' + (duJour.length ? '' : ' day--rest') + '">'
-        + '<div class="day__head"><span class="day__name">' + jour + '</span>'
+      html += '<div class="day' + (duJour.length ? '' : ' day--rest') + classeJour(jour) + '"'
+        + attrJour(jour) + '>'
+        + '<div class="day__head"><span class="day__name"' + libelleJour(jour) + '>' + jour + '</span>'
         + '<span class="day__note">' + note + '</span></div><div class="day__body">';
 
       if (!duJour.length) {
@@ -1495,6 +1540,7 @@ svg{display:block}
     });
 
     zone.innerHTML = html;
+    majAujourdhui();
 
     var ouverts = dispo.filter(function (a) { return a.groupe && !retenus(a.groupe).length; });
     var stat = document.getElementById('stat-options');
@@ -1643,6 +1689,7 @@ svg{display:block}
     var regime = document.getElementById('tt-regime');
     if (regime) regime.hidden = v === 'super';
     if (v === 'super') renderOverlay();
+    majAujourdhui();
     try { localStorage.setItem('planning.vue', v); } catch (e) {}
   }
 
@@ -1736,9 +1783,11 @@ svg{display:block}
       });
 
       html += '<div class="ovj">'
-        + '<div class="ovv__title" style="grid-column:' + col + ';grid-row:1"><b>' + jour + '</b>'
+        + '<div class="ovv__title' + classeJour(jour) + '"' + attrJour(jour)
+        + ' style="grid-column:' + col + ';grid-row:1"><b' + libelleJour(jour) + '>' + jour + '</b>'
         + '<span>' + (jour === 'Samedi' ? 'sans collège' : '') + '</span></div>'
-        + '<div class="ovv__body" style="grid-column:' + col + ';grid-row:2;height:' + haut_px + 'px">'
+        + '<div class="ovv__body' + classeJour(jour)
+        + '" style="grid-column:' + col + ';grid-row:2;height:' + haut_px + 'px">'
         + '<div class="ovv__rail ovv__rail--local">' + rail + '</div>'
         + '<div class="ovv__plot">' + blocs + '</div></div>'
         + '<div class="ovv__foot" style="grid-column:' + col + ';grid-row:3">'
@@ -1753,7 +1802,98 @@ svg{display:block}
       + '<span><i></i> Fin des cours (le début de journée n’est pas représenté)</span>'
       + '<span>Trait pointillé : créneau encore en option</span>'
       + '</div>';
+    majAujourdhui();
   }
+
+
+  // ---------- Repère du jour ----------
+  // Le dimanche, la semaine affichée n'a pas de « aujourd'hui » : on pointe alors
+  // le lundi, annoncé comme « demain ».
+  function estDimanche() { return new Date().getDay() === 0; }
+
+  function jourRepere() {
+    var noms = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    var d = new Date().getDay();
+    return d === 0 ? 'Lundi' : noms[d - 1];
+  }
+
+  function classeJour(jour) { return jour === jourRepere() ? ' is-today' : ''; }
+  function attrJour(jour) {
+    return (jour === jourRepere() && !estDimanche()) ? ' aria-current="date"' : '';
+  }
+  function libelleJour(jour) {
+    if (jour !== jourRepere()) return '';
+    return ' data-jl="' + (estDimanche() ? 'demain' : 'aujourd’hui') + '"';
+  }
+
+  // Le repère de la vue affichée : la grille des cours et sa version en liste
+  // coexistent dans le DOM, seule celle qui est visible nous intéresse.
+  function cibleJour() {
+    var panneau = null;
+    PANELS.forEach(function (nom) {
+      var el = document.getElementById('panel-' + nom);
+      if (el && !el.hidden) panneau = el;
+    });
+    if (!panneau) return null;
+    var candidats = panneau.querySelectorAll('.is-today');
+    for (var i = 0; i < candidats.length; i++) {
+      var b = candidats[i].getBoundingClientRect();
+      if (b.height > 0 && b.width > 0) return candidats[i];
+    }
+    return null;
+  }
+
+  // Hauteur de l'en-tête collant, sous lequel le jour doit venir se placer.
+  function margeHaute() {
+    var entete = document.querySelector('.masthead');
+    return (entete ? entete.getBoundingClientRect().height : 0) + 12;
+  }
+
+  // Visible = une part utile du repère est à l'écran, sous l'en-tête collant.
+  function jourVisible(cible) {
+    var b = cible.getBoundingClientRect();
+    var vertical = Math.min(b.bottom, window.innerHeight || 0) - Math.max(b.top, margeHaute());
+    var horizontal = Math.min(b.right, window.innerWidth || 0) - Math.max(b.left, 0);
+    return vertical > Math.min(80, b.height * 0.5)
+      && horizontal > Math.min(80, b.width * 0.5);
+  }
+
+  function allerAujourdhui(instantane) {
+    var cible = cibleJour();
+    if (!cible) return;
+
+    // Grille des cours et journées superposées défilent latéralement dans leur
+    // conteneur : on y centre la colonne avant de faire défiler la page.
+    var boite = cible.closest ? cible.closest('.tt-wrap, .ov-wrap') : null;
+    if (boite && boite.scrollWidth > boite.clientWidth) {
+      var c = cible.getBoundingClientRect(), k = boite.getBoundingClientRect();
+      boite.scrollLeft += (c.left - k.left) - (k.width - c.width) / 2;
+    }
+
+    var haut = window.pageYOffset + cible.getBoundingClientRect().top - margeHaute();
+    window.scrollTo({
+      top: Math.max(0, haut),
+      behavior: instantane === true ? 'auto' : 'smooth'
+    });
+  }
+
+  function majAujourdhui() {
+    var bouton = document.getElementById('today-fab');
+    if (!bouton) return;
+
+    var cible = cibleJour();
+    if (!cible) { bouton.hidden = true; return; }
+
+    var texte = document.getElementById('today-fab-label');
+    if (texte) texte.textContent = estDimanche() ? 'Demain' : 'Aujourd’hui';
+
+    bouton.hidden = jourVisible(cible);
+  }
+
+  // Le bouton n'apparaît que lorsque le repère a quitté l'écran — y compris par
+  // le défilement latéral des grilles, d'où l'écoute en phase de capture.
+  document.addEventListener('scroll', majAujourdhui, { capture: true, passive: true });
+  window.addEventListener('resize', majAujourdhui);
 
   (function restore() {
     var panel = null, child = null;
@@ -1769,6 +1909,26 @@ svg{display:block}
     var vue = null;
     try { vue = localStorage.getItem('planning.vue'); } catch (e) {}
     setVue(vue === 'super' ? 'super' : 'grille');
+
+    // Ouverture : on amène le jour à l'écran s'il n'y est pas déjà. Le placement
+    // a lieu dès la mise en page, puis une fois les polices prêtes (elles
+    // décalent les hauteurs) — sauf si la page a bougé entre-temps.
+    var placeA = null;
+
+    function placerSurLeJour() {
+      if (placeA !== null && Math.abs(window.pageYOffset - placeA) > 4) return;
+      var cible = cibleJour();
+      if (cible && !jourVisible(cible)) allerAujourdhui(true);
+      placeA = window.pageYOffset;
+      majAujourdhui();
+    }
+
+    requestAnimationFrame(function () { requestAnimationFrame(placerSurLeJour); });
+    if (document.fonts && document.fonts.ready && document.fonts.ready.then) {
+      document.fonts.ready.then(function () {
+        requestAnimationFrame(placerSurLeJour);
+      });
+    }
   })();
 
   window.addEventListener('beforeprint', function () {
