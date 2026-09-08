@@ -410,6 +410,112 @@ svg{display:block}
 .ins--n{--c:var(--narek)}
 .ins--a{--c:var(--annie)}
 
+/* ---------- superposition des journées ---------- */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{
+  font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
+  padding:6px 12px;border:0;background:var(--surface-2);color:var(--muted);
+  transition:background .15s ease,color .15s ease;
+}
+.seg button + button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
+:root[data-theme="dark"] .seg button[aria-pressed="true"],
+:root:not([data-theme="light"]) .seg button[aria-pressed="true"]{color:var(--ground)}
+
+.ov{display:flex;flex-direction:column;gap:12px}
+.ov__ruler{
+  display:grid;grid-template-columns:72px 1fr;gap:10px;align-items:end;
+  padding:0 14px;
+}
+.ov__hours{position:relative;height:15px}
+.ov__hours span{
+  position:absolute;top:0;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:9.5px;color:var(--muted);
+}
+.ovd{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:12px 14px;display:flex;flex-direction:column;gap:9px;
+}
+.ovd--vide{background:var(--surface-2)}
+.ovd__head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.ovd__head b{font-family:"Bricolage Grotesque",sans-serif;font-size:14px}
+.ovd__head span{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+}
+.trk{display:grid;grid-template-columns:72px 1fr;gap:10px;align-items:center}
+.trk__who{font-size:12px;font-weight:600;color:var(--c)}
+.trk--n{--c:var(--narek)}
+.trk--a{--c:var(--annie)}
+.lane{
+  position:relative;height:30px;border-radius:6px;
+  border:1px solid var(--line);background:var(--surface-2);
+  background-image:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 8%);
+}
+.blk{
+  position:absolute;top:3px;bottom:3px;border-radius:4px;
+  display:flex;align-items:center;padding:0 5px;
+  font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;
+}
+.blk--cours{
+  background:color-mix(in srgb,var(--muted) 20%,var(--surface));
+  color:var(--ink-soft);border:1px solid var(--line);
+}
+.blk--act{
+  background:color-mix(in srgb,var(--c) 26%,var(--surface));
+  color:var(--c);border:1px solid color-mix(in srgb,var(--c) 50%,transparent);
+}
+.blk--opt{border-style:dashed}
+.ovd__sum{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.ovd__sum b{color:var(--c);font-weight:600}
+.ovd__sum .gap{color:var(--hold);font-weight:600}
+
+/* ---------- choix des créneaux ---------- */
+.pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px}
+.pick__card{padding:16px;display:flex;flex-direction:column;gap:12px}
+.pick__head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding-bottom:10px;border-bottom:1px solid var(--line);
+}
+.pick__head h3{font-size:14px;display:flex;align-items:center;gap:8px}
+.pick__head h3 .icon{width:15px;height:15px;color:var(--c)}
+.pick__who{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--c);font-weight:600;
+}
+.pick--n{--c:var(--narek)}
+.pick--a{--c:var(--annie)}
+.pick__opts{display:flex;flex-direction:column;gap:8px}
+.opt-btn{
+  display:flex;align-items:flex-start;gap:10px;width:100%;text-align:left;
+  font:inherit;font-size:13px;cursor:pointer;
+  padding:10px 12px;border-radius:8px;
+  border:1px solid var(--line);background:var(--surface-2);color:var(--ink);
+  transition:border-color .15s ease,background .15s ease;
+}
+.opt-btn::before{
+  content:"";width:14px;height:14px;border-radius:50%;flex:none;margin-top:2px;
+  border:2px solid var(--line);background:var(--surface);
+}
+.opt-btn:hover{border-color:color-mix(in srgb,var(--c) 45%,var(--line))}
+.opt-btn[aria-pressed="true"]{
+  border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,var(--surface));
+}
+.opt-btn[aria-pressed="true"]::before{
+  border-color:var(--c);
+  background:radial-gradient(circle at center,var(--c) 0 3.5px,var(--surface) 3.5px);
+}
+.opt-btn b{display:block;font-weight:600;line-height:1.3}
+.opt-btn small{display:block;font-size:11.5px;color:var(--muted);margin-top:1px}
+.opt-btn--none b{color:var(--muted);font-weight:500}
+.opt-btn--none[aria-pressed="true"]{border-color:var(--line);background:var(--surface-2)}
+.opt-btn--none[aria-pressed="true"]::before{
+  border-color:var(--muted);
+  background:radial-gradient(circle at center,var(--muted) 0 3.5px,var(--surface) 3.5px);
+}
+.pick__foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pick__state{font-size:12.5px;color:var(--muted)}
+
 /* ---------- activities ---------- */
 .two-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
 .card{
@@ -582,6 +688,7 @@ svg{display:block}
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
     <symbol id="i-week" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M12 10v11"/></symbol>
+    <symbol id="i-choix" viewBox="0 0 24 24"><path d="M4 7h9M4 17h9"/><path d="M17 4.5 20 7.5 15.5 12"/><circle cx="17.5" cy="17" r="3"/></symbol>
     <symbol id="i-school" viewBox="0 0 24 24"><path d="M12 7c-2.2-1.6-5.2-1.9-8.5-1.3v12.6C6.8 17.7 9.8 18 12 19.6c2.2-1.6 5.2-1.9 8.5-1.3V5.7C17.2 5.1 14.2 5.4 12 7z"/><path d="M12 7v12.6"/></symbol>
     <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
     <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/></symbol>
@@ -627,6 +734,9 @@ svg{display:block}
     <button class="tab" role="tab" id="tab-activites" aria-controls="panel-activites" aria-selected="false" onclick="showPanel('activites')">
       <svg class="icon"><use href="#i-list"></use></svg> Activités &amp; inscriptions
     </button>
+    <button class="tab" role="tab" id="tab-choix" aria-controls="panel-choix" aria-selected="false" onclick="showPanel('choix')">
+      <svg class="icon"><use href="#i-choix"></use></svg> Choix
+    </button>
     <button class="tab" role="tab" id="tab-garde" aria-controls="panel-garde" aria-selected="false" onclick="showPanel('garde')">
       <svg class="icon"><use href="#i-swap"></use></svg> Garde · septembre
     </button>
@@ -648,7 +758,7 @@ svg{display:block}
       </div>
       <div class="stats">
         <span class="stat"><b>5</b> activités</span>
-        <span class="stat"><b>6</b> créneaux à confirmer</span>
+        <span class="stat" id="stat-options"><b>6</b> créneaux à confirmer</span>
         <span class="stat">Mardi <b>libre</b></span>
       </div>
     </div>
@@ -665,119 +775,7 @@ svg{display:block}
       </div>
     </div>
 
-    <div class="week">
-
-      <!-- LUNDI -->
-      <div class="day" data-day="Lundi">
-        <div class="day__head"><span class="day__name">Lundi</span><span class="day__note">1 créneau</span></div>
-        <div class="day__body">
-          <article class="ev ev--n ev--option" data-child="narek">
-            <div class="ev__top"><span class="ev__who">Narek</span><span class="tag">Option A</span></div>
-            <h4 class="ev__title"><svg class="icon"><use href="#i-paddle"></use></svg> Ping-pong</h4>
-            <p class="ev__time">17:45 – 19:00</p>
-          </article>
-        </div>
-      </div>
-
-      <!-- MARDI -->
-      <div class="day day--rest" data-day="Mardi">
-        <div class="day__head"><span class="day__name">Mardi</span><span class="day__note">libre</span></div>
-        <div class="day__body"><p class="day__empty">Aucune activité</p></div>
-      </div>
-
-      <!-- MERCREDI -->
-      <div class="day" data-day="Mercredi">
-        <div class="day__head"><span class="day__name">Mercredi</span><span class="day__note">4 créneaux</span></div>
-        <div class="day__body">
-          <article class="ev ev--a ev--option" data-child="annie">
-            <div class="ev__top"><span class="ev__who">Annie</span><span class="tag">Option 1</span></div>
-            <h4 class="ev__title"><svg class="icon"><use href="#i-note"></use></svg> Flûte</h4>
-            <p class="ev__time">16:00 – 16:30</p>
-            <p class="ev__meta">Créneau préféré</p>
-          </article>
-          <article class="ev ev--n" data-child="narek">
-            <div class="ev__top"><span class="ev__who">Narek</span><span class="tag tag--fixed">Confirmé</span></div>
-            <h4 class="ev__title"><svg class="icon"><use href="#i-ball"></use></svg> Tennis</h4>
-            <p class="ev__time">16:00 – 17:00</p>
-            <p class="ev__meta"><svg class="icon"><use href="#i-clock"></use></svg> Dès le mercredi 23 septembre</p>
-          </article>
-          <article class="ev ev--a" data-child="annie">
-            <div class="ev__top"><span class="ev__who">Annie</span><span class="tag tag--fixed">Confirmé</span></div>
-            <h4 class="ev__title"><svg class="icon"><use href="#i-solfege"></use></svg> Solfège</h4>
-            <p class="ev__time">16:30</p>
-            <p class="ev__meta"><svg class="icon"><use href="#i-pin"></use></svg> Académie des Arts</p>
-          </article>
-          <article class="ev ev--a ev--option" data-child="annie">
-            <div class="ev__top"><span class="ev__who">Annie</span><span class="tag">Option 2</span></div>
-            <h4 class="ev__title"><svg class="icon"><use href="#i-note"></use></svg> Flûte</h4>
-            <p class="ev__time">17:30</p>
-            <p class="ev__meta">Enchaîné après le solfège</p>
-          </article>
-        </div>
-      </div>
-
-      <!-- JEUDI -->
-      <div class="day" data-day="Jeudi">
-        <div class="day__head"><span class="day__name">Jeudi</span><span class="day__note">4 créneaux</span></div>
-        <div class="day__body">
-          <article class="ev ev--a ev--option" data-child="annie">
-            <div class="ev__top"><span class="ev__who">Annie</span><span class="tag">Option 3</span></div>
-            <h4 class="ev__title"><svg class="icon"><use href="#i-note"></use></svg> Flûte</h4>
-            <p class="ev__time">18:00 – 18:30</p>
-            <p class="ev__meta"><svg class="icon"><use href="#i-pin"></use></svg> Académie des Arts</p>
-          </article>
-          <article class="ev ev--a ev--option" data-child="annie">
-            <div class="ev__top"><span class="ev__who">Annie</span><span class="tag">À bloquer</span></div>
-            <h4 class="ev__title"><svg class="icon"><use href="#i-keys"></use></svg> Piano · Mme Jun</h4>
-            <p class="ev__time">18:30 – 19:00</p>
-            <p class="ev__meta">Mme Jun n'enseigne que mardi et jeudi</p>
-          </article>
-          <article class="ev ev--n ev--option" data-child="narek">
-            <div class="ev__top"><span class="ev__who">Narek</span><span class="tag">Option B</span></div>
-            <h4 class="ev__title"><svg class="icon"><use href="#i-paddle"></use></svg> Ping-pong</h4>
-            <p class="ev__time">18:30 – 20:00</p>
-            <p class="ev__meta">Préféré si le mercredi n'est pas possible</p>
-          </article>
-          <article class="ev ev--a" data-child="annie">
-            <div class="ev__top"><span class="ev__who">Annie</span><span class="tag tag--fixed">Dès cette semaine</span></div>
-            <h4 class="ev__title"><svg class="icon"><use href="#i-stage"></use></svg> Théâtre</h4>
-            <p class="ev__time">19:15</p>
-          </article>
-        </div>
-      </div>
-
-      <!-- VENDREDI -->
-      <div class="day" data-day="Vendredi">
-        <div class="day__head"><span class="day__name">Vendredi</span><span class="day__note">relais</span></div>
-        <div class="day__body">
-          <article class="ev ev--relay" data-child="tous">
-            <div class="ev__top"><span class="ev__who">Les deux</span></div>
-            <h4 class="ev__title"><svg class="icon"><use href="#i-relay"></use></svg> Changement de garde</h4>
-            <p class="ev__time">en soirée</p>
-            <p class="ev__meta">Alternance 1 semaine sur 2</p>
-          </article>
-        </div>
-      </div>
-
-      <!-- SAMEDI -->
-      <div class="day" data-day="Samedi">
-        <div class="day__head"><span class="day__name">Samedi</span><span class="day__note">2 créneaux</span></div>
-        <div class="day__body">
-          <article class="ev ev--n ev--option" data-child="narek">
-            <div class="ev__top"><span class="ev__who">Narek</span><span class="tag">Option C</span></div>
-            <h4 class="ev__title"><svg class="icon"><use href="#i-paddle"></use></svg> Ping-pong</h4>
-            <p class="ev__time">11:30 – 12:30</p>
-          </article>
-          <article class="ev ev--a" data-child="annie">
-            <div class="ev__top"><span class="ev__who">Annie</span><span class="tag tag--fixed">Dès le 12 sept.</span></div>
-            <h4 class="ev__title"><svg class="icon"><use href="#i-dance"></use></svg> Danse arménienne</h4>
-            <p class="ev__time">17:00 – 18:30</p>
-            <p class="ev__meta"><svg class="icon"><use href="#i-pin"></use></svg> Cie Yeraz · Alfortville</p>
-          </article>
-        </div>
-      </div>
-
-    </div>
+    <div class="week" id="week-grid"></div>
 
     <div class="callout">
       <span class="callout__icon"><svg class="icon"><use href="#i-alert"></use></svg></span>
@@ -803,20 +801,27 @@ svg{display:block}
     </div>
 
     <div class="tt-bar">
-      <span class="filters__label">Élève</span>
-      <button class="chip chip--n" type="button" id="tt-narek" aria-pressed="true" onclick="pickPupil('narek')">Narek · 5C</button>
-      <button class="chip chip--a" type="button" id="tt-annie" aria-pressed="false" onclick="pickPupil('annie')">Annie · 3F</button>
+      <span class="seg">
+        <button type="button" id="vue-grille" aria-pressed="true" onclick="setVue('grille')">Grille des cours</button>
+        <button type="button" id="vue-super" aria-pressed="false" onclick="setVue('super')">Journées superposées</button>
+      </span>
+      <span id="tt-eleve" style="display:contents">
+        <span class="filters__label">Élève</span>
+        <button class="chip chip--n" type="button" id="tt-narek" aria-pressed="true" onclick="pickPupil('narek')">Narek · 5C</button>
+        <button class="chip chip--a" type="button" id="tt-annie" aria-pressed="false" onclick="pickPupil('annie')">Annie · 3F</button>
+      </span>
       <span class="filters__label" style="margin-left:8px">Semaine</span>
       <button class="wk wk--v" type="button" id="wk-V" aria-pressed="true" onclick="pickWeek('V')">Verte <small id="wk-V-now"></small></button>
       <button class="wk wk--r" type="button" id="wk-R" aria-pressed="false" onclick="pickWeek('R')">Rouge <small id="wk-R-now"></small></button>
       <span class="tt-note" id="tt-regime"></span>
     </div>
 
-    <div class="tt-wrap">
-      <table class="tt" id="tt-grid"></table>
-    </div>
+    <div id="tt-zone">
+      <div class="tt-wrap">
+        <table class="tt" id="tt-grid"></table>
+      </div>
 
-    <div class="subjects">
+      <div class="subjects">
       <span class="m-lettres"><i></i> Lettres</span>
       <span class="m-langues"><i></i> Langues</span>
       <span class="m-maths"><i></i> Mathématiques</span>
@@ -824,8 +829,11 @@ svg{display:block}
       <span class="m-hist"><i></i> Histoire-géo</span>
       <span class="m-arts"><i></i> Arts</span>
       <span class="m-sport"><i></i> EPS</span>
-      <span><i style="background:var(--muted)"></i> « V + R » = toutes les semaines</span>
+        <span><i style="background:var(--muted)"></i> « V + R » = toutes les semaines</span>
+      </div>
     </div>
+
+    <div class="ov" id="tt-overlay" hidden></div>
 
     <div class="card tt-insights">
       <h3>Ce que l'emploi du temps impose aux activités</h3>
@@ -945,6 +953,30 @@ svg{display:block}
     </div>
   </section>
 
+  <!-- ============ CHOIX ============ -->
+  <section class="panel" id="panel-choix" role="tabpanel" aria-labelledby="tab-choix" hidden>
+    <div class="section-head">
+      <div>
+        <h2>Choix des créneaux</h2>
+        <p>Indiquez l'option retenue pour chaque activité : les autres disparaissent du planning et des journées superposées.</p>
+      </div>
+      <div class="stats">
+        <span class="stat" id="pick-state"></span>
+      </div>
+    </div>
+
+    <div class="pick" id="pick-grid"></div>
+
+    <div class="card tt-insights">
+      <div class="pick__foot">
+        <p class="pick__state">Les choix sont enregistrés dans ce navigateur : ils vous suivent d'une visite à l'autre, sur cet appareil.</p>
+        <button class="btn" type="button" onclick="resetChoix()">
+          <svg class="icon"><use href="#i-swap"></use></svg> Tout remettre en option
+        </button>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ GARDE ============ -->
   <section class="panel" id="panel-garde" role="tabpanel" aria-labelledby="tab-garde" hidden>
     <div class="banner">
@@ -1043,7 +1075,7 @@ svg{display:block}
 </main>
 
 <script>
-  var PANELS = ['semaine', 'college', 'activites', 'garde', 'budget'];
+  var PANELS = ['semaine', 'college', 'activites', 'choix', 'garde', 'budget'];
 
   function showPanel(id) {
     PANELS.forEach(function (p) {
@@ -1056,49 +1088,6 @@ svg{display:block}
     try { localStorage.setItem('planning.panel', id); } catch (e) {}
   }
 
-  function filterChild(who) {
-    ['tous', 'narek', 'annie'].forEach(function (c) {
-      var chip = document.getElementById('chip-' + c);
-      if (chip) chip.setAttribute('aria-pressed', c === who ? 'true' : 'false');
-    });
-
-    document.querySelectorAll('.week .day').forEach(function (day) {
-      var shown = 0;
-      day.querySelectorAll('.ev').forEach(function (ev) {
-        var child = ev.getAttribute('data-child');
-        var visible = (who === 'tous') || (child === who) || (child === 'tous');
-        ev.hidden = !visible;
-        if (visible) shown++;
-      });
-
-      var body = day.querySelector('.day__body');
-      var empty = body.querySelector('.day__empty');
-      if (shown === 0) {
-        if (!empty) {
-          empty = document.createElement('p');
-          empty.className = 'day__empty';
-          empty.textContent = 'Aucune activité';
-          body.appendChild(empty);
-        }
-        empty.hidden = false;
-        day.classList.add('day--rest');
-      } else {
-        if (empty) empty.hidden = true;
-        day.classList.remove('day--rest');
-      }
-
-      var note = day.querySelector('.day__note');
-      if (note) {
-        if (day.getAttribute('data-day') === 'Vendredi' && shown > 0) {
-          note.textContent = 'relais';
-        } else {
-          note.textContent = shown === 0 ? 'libre' : shown + (shown > 1 ? ' créneaux' : ' créneau');
-        }
-      }
-    });
-
-    try { localStorage.setItem('planning.child', who); } catch (e) {}
-  }
 
 
   // ---------- Emploi du temps du collège ----------
@@ -1266,6 +1255,7 @@ svg{display:block}
       if (b) b.setAttribute('aria-pressed', x === w ? 'true' : 'false');
     });
     drawTimetable();
+    renderOverlay();
     try { localStorage.setItem('planning.week', w); } catch (e) {}
   }
 
@@ -1350,6 +1340,344 @@ svg{display:block}
     pickWeek(week === 'R' || week === 'V' ? week : courante);
   })();
 
+
+  // ---------- Activités extrascolaires ----------
+  // Les activités dont le créneau n'est pas tranché portent un « groupe » :
+  // tant qu'aucune option n'est choisie, toutes s'affichent ; dès qu'une option
+  // est retenue dans l'onglet « Choix », les autres du groupe disparaissent.
+  var ACTIVITES = [
+    { id: 'tennis', enfant: 'narek', titre: 'Tennis', icone: 'i-ball',
+      jour: 'Mercredi', debut: '16:00', fin: '17:00',
+      badge: 'Confirmé', fixe: true, note: 'Dès le mercredi 23 septembre' },
+    { id: 'pp-lundi', groupe: 'pingpong', enfant: 'narek', titre: 'Ping-pong', icone: 'i-paddle',
+      jour: 'Lundi', debut: '17:45', fin: '19:00', badge: 'Option A' },
+    { id: 'pp-jeudi', groupe: 'pingpong', enfant: 'narek', titre: 'Ping-pong', icone: 'i-paddle',
+      jour: 'Jeudi', debut: '18:30', fin: '20:00', badge: 'Option B',
+      note: 'Préféré si le mercredi n’est pas possible' },
+    { id: 'pp-samedi', groupe: 'pingpong', enfant: 'narek', titre: 'Ping-pong', icone: 'i-paddle',
+      jour: 'Samedi', debut: '11:30', fin: '12:30', badge: 'Option C' },
+
+    { id: 'flute-mer16', groupe: 'flute', enfant: 'annie', titre: 'Flûte', icone: 'i-note',
+      jour: 'Mercredi', debut: '16:00', fin: '16:30', badge: 'Option 1', note: 'Créneau préféré' },
+    { id: 'solfege', enfant: 'annie', titre: 'Solfège', icone: 'i-solfege',
+      jour: 'Mercredi', debut: '16:30', badge: 'Confirmé', fixe: true, note: 'Académie des Arts' },
+    { id: 'flute-mer1730', groupe: 'flute', enfant: 'annie', titre: 'Flûte', icone: 'i-note',
+      jour: 'Mercredi', debut: '17:30', badge: 'Option 2', note: 'Enchaîné après le solfège' },
+    { id: 'flute-jeu18', groupe: 'flute', enfant: 'annie', titre: 'Flûte', icone: 'i-note',
+      jour: 'Jeudi', debut: '18:00', fin: '18:30', badge: 'Option 3', note: 'Académie des Arts' },
+    { id: 'piano-jeu', groupe: 'piano', enfant: 'annie', titre: 'Piano · Mme Jun', icone: 'i-keys',
+      jour: 'Jeudi', debut: '18:30', fin: '19:00', badge: 'À bloquer',
+      note: 'Mme Jun n’enseigne que mardi et jeudi' },
+    { id: 'theatre', enfant: 'annie', titre: 'Théâtre', icone: 'i-stage',
+      jour: 'Jeudi', debut: '19:15', badge: 'Dès cette semaine', fixe: true },
+    { id: 'danse', enfant: 'annie', titre: 'Danse arménienne', icone: 'i-dance',
+      jour: 'Samedi', debut: '17:00', fin: '18:30', badge: 'Dès le 12 sept.', fixe: true,
+      lieu: 'Cie Yeraz · Alfortville' },
+
+    { id: 'garde', enfant: 'tous', titre: 'Changement de garde', icone: 'i-relay',
+      jour: 'Vendredi', debut: '19:00', horaire: 'en soirée', jalon: true,
+      note: 'Alternance 1 semaine sur 2' }
+  ];
+
+  var GROUPES = [
+    { id: 'pingpong', enfant: 'narek', titre: 'Ping-pong', icone: 'i-paddle',
+      aide: 'Trois créneaux proposés par le club — un seul sera retenu.' },
+    { id: 'flute', enfant: 'annie', titre: 'Flûte', icone: 'i-note',
+      aide: 'Créneau à caler avec M. Parent le 10 septembre.' },
+    { id: 'piano', enfant: 'annie', titre: 'Piano · Mme Jun', icone: 'i-keys',
+      aide: 'Créneau souhaité, à bloquer auprès de Mme Jun.' }
+  ];
+
+  var JOURS_SEMAINE = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+  var choix = {};
+  var filtreEnfant = 'tous';
+
+  try {
+    var brut = localStorage.getItem('planning.choix');
+    if (brut) choix = JSON.parse(brut) || {};
+  } catch (e) { choix = {}; }
+
+  function enMinutes(h) {
+    var p = h.split(':');
+    return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+  }
+
+  function enHeures(m) {
+    return ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + (m % 60)).slice(-2);
+  }
+
+  function duree(m) {
+    var h = Math.floor(m / 60), r = m % 60;
+    return (h ? h + ' h' + (r ? ' ' + ('0' + r).slice(-2) : '') : r + ' min');
+  }
+
+  function activitesRetenues() {
+    return ACTIVITES.filter(function (a) {
+      return !a.groupe || !choix[a.groupe] || choix[a.groupe] === a.id;
+    });
+  }
+
+  function estChoisie(a) { return a.groupe && choix[a.groupe] === a.id; }
+
+  function horaireDe(a) {
+    if (a.horaire) return a.horaire;
+    return a.fin ? a.debut + ' – ' + a.fin : a.debut;
+  }
+
+  // ---------- Onglet « Semaine type » ----------
+  function filterChild(who) {
+    filtreEnfant = who;
+    ['tous', 'narek', 'annie'].forEach(function (c) {
+      var chip = document.getElementById('chip-' + c);
+      if (chip) chip.setAttribute('aria-pressed', c === who ? 'true' : 'false');
+    });
+    renderSemaine();
+    try { localStorage.setItem('planning.child', who); } catch (e) {}
+  }
+
+  function renderSemaine() {
+    var zone = document.getElementById('week-grid');
+    if (!zone) return;
+    var retenues = activitesRetenues();
+    var html = '';
+
+    JOURS_SEMAINE.forEach(function (jour) {
+      var duJour = retenues.filter(function (a) {
+        return a.jour === jour
+          && (filtreEnfant === 'tous' || a.enfant === filtreEnfant || a.enfant === 'tous');
+      }).sort(function (x, y) { return enMinutes(x.debut) - enMinutes(y.debut); });
+
+      var note = duJour.length
+        ? (jour === 'Vendredi' && duJour.every(function (a) { return a.jalon; })
+            ? 'relais'
+            : duJour.length + (duJour.length > 1 ? ' créneaux' : ' créneau'))
+        : 'libre';
+
+      html += '<div class="day' + (duJour.length ? '' : ' day--rest') + '">'
+        + '<div class="day__head"><span class="day__name">' + jour + '</span>'
+        + '<span class="day__note">' + note + '</span></div><div class="day__body">';
+
+      if (!duJour.length) {
+        html += '<p class="day__empty">Aucune activité</p>';
+      } else {
+        duJour.forEach(function (a) {
+          var choisie = estChoisie(a);
+          var option = a.badge && !a.fixe && !choisie;
+          var classe = a.jalon ? 'ev ev--relay'
+            : 'ev ev--' + (a.enfant === 'narek' ? 'n' : 'a') + (option ? ' ev--option' : '');
+          var qui = a.enfant === 'narek' ? 'Narek' : a.enfant === 'annie' ? 'Annie' : 'Les deux';
+          var badge = choisie ? '<span class="tag tag--fixed">Choisi</span>'
+            : a.badge ? '<span class="tag' + (a.fixe ? ' tag--fixed' : '') + '">' + a.badge + '</span>'
+            : '';
+
+          html += '<article class="' + classe + '">'
+            + '<div class="ev__top"><span class="ev__who">' + qui + '</span>' + badge + '</div>'
+            + '<h4 class="ev__title"><svg class="icon"><use href="#' + a.icone + '"></use></svg> ' + a.titre + '</h4>'
+            + '<p class="ev__time">' + horaireDe(a) + '</p>'
+            + (a.note ? '<p class="ev__meta">' + a.note + '</p>' : '')
+            + (a.lieu ? '<p class="ev__meta"><svg class="icon"><use href="#i-pin"></use></svg> ' + a.lieu + '</p>' : '')
+            + '</article>';
+        });
+      }
+      html += '</div></div>';
+    });
+
+    zone.innerHTML = html;
+
+    var restants = activitesRetenues().filter(function (a) { return a.groupe && !choix[a.groupe]; });
+    var groupesOuverts = GROUPES.filter(function (g) { return !choix[g.id]; }).length;
+    var stat = document.getElementById('stat-options');
+    if (stat) {
+      stat.innerHTML = groupesOuverts
+        ? '<b>' + restants.length + '</b> créneau' + (restants.length > 1 ? 'x' : '') + ' à confirmer'
+        : '<b>Tous</b> les créneaux sont choisis';
+    }
+  }
+
+  // ---------- Onglet « Choix » ----------
+  function setChoix(groupe, id) {
+    if (id) { choix[groupe] = id; } else { delete choix[groupe]; }
+    try { localStorage.setItem('planning.choix', JSON.stringify(choix)); } catch (e) {}
+    renderChoix();
+    renderSemaine();
+    renderOverlay();
+  }
+
+  function resetChoix() {
+    choix = {};
+    try { localStorage.removeItem('planning.choix'); } catch (e) {}
+    renderChoix();
+    renderSemaine();
+    renderOverlay();
+  }
+
+  function renderChoix() {
+    var zone = document.getElementById('pick-grid');
+    if (!zone) return;
+    var html = '';
+
+    GROUPES.forEach(function (g) {
+      var options = ACTIVITES.filter(function (a) { return a.groupe === g.id; });
+      var retenu = choix[g.id];
+      html += '<div class="card pick__card pick--' + (g.enfant === 'narek' ? 'n' : 'a') + '">'
+        + '<div class="pick__head">'
+        + '<h3><svg class="icon"><use href="#' + g.icone + '"></use></svg> ' + g.titre + '</h3>'
+        + '<span class="pick__who">' + (g.enfant === 'narek' ? 'Narek' : 'Annie') + '</span>'
+        + '</div>'
+        + '<p class="pick__state">' + g.aide + '</p>'
+        + '<div class="pick__opts">';
+
+      options.forEach(function (a) {
+        html += '<button class="opt-btn" type="button" aria-pressed="' + (retenu === a.id) + '"'
+          + ' onclick="setChoix(\'' + g.id + '\', \'' + a.id + '\')">'
+          + '<span><b>' + a.jour + ' ' + horaireDe(a) + '</b>'
+          + '<small>' + (a.note || a.badge || '') + '</small></span></button>';
+      });
+
+      html += '<button class="opt-btn opt-btn--none" type="button" aria-pressed="' + !retenu + '"'
+        + ' onclick="setChoix(\'' + g.id + '\', null)">'
+        + '<span><b>Pas encore décidé</b><small>Toutes les options restent affichées</small></span></button>'
+        + '</div></div>';
+    });
+
+    zone.innerHTML = html;
+
+    var decides = GROUPES.filter(function (g) { return choix[g.id]; }).length;
+    var etat = document.getElementById('pick-state');
+    if (etat) {
+      etat.textContent = decides + ' créneau' + (decides > 1 ? 'x' : '') + ' sur '
+        + GROUPES.length + ' arbitré' + (decides > 1 ? 's' : '');
+    }
+  }
+
+  // ---------- Vue « superposition » de l'onglet Collège ----------
+  var JOUR_DEBUT = 480, JOUR_FIN = 1230; // 08:00 → 20:30
+
+  function pct(minutes) {
+    return ((minutes - JOUR_DEBUT) / (JOUR_FIN - JOUR_DEBUT)) * 100;
+  }
+
+  function segmentsCours(pupil, week, jour) {
+    var entrees = (PUPILS[pupil].jours[jour] || []).filter(function (e) {
+      return e[1].indexOf(week) !== -1;
+    });
+    var occupes = [];
+    entrees.forEach(function (e) {
+      var span = e[5] || 1;
+      for (var k = 0; k < span; k++) occupes.push(e[0] + k);
+    });
+    var segments = [];
+    [[0, 3], [4, 7]].forEach(function (bornes) {
+      var dedans = occupes.filter(function (i) { return i >= bornes[0] && i <= bornes[1]; });
+      if (!dedans.length) return;
+      dedans.sort(function (a, b) { return a - b; });
+      segments.push({
+        debut: enMinutes(SLOTS[dedans[0]][0].replace('h', ':')),
+        fin: enMinutes(SLOTS[dedans[dedans.length - 1]][1].replace('h', ':'))
+      });
+    });
+    return segments;
+  }
+
+  function setVue(v) {
+    ['grille', 'super'].forEach(function (x) {
+      var b = document.getElementById('vue-' + x);
+      if (b) b.setAttribute('aria-pressed', x === v ? 'true' : 'false');
+    });
+    var grille = document.getElementById('tt-zone');
+    var sup = document.getElementById('tt-overlay');
+    var eleve = document.getElementById('tt-eleve');
+    if (grille) grille.hidden = v !== 'grille';
+    if (sup) sup.hidden = v !== 'super';
+    if (eleve) eleve.hidden = v === 'super';
+    if (v === 'super') renderOverlay();
+    try { localStorage.setItem('planning.vue', v); } catch (e) {}
+  }
+
+  function renderOverlay() {
+    var zone = document.getElementById('tt-overlay');
+    // Vue masquée : rien à dessiner (et le modèle des activités n'est pas
+    // encore initialisé lors du tout premier passage).
+    if (!zone || zone.hidden) return;
+    var week = ttState.week;
+    var retenues = activitesRetenues().filter(function (a) { return !a.jalon; });
+
+    var reglet = '<div class="ov__ruler"><span></span><div class="ov__hours">';
+    for (var h = 8; h <= 20; h += 2) {
+      var p = pct(h * 60);
+      var deca = h === 8 ? 'left:0' : h === 20 ? 'right:0' : 'left:' + p.toFixed(2) + '%;transform:translateX(-50%)';
+      reglet += '<span style="' + deca + '">' + h + 'h</span>';
+    }
+    reglet += '</div></div>';
+
+    var html = reglet;
+
+    JOURS_SEMAINE.forEach(function (jour) {
+      var pistes = '', resume = '', rempli = false;
+
+      [['narek', 'Narek', 'n'], ['annie', 'Annie', 'a']].forEach(function (p) {
+        var cle = p[0];
+        var cours = jour === 'Samedi' ? [] : segmentsCours(cle, week, jour);
+        var actes = retenues.filter(function (a) { return a.jour === jour && a.enfant === cle; })
+          .sort(function (x, y) { return enMinutes(x.debut) - enMinutes(y.debut); });
+        if (!cours.length && !actes.length) return;
+        rempli = true;
+
+        var blocs = '';
+        cours.forEach(function (s) {
+          blocs += '<div class="blk blk--cours" style="left:' + pct(s.debut).toFixed(2) + '%;'
+            + 'width:' + (pct(s.fin) - pct(s.debut)).toFixed(2) + '%" '
+            + 'title="Cours ' + enHeures(s.debut) + ' – ' + enHeures(s.fin) + '">Cours</div>';
+        });
+        actes.forEach(function (a) {
+          var d = enMinutes(a.debut);
+          var f = a.fin ? enMinutes(a.fin) : d + 45;
+          var opt = a.groupe && !choix[a.groupe];
+          blocs += '<div class="blk blk--act' + (opt ? ' blk--opt' : '') + '" '
+            + 'style="left:' + pct(d).toFixed(2) + '%;width:' + (pct(f) - pct(d)).toFixed(2) + '%" '
+            + 'title="' + a.titre + ' ' + horaireDe(a) + (a.fin ? '' : ' (fin non précisée)') + '">'
+            + a.titre + '</div>';
+        });
+
+        pistes += '<div class="trk trk--' + p[2] + '"><span class="trk__who">' + p[1] + '</span>'
+          + '<div class="lane">' + blocs + '</div></div>';
+
+        var phrase = cours.length
+          ? 'sortie ' + enHeures(cours[cours.length - 1].fin)
+          : 'pas de cours';
+        if (actes.length) {
+          var premiere = actes[0];
+          phrase += ' · ' + premiere.titre + ' ' + premiere.debut;
+          if (cours.length) {
+            var battement = enMinutes(premiere.debut) - cours[cours.length - 1].fin;
+            phrase += battement >= 0
+              ? ' (<span class="gap">' + duree(battement) + '</span> de battement)'
+              : ' (<span class="gap">chevauche la fin des cours</span>)';
+          }
+          actes.slice(1).forEach(function (a) {
+            phrase += ', puis ' + a.titre + ' ' + a.debut;
+          });
+        }
+        resume += '<div class="trk--' + p[2] + '"><b>' + p[1] + '</b> — ' + phrase + '</div>';
+      });
+
+      ACTIVITES.filter(function (a) { return a.jalon && a.jour === jour; }).forEach(function (a) {
+        resume += '<div>' + a.titre + ' — ' + horaireDe(a) + '</div>';
+        rempli = true;
+      });
+
+      html += '<div class="ovd' + (rempli ? '' : ' ovd--vide') + '">'
+        + '<div class="ovd__head"><b>' + jour + '</b>'
+        + (jour === 'Samedi' ? '<span>pas de collège</span>' : '')
+        + '</div>'
+        + (rempli ? pistes + '<div class="ovd__sum">' + resume + '</div>'
+                  : '<p class="day__empty">Rien ce jour-là</p>')
+        + '</div>';
+    });
+
+    zone.innerHTML = html;
+  }
+
   (function restore() {
     var panel = null, child = null;
     try {
@@ -1357,7 +1685,13 @@ svg{display:block}
       child = localStorage.getItem('planning.child');
     } catch (e) {}
     if (panel && PANELS.indexOf(panel) !== -1) showPanel(panel);
-    if (child && ['tous', 'narek', 'annie'].indexOf(child) !== -1 && child !== 'tous') filterChild(child);
+
+    renderChoix();
+    filterChild(['tous', 'narek', 'annie'].indexOf(child) !== -1 ? child : 'tous');
+
+    var vue = null;
+    try { vue = localStorage.getItem('planning.vue'); } catch (e) {}
+    setVue(vue === 'super' ? 'super' : 'grille');
   })();
 
   window.addEventListener('beforeprint', function () {
