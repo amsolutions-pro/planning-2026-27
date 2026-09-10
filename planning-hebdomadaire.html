@@ -26,8 +26,6 @@
   --go:#3C6B33;
   --go-bg:#E5EFDF;
   --go-line:#AFCBA4;
-  --sem-v:#2F7A3E;
-  --sem-r:#BE3A2B;
   --m1:#3A5BA0;
   --m2:#5B7A26;
   --m3:#96660F;
@@ -61,8 +59,6 @@
     --go:#93C583;
     --go-bg:#1F2E1C;
     --go-line:#48653F;
-    --sem-v:#79C489;
-    --sem-r:#F0887C;
     --m1:#93ADEA;
     --m2:#AEC873;
     --m3:#E0B25C;
@@ -95,8 +91,6 @@
   --go:#93C583;
   --go-bg:#1F2E1C;
   --go-line:#48653F;
-  --sem-v:#79C489;
-  --sem-r:#F0887C;
   --m1:#93ADEA;
   --m2:#AEC873;
   --m3:#E0B25C;
@@ -313,11 +307,14 @@ svg{display:block}
   border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);
   transition:all .15s ease;
 }
-.wk::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--sem)}
-.wk--v{--sem:var(--sem-v)}
-.wk--r{--sem:var(--sem-r)}
-.wk[aria-pressed="true"]{border-color:var(--sem);color:var(--ink);background:var(--surface)}
-.wk[aria-pressed="true"]::before{box-shadow:0 0 0 3px color-mix(in srgb,var(--sem) 25%,transparent)}
+.wk::before{
+  content:"";width:12px;height:12px;flex:none;
+  border:2px solid currentColor;background:currentColor;
+}
+.wk--papa::before{border-radius:3px}
+.wk--mama::before{border-radius:50%;background:transparent}
+.wk[aria-pressed="true"]{border-color:var(--accent);color:var(--ink);background:var(--surface)}
+.wk[aria-pressed="true"]::before{box-shadow:0 0 0 3px var(--accent-soft)}
 .wk small{
   font-family:"IBM Plex Mono",ui-monospace,monospace;
   font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;
@@ -675,6 +672,89 @@ svg{display:block}
   font-size:12px;color:var(--c);font-weight:500;white-space:nowrap;padding-top:2px;
 }
 
+/* Repere de garde : carre plein pour Papa, cercle evide pour Mama. La
+   distinction tient a la forme et au remplissage, pas a la couleur — lisible
+   en noir et blanc, a l'impression et pour un oeil daltonien. */
+.gm{
+  width:12px;height:12px;flex:none;
+  border:2px solid currentColor;background:currentColor;
+}
+.gm--papa{border-radius:3px}
+.gm--mama{border-radius:50%;background:transparent}
+.chip--papa::before{width:11px;height:11px;border-radius:2px;background:currentColor}
+.chip--mama::before{width:11px;height:11px;border-radius:50%;background:transparent;border:2px solid currentColor}
+
+.gd{margin-top:-4px}
+.gd-now{
+  display:flex;flex-wrap:wrap;gap:10px;
+}
+.gd-now__box{
+  flex:1 1 220px;display:flex;align-items:center;gap:11px;
+  padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--surface-2);
+}
+.gd-now__box--live{border-color:var(--accent);background:var(--accent-soft)}
+.gd-now__txt{display:flex;flex-direction:column;gap:1px;min-width:0}
+.gd-now__when{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+}
+.gd-now__who{font-family:"Bricolage Grotesque",sans-serif;font-size:17px;font-weight:700}
+.gd-now__dates{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.gd-find{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.gd-find input{
+  font:inherit;font-size:13px;font-variant-numeric:tabular-nums;
+  padding:6px 10px;border-radius:8px;
+  border:1px solid var(--line);background:var(--surface-2);color:var(--ink);
+}
+.gd-answer{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600}
+.gd-answer em{font-style:normal;font-weight:400;color:var(--muted)}
+.gd-filters{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.gd-months{display:flex;flex-direction:column;gap:16px}
+.gd-month h4{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  margin-bottom:6px;
+}
+.gd-weeks{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.gd-week{
+  display:flex;align-items:center;gap:12px;
+  padding:9px 12px;border-top:1px solid var(--line);background:var(--surface);
+}
+.gd-week:first-child{border-top:0}
+/* La semaine Papa est soulignee d'un filet a gauche : on la repere d'un coup
+   d'oeil dans la liste, sans avoir a lire chaque ligne. */
+.gd-week--papa{box-shadow:inset 3px 0 0 var(--accent)}
+.gd-week--now{background:var(--accent-soft)}
+.gd-week--cible{outline:2px solid var(--accent);outline-offset:-2px}
+.gd-week__no{
+  flex:none;width:34px;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-size:10.5px;color:var(--muted);
+}
+.gd-week__dates{flex:1;min-width:0;font-size:13px;font-variant-numeric:tabular-nums}
+.gd-week__dates i{font-style:normal;color:var(--muted)}
+.gd-week__note{display:block;font-size:11.5px;color:var(--muted)}
+.gd-week__who{
+  flex:none;display:inline-flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:700;
+}
+.gd-week--mama .gd-week__who{font-weight:500;color:var(--ink-soft)}
+.gd-week__tag{
+  flex:none;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  padding:2px 6px;border-radius:5px;
+  background:var(--hold-bg);color:var(--hold);border:1px solid var(--hold-line);
+}
+.gd-months[data-filtre="R"] .gd-week--mama,
+.gd-months[data-filtre="V"] .gd-week--papa{display:none}
+@media (max-width:560px){
+  .gd-week{flex-wrap:wrap;gap:6px 10px}
+  .gd-week__dates{flex:1 1 100%;order:2}
+  .gd-week__who{order:1;margin-left:auto}
+}
+
 /* ---------- budget ---------- */
 .budget-top{
   background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
@@ -821,7 +901,7 @@ svg{display:block}
       <svg class="icon"><use href="#i-list"></use></svg> Activités &amp; créneaux
     </button>
     <button class="tab" role="tab" id="tab-garde" aria-controls="panel-garde" aria-selected="false" onclick="showPanel('garde')">
-      <svg class="icon"><use href="#i-swap"></use></svg> Garde · septembre
+      <svg class="icon"><use href="#i-swap"></use></svg> Garde &amp; semaines
     </button>
     <button class="tab" role="tab" id="tab-budget" aria-controls="panel-budget" aria-selected="false" onclick="showPanel('budget')">
       <svg class="icon"><use href="#i-money"></use></svg> Budget
@@ -879,7 +959,7 @@ svg{display:block}
     <div class="section-head">
       <div>
         <h2>Emploi du temps au collège</h2>
-        <p>Semestre 1 — la quinzaine alterne entre semaine rouge (Q1) et semaine verte (Q2). La semaine en cours est déduite de l'alternance depuis la semaine du 7 septembre.</p>
+        <p>Semestre 1 — la quinzaine alterne entre semaine Papa (colonne Q1 des emplois du temps papier) et semaine Mama (Q2). La semaine en cours est déduite de l'alternance depuis la semaine du 7 septembre ; l'onglet « Garde &amp; semaines » donne la suite jusqu'en juillet 2027.</p>
       </div>
     </div>
 
@@ -894,8 +974,8 @@ svg{display:block}
         <button class="chip chip--a" type="button" id="tt-annie" aria-pressed="false" onclick="pickPupil('annie')">Annie · 3F</button>
       </span>
       <span class="filters__label" style="margin-left:8px">Semaine</span>
-      <button class="wk wk--v" type="button" id="wk-V" aria-pressed="true" onclick="pickWeek('V')">Verte <small id="wk-V-now"></small></button>
-      <button class="wk wk--r" type="button" id="wk-R" aria-pressed="false" onclick="pickWeek('R')">Rouge <small id="wk-R-now"></small></button>
+      <button class="wk wk--papa" type="button" id="wk-R" aria-pressed="false" onclick="pickWeek('R')">Papa <small id="wk-R-now"></small></button>
+      <button class="wk wk--mama" type="button" id="wk-V" aria-pressed="true" onclick="pickWeek('V')">Mama <small id="wk-V-now"></small></button>
       <span class="tt-note" id="tt-regime"></span>
     </div>
 
@@ -914,7 +994,7 @@ svg{display:block}
       <span class="m-hist"><i></i> Histoire-géo</span>
       <span class="m-arts"><i></i> Arts</span>
       <span class="m-sport"><i></i> EPS</span>
-        <span><i style="background:var(--muted)"></i> « V + R » = toutes les semaines</span>
+        <span><i style="background:var(--muted)"></i> « 2 sem. » = cours donné chaque semaine</span>
       </div>
     </div>
 
@@ -993,6 +1073,37 @@ svg{display:block}
             <span class="period__len">cadre rétabli</span>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <div>
+        <h2>À qui est la semaine ?</h2>
+        <p>Toutes les semaines jusqu’en juillet 2027. Un bloc va du vendredi soir
+        au vendredi soir : il commence par le week-end, puis couvre la semaine de
+        classe. Les vacances scolaires peuvent suivre un autre partage.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__body">
+        <div class="gd-now" id="gd-now"></div>
+
+        <div class="gd-find">
+          <label class="filters__label" for="gd-date">Une date précise</label>
+          <input type="date" id="gd-date" min="2026-09-05" max="2027-07-30"
+                 oninput="chercherSemaine(this.value, true)">
+          <span class="gd-answer" id="gd-answer" aria-live="polite"></span>
+        </div>
+
+        <div class="gd-filters">
+          <span class="filters__label">Afficher</span>
+          <button class="chip" type="button" id="gd-f-tous" aria-pressed="true" onclick="filtrerGarde('tous')">Toutes</button>
+          <button class="chip chip--papa" type="button" id="gd-f-R" aria-pressed="false" onclick="filtrerGarde('R')">Papa</button>
+          <button class="chip chip--mama" type="button" id="gd-f-V" aria-pressed="false" onclick="filtrerGarde('V')">Mama</button>
+        </div>
+
+        <div class="gd-months" id="gd-months" data-filtre="tous"></div>
       </div>
     </div>
   </section>
@@ -1077,7 +1188,8 @@ svg{display:block}
 
   // ---------- Emploi du temps du collège ----------
   // Une entrée = [créneau, semaines, matière, professeur, salle, nb de créneaux].
-  // Semaines : 'R' = quinzaine Q1 (rouge), 'V' = Q2 (verte), 'RV' = toutes les semaines.
+  // Semaines : 'R' = quinzaine Q1 (semaine Papa), 'V' = Q2 (semaine Mama),
+  //            'RV' = cours donné chaque semaine.
   var SLOTS = [
     ['08:10', '09:05'], ['09:05', '10:00'], ['10:20', '11:15'], ['11:15', '12:10'],
     ['13:45', '14:40'], ['14:40', '15:35'], ['15:55', '16:50'], ['16:50', '17:45']
@@ -1211,14 +1323,16 @@ svg{display:block}
     }
   };
 
-  // Semaine du lundi 7 septembre 2026 = verte ; l'alternance suit de quinzaine en quinzaine.
+  var MS_JOUR = 86400000;
+  var MS_SEMAINE = 604800000;
+
+  // Semaine du lundi 7 septembre 2026 = quinzaine Q2, dite « verte » sur les
+  // emplois du temps papier — la semaine Mama ; l'alternance suit ensuite de
+  // quinzaine en quinzaine.
   var ANCRAGE = Date.UTC(2026, 8, 7);
 
   function semaineCourante(today) {
-    var d = today || new Date();
-    var lundi = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
-    var ecart = Math.round((lundi - ANCRAGE) / 604800000);
-    return (((ecart % 2) + 2) % 2) === 0 ? 'V' : 'R';
+    return quinzaineDe(lundiUTC(today || new Date()));
   }
 
   var ttState = { pupil: 'narek', week: semaineCourante() };
@@ -1303,7 +1417,7 @@ svg{display:block}
           + '<span>' + cell.prof + '</span>'
           + (cell.salle ? '<em>' + cell.salle + '</em>' : '')
           + (plage ? '<em>' + plage + '</em>' : '')
-          + (cell.both ? '<span class="both">V + R</span>' : '')
+          + (cell.both ? '<span class="both">2 sem.</span>' : '')
           + '</div></td>';
       });
       html += '</tr>';
@@ -1325,7 +1439,7 @@ svg{display:block}
             + '<span class="ttl__h">' + SLOTS[i][0] + '<i>' + fin + '</i></span>'
             + '<span class="ttl__c"><b>' + cell.matiere + '</b>'
             + '<span>' + cell.prof + (cell.salle ? ' · ' + cell.salle : '') + '</span>'
-            + (cell.both ? '<span class="both">V + R</span>' : '') + '</span></li>';
+            + (cell.both ? '<span class="both">2 sem.</span>' : '') + '</span></li>';
         });
         lhtml += '<div class="ttl__day' + classeJour(day) + '"' + attrJour(day) + '>'
           + '<div class="ttl__head"><b' + libelleJour(day) + '>' + day + '</b>'
@@ -1353,6 +1467,197 @@ svg{display:block}
     } catch (e) {}
     pickPupil(pupil === 'annie' ? 'annie' : 'narek');
     pickWeek(week === 'R' || week === 'V' ? week : courante);
+  })();
+
+
+  // ---------- Semaines Papa / Mama ----------
+  // La quinzaine du collège porte le nom du parent qui a les enfants : Q1
+  // (colonne « rouge » des emplois du temps papier) = Papa, Q2 (« verte ») =
+  // Mama. Aucune couleur ne code cette distinction dans la page : c'est la
+  // forme du repère qui la porte (carré plein / cercle évidé).
+  var PARENTS = {
+    R: { nom: 'Papa', classe: 'papa' },
+    V: { nom: 'Mama', classe: 'mama' }
+  };
+
+  // Étendue du calendrier : de la semaine de la rentrée au dernier lundi de
+  // juillet 2027.
+  var GARDE_DEBUT = Date.UTC(2026, 8, 7);
+  var GARDE_FIN = Date.UTC(2027, 6, 26);
+
+  // Septembre 2026 sort de l'alternance (déplacement de la mère du 10 au 22,
+  // cf. la frise ci-dessus) : ces semaines-là sont fixées à la main.
+  var GARDE_EXCEPTIONS = {
+    '2026-09-07': { qui: 'R', tag: 'exception', note: 'Papa à partir du mercredi 9 — déplacement de la mère' },
+    '2026-09-21': { qui: 'R', tag: 'exception', note: 'Fin du déplacement : relais le vendredi 25 au soir' },
+    '2026-09-28': { qui: 'V', tag: 'exception', note: 'Semaine de la mère jusqu’au vendredi 2 octobre' },
+    '2026-10-05': { qui: 'V', tag: 'à confirmer', note: 'Reprise de l’alternance après l’aménagement de septembre' }
+  };
+
+  var FMT_JOUR = new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', weekday: 'short', day: 'numeric' });
+  var FMT_JOUR_MOIS = new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' });
+  var FMT_LONG = new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' });
+  var FMT_MOIS = new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', month: 'long', year: 'numeric' });
+
+  function lundiUTC(d) {
+    return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
+  }
+
+  function jourUTC(d) {
+    return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  function cleJour(ms) {
+    return new Date(ms).toISOString().slice(0, 10);
+  }
+
+  function quinzaineDe(lundi) {
+    var ecart = Math.round((lundi - ANCRAGE) / MS_SEMAINE);
+    return (((ecart % 2) + 2) % 2) === 0 ? 'V' : 'R';
+  }
+
+  // Le relais se fait le vendredi soir : le samedi et le dimanche appartiennent
+  // déjà au bloc de la semaine suivante.
+  function lundiDuBloc(ms) {
+    var d = new Date(ms + 2 * MS_JOUR);
+    return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  }
+
+  // Un bloc de garde = du vendredi soir (veille du samedi) au vendredi suivant.
+  function bornesDuBloc(lundi) {
+    return { debut: lundi - 2 * MS_JOUR, fin: lundi + 4 * MS_JOUR };
+  }
+
+  function gardeDeLaSemaine(lundi) {
+    var quinzaine = quinzaineDe(lundi);
+    var ex = GARDE_EXCEPTIONS[cleJour(lundi)];
+    var qui = ex ? ex.qui : quinzaine;
+    return {
+      qui: qui, nom: PARENTS[qui].nom, classe: PARENTS[qui].classe,
+      quinzaine: quinzaine, tag: ex ? ex.tag : '', note: ex ? ex.note : ''
+    };
+  }
+
+  // Numéro de semaine ISO, pour recouper avec un agenda.
+  function numeroSemaine(lundi) {
+    var jeudi = lundi + 3 * MS_JOUR;
+    var jan4 = Date.UTC(new Date(jeudi).getUTCFullYear(), 0, 4);
+    var premier = jan4 - ((new Date(jan4).getUTCDay() + 6) % 7) * MS_JOUR;
+    return Math.round((jeudi - premier) / MS_SEMAINE) + 1;
+  }
+
+  function repereGarde(classe) {
+    return '<i class="gm gm--' + classe + '"></i>';
+  }
+
+  function encartGarde(lundi, libelle, live) {
+    var g = gardeDeLaSemaine(lundi);
+    var b = bornesDuBloc(lundi);
+    return '<div class="gd-now__box' + (live ? ' gd-now__box--live' : '') + '">'
+      + repereGarde(g.classe)
+      + '<span class="gd-now__txt">'
+      + '<span class="gd-now__when">' + libelle + '</span>'
+      + '<b class="gd-now__who">' + g.nom + '</b>'
+      + '<span class="gd-now__dates">' + FMT_JOUR.format(b.debut) + ' → '
+      + FMT_JOUR_MOIS.format(b.fin) + ' au soir</span>'
+      + '</span></div>';
+  }
+
+  function renderGarde() {
+    var zone = document.getElementById('gd-months');
+    if (!zone) return;
+
+    var courante = lundiDuBloc(jourUTC(new Date()));
+    var depart = Math.max(GARDE_DEBUT, courante);
+
+    var entete = document.getElementById('gd-now');
+    if (entete) {
+      entete.innerHTML = courante >= GARDE_DEBUT && courante <= GARDE_FIN
+        ? encartGarde(courante, 'Cette semaine', true)
+          + encartGarde(courante + MS_SEMAINE, 'La semaine prochaine', false)
+        : '';
+    }
+
+    var html = '';
+    var mois = '';
+    for (var lundi = depart; lundi <= GARDE_FIN; lundi += MS_SEMAINE) {
+      var etiquette = FMT_MOIS.format(lundi);
+      if (etiquette !== mois) {
+        if (mois) html += '</div></section>';
+        mois = etiquette;
+        html += '<section class="gd-month"><h4>' + etiquette + '</h4><div class="gd-weeks">';
+      }
+      var g = gardeDeLaSemaine(lundi);
+      var b = bornesDuBloc(lundi);
+      var ici = lundi === courante;
+      // Une semaine sortie de l'alternance garde l'emploi du temps de sa
+      // quinzaine : on le rappelle, sinon la grille du collège semble fausse.
+      var note = g.note + (g.qui !== g.quinzaine
+        ? (g.note ? ' · ' : '') + 'au collège, emploi du temps de la quinzaine ' + PARENTS[g.quinzaine].nom
+        : '');
+      html += '<div class="gd-week gd-week--' + g.classe + (ici ? ' gd-week--now' : '')
+        + '" id="gd-' + cleJour(lundi) + '">'
+        + '<span class="gd-week__no">S' + numeroSemaine(lundi) + '</span>'
+        + '<span class="gd-week__dates">' + FMT_JOUR.format(b.debut) + ' <i>→</i> '
+        + FMT_JOUR_MOIS.format(b.fin)
+        + (note ? '<span class="gd-week__note">' + note + '</span>' : '')
+        + '</span>'
+        + (ici ? '<span class="gd-week__tag">en cours</span>' : '')
+        + (g.tag ? '<span class="gd-week__tag">' + g.tag + '</span>' : '')
+        + '<span class="gd-week__who">' + repereGarde(g.classe) + g.nom + '</span>'
+        + '</div>';
+    }
+    zone.innerHTML = mois ? html + '</div></section>' : '<p class="day__empty">Le calendrier s’arrête en juillet 2027.</p>';
+  }
+
+  function filtrerGarde(f) {
+    var zone = document.getElementById('gd-months');
+    if (zone) zone.setAttribute('data-filtre', f);
+    ['tous', 'R', 'V'].forEach(function (x) {
+      var b = document.getElementById('gd-f-' + x);
+      if (b) b.setAttribute('aria-pressed', x === f ? 'true' : 'false');
+    });
+  }
+
+  function chercherSemaine(valeur, cibler) {
+    var sortie = document.getElementById('gd-answer');
+    if (!sortie) return;
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valeur || '');
+    if (!m) { sortie.innerHTML = ''; return; }
+
+    var jour = Date.UTC(+m[1], +m[2] - 1, +m[3]);
+    var lundi = lundiDuBloc(jour);
+    if (lundi < GARDE_DEBUT || lundi > GARDE_FIN) {
+      sortie.innerHTML = '<em>Hors calendrier : septembre 2026 → juillet 2027.</em>';
+      return;
+    }
+
+    var g = gardeDeLaSemaine(lundi);
+    // Le vendredi, la journée se partage : le relais tombe le soir.
+    var vendredi = new Date(jour).getUTCDay() === 5;
+    sortie.innerHTML = repereGarde(g.classe) + '<span>' + FMT_LONG.format(jour) + ' — ' + g.nom
+      + (vendredi ? ' <em>jusqu’au relais du soir</em>' : '') + '</span>';
+
+    var ligne = document.getElementById('gd-' + cleJour(lundi));
+    if (!ligne) return;
+    var precedente = document.querySelector('.gd-week--cible');
+    if (precedente) precedente.classList.remove('gd-week--cible');
+    ligne.classList.add('gd-week--cible');
+    if (!cibler) return;
+    // La ligne visée peut être masquée par le filtre : on le rouvre.
+    filtrerGarde('tous');
+    ligne.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  (function initGarde() {
+    renderGarde();
+    var champ = document.getElementById('gd-date');
+    if (!champ) return;
+    var aujourdhui = cleJour(jourUTC(new Date()));
+    if (aujourdhui >= champ.min && aujourdhui <= champ.max) {
+      champ.value = aujourdhui;
+      chercherSemaine(aujourdhui, false);
+    }
   })();
 
 

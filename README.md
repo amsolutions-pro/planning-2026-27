@@ -1,8 +1,8 @@
 # Planning 2026-2027 — Narek & Annie
 
 Page interactive du planning hebdomadaire des enfants : semaine type, emploi du
-temps au collège, activités et inscriptions, calendrier de garde de septembre,
-budget annuel.
+temps au collège, activités et inscriptions, calendrier de garde jusqu'en
+juillet 2027, budget annuel.
 
 L'onglet « Activités & créneaux » réunit le coût des inscriptions et le choix
 des créneaux : pour le ping-pong, la flûte et le piano, on coche les créneaux
@@ -31,11 +31,38 @@ choisissant laquelle afficher) et les journées superposées s'empilent, chacune
 avec son propre rail d'heures.
 
 L'onglet « Collège » reprend les emplois du temps du semestre 1 de Narek (5C) et
-Annie (3F). La quinzaine y est notée `R` pour la semaine rouge (colonne Q1 des
-emplois du temps papier) et `V` pour la semaine verte (colonne Q2) ; un cours
-marqué `V + R` a lieu toutes les semaines. La semaine affichée par défaut est
-déduite de l'alternance, la semaine du lundi 7 septembre 2026 étant verte
+Annie (3F). La quinzaine y est notée `R` pour la colonne Q1 des emplois du temps
+papier et `V` pour la colonne Q2 ; un cours marqué `RV` a lieu chaque semaine et
+porte la pastille « 2 sem. ». La semaine affichée par défaut est déduite de
+l'alternance, la semaine du lundi 7 septembre 2026 étant une quinzaine Q2
 (constante `ANCRAGE` dans le script de la page).
+
+## Semaines Papa et Mama
+
+La quinzaine est nommée par le parent qui a les enfants : `R` = **Papa**,
+`V` = **Mama** (table `PARENTS`). Aucune couleur ne code cette distinction —
+elle tient à la forme du repère, **carré plein pour Papa, cercle évidé pour
+Mama** (classe `.gm`, faite en `currentColor`), lisible à l'impression comme
+pour un œil daltonien. Dans la liste des semaines, les lignes Papa portent en
+plus un filet vertical à gauche.
+
+L'onglet « Garde & semaines » ajoute, sous la frise de septembre, toutes les
+semaines de la semaine en cours jusqu'à celle du lundi 26 juillet 2027
+(`GARDE_DEBUT` et `GARDE_FIN`) :
+
+- un encart « cette semaine / la semaine prochaine » ;
+- un champ date qui répond pour un jour précis et met la ligne en évidence ;
+- des filtres « Toutes / Papa / Mama » ;
+- la liste mois par mois, avec le numéro de semaine ISO.
+
+Le relais se faisant le vendredi soir, un bloc va **du vendredi soir au vendredi
+soir** : il commence par le week-end, puis couvre la semaine de classe. Un jour
+du samedi ou du dimanche est donc rattaché au lundi suivant (`lundiDuBloc`).
+
+Les semaines qui sortent de l'alternance sont listées dans `GARDE_EXCEPTIONS`,
+d'après la frise de septembre 2026 (déplacement de la mère du 10 au 22). Quand
+une semaine exceptionnelle ne correspond pas à sa quinzaine, la ligne le
+rappelle : l'emploi du temps du collège, lui, suit toujours la quinzaine.
 
 ## Fichier
 
