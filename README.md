@@ -5,10 +5,12 @@ temps au collège, activités et inscriptions, calendrier de garde jusqu'en
 juillet 2027, budget annuel.
 
 L'onglet « Activités & créneaux » réunit le coût des inscriptions et le choix
-des créneaux : pour le ping-pong, la flûte et le piano, on coche les créneaux
-retenus — plusieurs sont possibles pour une même activité — et les autres
-disparaissent de la semaine type et des journées superposées. Les choix sont
-conservés dans le `localStorage` du navigateur, donc propres à chaque appareil.
+des créneaux. Seul le ping-pong reste à arbitrer : on coche les créneaux retenus
+— plusieurs sont possibles — et les autres disparaissent de la semaine type et
+des journées superposées. Les choix sont conservés dans le `localStorage` du
+navigateur, donc propres à chaque appareil. Les créneaux de musique sont
+arrêtés : solfège mercredi 16h30, flûte mercredi 18h00, piano jeudi 18h20, puis
+théâtre jeudi 19h15 → 21h30.
 
 L'onglet « Collège » propose deux vues : la grille des cours, et « Journées
 superposées », où les jours sont en colonnes et le temps en vertical. L'échelle
@@ -39,8 +41,12 @@ l'alternance, la semaine du lundi 7 septembre 2026 étant une quinzaine Q2
 
 ## Semaines Papa et Mama
 
-La quinzaine est nommée par le parent qui a les enfants : `R` = **Papa**,
-`V` = **Mama** (table `PARENTS`). Aucune couleur ne code cette distinction —
+La quinzaine est nommée par le parent qui a les enfants (table
+`PARENT_DE_QUINZAINE`) : la quinzaine `V` (colonne Q2) est la semaine **Papa**,
+la `R` (Q1) la semaine **Mama**. Le rattachement est calé sur un repère certain,
+la reprise de Papa le vendredi 2 octobre 2026 au soir ; c'est la seule ligne à
+corriger s'il change — surtout pas `ANCRAGE`, qui décide des cours affichés.
+Aucune couleur ne code cette distinction —
 elle tient à la forme du repère, **carré plein pour Papa, cercle évidé pour
 Mama** (classe `.gm`, faite en `currentColor`), lisible à l'impression comme
 pour un œil daltonien. Dans la liste des semaines, les lignes Papa portent en
@@ -59,10 +65,10 @@ Le relais se faisant le vendredi soir, un bloc va **du vendredi soir au vendredi
 soir** : il commence par le week-end, puis couvre la semaine de classe. Un jour
 du samedi ou du dimanche est donc rattaché au lundi suivant (`lundiDuBloc`).
 
-Les semaines qui sortent de l'alternance sont listées dans `GARDE_EXCEPTIONS`,
-d'après la frise de septembre 2026 (déplacement de la mère du 10 au 22). Quand
-une semaine exceptionnelle ne correspond pas à sa quinzaine, la ligne le
-rappelle : l'emploi du temps du collège, lui, suit toujours la quinzaine.
+Les semaines qui sortent de l'alternance sont listées dans `GARDE_EXCEPTIONS` —
+une seule à ce jour : celle du 14 septembre 2026, deuxième semaine d'affilée chez
+Papa pendant le déplacement de la mère. La ligne rappelle alors que l'emploi du
+temps du collège, lui, suit toujours la quinzaine.
 
 ## Fichier
 

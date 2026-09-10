@@ -966,12 +966,12 @@ svg{display:block}
     <div class="callout">
       <span class="callout__icon"><svg class="icon"><use href="#i-alert"></use></svg></span>
       <div>
-        <h3>Jeudi 10 septembre — les rendez-vous qui décident des créneaux</h3>
+        <h3>Les créneaux d'Annie sont arrêtés</h3>
         <ul class="callout__list">
-          <li><span class="callout__hour">18:00</span> Académie des Arts — professeur de flûte, M. Parent</li>
-          <li><span class="callout__hour">18:30</span> <span>Demander le créneau piano du jeudi à Mme Jun <em>(idéalement à ce moment-là)</em></span></li>
-          <li><span class="callout__hour">19:00</span> Académie des Arts — professeure de piano, Mme Jun</li>
-          <li><span class="callout__hour">18:00</span> <span>Réunion collective du collège pour Annie <em>(info obtenue auprès d'autres parents)</em></span></li>
+          <li><span class="callout__hour">MER 18:00</span> Flûte — Académie des Arts, après le solfège</li>
+          <li><span class="callout__hour">JEU 18:20</span> Piano — Mme Jun</li>
+          <li><span class="callout__hour">JEU 19:15</span> <span>Théâtre jusqu'à 21:30 <em>(enchaîné juste après le piano)</em></span></li>
+          <li><span class="callout__hour">JEU 18:00</span> <span>Réunion collective du collège pour Annie, le 10 septembre <em>(info obtenue auprès d'autres parents)</em></span></li>
         </ul>
       </div>
     </div>
@@ -982,7 +982,7 @@ svg{display:block}
     <div class="section-head">
       <div>
         <h2>Emploi du temps au collège</h2>
-        <p>Semestre 1 — la quinzaine alterne entre semaine Papa (colonne Q1 des emplois du temps papier) et semaine Mama (Q2). La semaine en cours est déduite de l'alternance depuis la semaine du 7 septembre ; l'onglet « Garde &amp; semaines » donne la suite jusqu'en juillet 2027.</p>
+        <p>Semestre 1 — la quinzaine alterne entre semaine Papa (colonne Q2 des emplois du temps papier) et semaine Mama (Q1). La semaine en cours est déduite de l'alternance depuis la semaine du 7 septembre ; l'onglet « Garde &amp; semaines » donne la suite jusqu'en juillet 2027.</p>
       </div>
     </div>
 
@@ -997,8 +997,9 @@ svg{display:block}
         <button class="chip chip--a" type="button" id="tt-annie" aria-pressed="false" onclick="pickPupil('annie')">Annie · 3F</button>
       </span>
       <span class="filters__label" style="margin-left:8px">Semaine</span>
-      <button class="wk wk--papa" type="button" id="wk-R" aria-pressed="false" onclick="pickWeek('R')">Papa <small id="wk-R-now"></small></button>
-      <button class="wk wk--mama" type="button" id="wk-V" aria-pressed="true" onclick="pickWeek('V')">Mama <small id="wk-V-now"></small></button>
+      <!-- Rattachement quinzaine → parent : PARENT_DE_QUINZAINE, dans le script. -->
+      <button class="wk wk--papa" type="button" id="wk-V" aria-pressed="true" onclick="pickWeek('V')">Papa <small id="wk-V-now"></small></button>
+      <button class="wk wk--mama" type="button" id="wk-R" aria-pressed="false" onclick="pickWeek('R')">Mama <small id="wk-R-now"></small></button>
       <span class="tt-note" id="tt-regime"></span>
     </div>
 
@@ -1029,8 +1030,8 @@ svg{display:block}
         <li class="ins--n"><b>Narek</b> Mercredi, cours de 8h10 à 12h10 : après-midi libre, le tennis de 16h00 passe.</li>
         <li class="ins--a"><b>Annie</b> Lundi, LCA latin jusqu'à 17h45 — le jour le plus long de la semaine.</li>
         <li class="ins--n"><b>Narek</b> Jeudi, sortie à 16h50 : compatible avec le ping-pong de 18h30.</li>
-        <li class="ins--a"><b>Annie</b> Jeudi, sortie à 16h50 : piano 18h30 puis théâtre 19h15 s'enchaînent.</li>
-        <li class="ins--a"><b>Annie</b> Mercredi, cours jusqu'à 12h10 : le solfège de 16h30 reste dégagé.</li>
+        <li class="ins--a"><b>Annie</b> Jeudi, sortie à 16h50 : piano 18h20 puis théâtre 19h15 → 21h30, la soirée est pleine.</li>
+        <li class="ins--a"><b>Annie</b> Mercredi, cours jusqu'à 12h10 : solfège 16h30 puis flûte 18h00.</li>
         <li><b>Samedi</b> Aucun cours pour les deux : ping-pong 11h30 et danse 17h00 sans contrainte.</li>
       </ul>
     </div>
@@ -1091,7 +1092,7 @@ svg{display:block}
             <span class="period__marker">1 / 2</span>
             <div class="period__body">
               <span class="period__dates">À partir du vendredi 2 octobre</span>
-              <span class="period__desc">Retour au rythme officiel : une semaine sur deux, changement le vendredi soir</span>
+              <span class="period__desc">Papa reprend le 2 octobre au soir, puis une semaine sur deux, changement le vendredi soir</span>
             </div>
             <span class="period__len">cadre rétabli</span>
           </div>
@@ -1349,9 +1350,8 @@ svg{display:block}
   var MS_JOUR = 86400000;
   var MS_SEMAINE = 604800000;
 
-  // Semaine du lundi 7 septembre 2026 = quinzaine Q2, dite « verte » sur les
-  // emplois du temps papier — la semaine Mama ; l'alternance suit ensuite de
-  // quinzaine en quinzaine.
+  // Semaine du lundi 7 septembre 2026 = quinzaine Q2 des emplois du temps ;
+  // l'alternance suit ensuite de quinzaine en quinzaine.
   var ANCRAGE = Date.UTC(2026, 8, 7);
 
   function semaineCourante(today) {
@@ -1494,13 +1494,17 @@ svg{display:block}
 
 
   // ---------- Semaines Papa / Mama ----------
-  // La quinzaine du collège porte le nom du parent qui a les enfants : Q1
-  // (colonne « rouge » des emplois du temps papier) = Papa, Q2 (« verte ») =
-  // Mama. Aucune couleur ne code cette distinction dans la page : c'est la
-  // forme du repère qui la porte (carré plein / cercle évidé).
+  // La quinzaine du collège porte le nom du parent qui a les enfants. Le
+  // rattachement est calé sur un repère certain : Papa reprend les enfants le
+  // vendredi 2 octobre 2026 au soir, semaine de la quinzaine Q2 — celle du
+  // lundi 7 septembre (constante ANCRAGE). Q2 est donc la semaine Papa, Q1 la
+  // semaine Mama. C'est le seul endroit à corriger si le rattachement change.
+  // Aucune couleur ne code cette distinction dans la page : c'est la forme du
+  // repère qui la porte (carré plein / cercle évidé).
+  var PARENT_DE_QUINZAINE = { V: 'papa', R: 'mama' };
   var PARENTS = {
-    R: { nom: 'Papa', classe: 'papa' },
-    V: { nom: 'Mama', classe: 'mama' }
+    papa: { nom: 'Papa', classe: 'papa' },
+    mama: { nom: 'Mama', classe: 'mama' }
   };
 
   // Étendue du calendrier : de la semaine de la rentrée au dernier lundi de
@@ -1508,13 +1512,11 @@ svg{display:block}
   var GARDE_DEBUT = Date.UTC(2026, 8, 7);
   var GARDE_FIN = Date.UTC(2027, 6, 26);
 
-  // Septembre 2026 sort de l'alternance (déplacement de la mère du 10 au 22,
-  // cf. la frise ci-dessus) : ces semaines-là sont fixées à la main.
+  // Seule entorse à l'alternance : le déplacement de la mère du 10 au 22
+  // septembre, qui donne à Papa une deuxième semaine d'affilée (frise ci-dessus).
   var GARDE_EXCEPTIONS = {
-    '2026-09-07': { qui: 'R', tag: 'exception', note: 'Papa à partir du mercredi 9 — déplacement de la mère' },
-    '2026-09-21': { qui: 'R', tag: 'exception', note: 'Fin du déplacement : relais le vendredi 25 au soir' },
-    '2026-09-28': { qui: 'V', tag: 'exception', note: 'Semaine de la mère jusqu’au vendredi 2 octobre' },
-    '2026-10-05': { qui: 'V', tag: 'à confirmer', note: 'Reprise de l’alternance après l’aménagement de septembre' }
+    '2026-09-14': { qui: 'papa', tag: 'exception',
+                    note: 'Deuxième semaine d’affilée chez Papa — déplacement de la mère jusqu’au 22' }
   };
 
   var FMT_JOUR = new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', weekday: 'short', day: 'numeric' });
@@ -1552,12 +1554,12 @@ svg{display:block}
   }
 
   function gardeDeLaSemaine(lundi) {
-    var quinzaine = quinzaineDe(lundi);
+    var habituel = PARENT_DE_QUINZAINE[quinzaineDe(lundi)];
     var ex = GARDE_EXCEPTIONS[cleJour(lundi)];
-    var qui = ex ? ex.qui : quinzaine;
+    var qui = ex ? ex.qui : habituel;
     return {
       qui: qui, nom: PARENTS[qui].nom, classe: PARENTS[qui].classe,
-      quinzaine: quinzaine, tag: ex ? ex.tag : '', note: ex ? ex.note : ''
+      habituel: habituel, tag: ex ? ex.tag : '', note: ex ? ex.note : ''
     };
   }
 
@@ -1615,8 +1617,8 @@ svg{display:block}
       var ici = lundi === courante;
       // Une semaine sortie de l'alternance garde l'emploi du temps de sa
       // quinzaine : on le rappelle, sinon la grille du collège semble fausse.
-      var note = g.note + (g.qui !== g.quinzaine
-        ? (g.note ? ' · ' : '') + 'au collège, emploi du temps de la quinzaine ' + PARENTS[g.quinzaine].nom
+      var note = g.note + (g.qui !== g.habituel
+        ? (g.note ? ' · ' : '') + 'au collège, emploi du temps de la quinzaine ' + PARENTS[g.habituel].nom
         : '');
       html += '<div class="gd-week gd-week--' + g.classe + (ici ? ' gd-week--now' : '')
         + '" id="gd-' + cleJour(lundi) + '">'
@@ -1716,19 +1718,17 @@ svg{display:block}
     { id: 'pp-samedi', groupe: 'pingpong', enfant: 'narek', titre: 'Ping-pong', icone: 'i-paddle',
       jour: 'Samedi', debut: '11:30', fin: '12:30', badge: 'Option C' },
 
-    { id: 'flute-mer16', groupe: 'flute', enfant: 'annie', titre: 'Flûte', icone: 'i-note',
-      jour: 'Mercredi', debut: '16:00', fin: '16:30', badge: 'Option 1', note: 'Créneau préféré' },
     { id: 'solfege', enfant: 'annie', titre: 'Solfège', icone: 'i-solfege',
       jour: 'Mercredi', debut: '16:30', badge: 'Confirmé', fixe: true, note: 'Académie des Arts' },
-    { id: 'flute-mer1730', groupe: 'flute', enfant: 'annie', titre: 'Flûte', icone: 'i-note',
-      jour: 'Mercredi', debut: '17:30', badge: 'Option 2', note: 'Enchaîné après le solfège' },
-    { id: 'flute-jeu18', groupe: 'flute', enfant: 'annie', titre: 'Flûte', icone: 'i-note',
-      jour: 'Jeudi', debut: '18:00', fin: '18:30', badge: 'Option 3', note: 'Académie des Arts' },
-    { id: 'piano-jeu', groupe: 'piano', enfant: 'annie', titre: 'Piano · Mme Jun', icone: 'i-keys',
-      court: 'Piano', jour: 'Jeudi', debut: '18:30', fin: '19:00', badge: 'À bloquer',
-      note: 'Mme Jun n’enseigne que mardi et jeudi' },
+    { id: 'flute', enfant: 'annie', titre: 'Flûte', icone: 'i-note',
+      jour: 'Mercredi', debut: '18:00', badge: 'Confirmé', fixe: true,
+      note: 'Académie des Arts, après le solfège' },
+    { id: 'piano', enfant: 'annie', titre: 'Piano · Mme Jun', icone: 'i-keys',
+      court: 'Piano', jour: 'Jeudi', debut: '18:20', badge: 'Confirmé', fixe: true,
+      note: 'Horaire définitif — juste avant le théâtre' },
     { id: 'theatre', enfant: 'annie', titre: 'Théâtre', icone: 'i-stage',
-      jour: 'Jeudi', debut: '19:15', badge: 'Dès cette semaine', fixe: true },
+      jour: 'Jeudi', debut: '19:15', fin: '21:30', badge: 'Confirmé', fixe: true,
+      note: 'Tous les jeudis, jusqu’à 21h30' },
     { id: 'danse', enfant: 'annie', titre: 'Danse arménienne', icone: 'i-dance',
       court: 'Danse', jour: 'Samedi', debut: '17:00', fin: '18:30', badge: 'Dès le 12 sept.', fixe: true,
       lieu: 'Cie Yeraz · Alfortville' },
@@ -1753,14 +1753,12 @@ svg{display:block}
       creneaux: ['danse'] },
     { enfant: 'annie', titre: 'Musique — Académie des Arts', icone: 'i-note', prix: '~ 450 €',
       infos: [['Détail', 'Solfège, piano et flûte']],
-      creneaux: ['solfege'], groupes: ['flute', 'piano'],
-      aide: 'Créneaux à caler avec l’Académie des Arts le 10 septembre.' }
+      creneaux: ['solfege', 'flute', 'piano'],
+      aide: 'Horaires définitifs confirmés par l’Académie des Arts.' }
   ];
 
   var GROUPES = {
-    pingpong: 'Créneau du ping-pong',
-    flute: 'Créneau de flûte',
-    piano: 'Créneau de piano'
+    pingpong: 'Créneau du ping-pong'
   };
 
   var JOURS_SEMAINE = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
