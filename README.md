@@ -26,6 +26,12 @@ et sa version en liste, journées superposées) et la page s'y place à l'ouvert
 s'il n'est pas déjà à l'écran ; un bouton « Aujourd'hui » apparaît dès qu'on s'en
 éloigne. Le dimanche, le repère se porte sur le lundi, annoncé comme « demain ».
 
+Quand l'onglet Collège montre l'autre quinzaine, ce jour-là n'est plus
+aujourd'hui mais le même jour la semaine suivante : le repère s'atténue
+(`is-shifted`) et porte sa date — « ven. 18 sept. » — que reprend le bouton
+flottant. `semaineDecalee()` compare la quinzaine affichée à celle du jour
+repéré.
+
 Les deux barres de réglage — « Afficher » de la semaine type, et celle du
 collège (vue, élève, semaine) — restent collées sous l'en-tête : on change
 d'enfant ou de semaine depuis n'importe quel jour, sans remonter en haut de

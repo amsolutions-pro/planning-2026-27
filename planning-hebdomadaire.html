@@ -447,6 +447,20 @@ svg{display:block}
   border-color:var(--accent);
   box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent);
 }
+/* Sur l'autre quinzaine, le jour repéré n'est pas aujourd'hui mais le même jour
+   la semaine suivante : le repère s'atténue et porte la date. */
+.day.is-today.is-shifted,
+.ttl__day.is-today.is-shifted{
+  border-color:color-mix(in srgb,var(--accent) 35%,var(--line));
+  box-shadow:var(--shadow);
+}
+.tt thead th.is-today.is-shifted{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.ovv__title.is-today.is-shifted b{color:var(--ink)}
+.ovv__body.is-today.is-shifted .ovv__plot{
+  border-color:color-mix(in srgb,var(--accent) 35%,var(--line));
+  box-shadow:var(--shadow);
+}
+[data-jl-soft]::after{color:var(--muted)}
 
 .today-fab{
   position:fixed;right:16px;bottom:16px;z-index:30;
@@ -1383,6 +1397,7 @@ svg{display:block}
     if (!table) return;
     var data = PUPILS[ttState.pupil];
     var week = ttState.week;
+    var decale = semaineDecalee();
 
     var grid = {};
     var bornes = {};
@@ -1412,8 +1427,8 @@ svg{display:block}
 
     var html = '<thead><tr><th class="tt__hour"></th>';
     DAYS.forEach(function (day) {
-      html += '<th class="' + (classeJour(day) ? 'is-today' : '') + '"' + attrJour(day)
-        + '><span class="tt__day"><b' + libelleJour(day) + '>'
+      html += '<th class="' + classeJour(day, decale).trim() + '"' + attrJour(day, decale)
+        + '><span class="tt__day"><b' + libelleJour(day, decale) + '>'
         + day + '</b><span>' + bornes[day] + '</span></span></th>';
     });
     html += '</tr></thead><tbody>';
@@ -1461,8 +1476,8 @@ svg{display:block}
             + '<span>' + cell.prof + (cell.salle ? ' · ' + cell.salle : '') + '</span>'
             + (cell.both ? '<span class="both">2 sem.</span>' : '') + '</span></li>';
         });
-        lhtml += '<div class="ttl__day' + classeJour(day) + '"' + attrJour(day) + '>'
-          + '<div class="ttl__head"><b' + libelleJour(day) + '>' + day + '</b>'
+        lhtml += '<div class="ttl__day' + classeJour(day, decale) + '"' + attrJour(day, decale) + '>'
+          + '<div class="ttl__head"><b' + libelleJour(day, decale) + '>' + day + '</b>'
           + '<span>' + bornes[day] + '</span></div>'
           + (cours ? '<ul>' + cours + '</ul>' : '<p class="day__empty">Pas de cours</p>')
           + '</div>';
@@ -2023,6 +2038,7 @@ svg{display:block}
     if (!zone || zone.hidden) return;
 
     var week = ttState.week;
+    var decaleOv = semaineDecalee();
     var actes = activitesRetenues().filter(function (a) { return !a.jalon; });
 
     // La vue ne montre que la fin de journée : l'échelle démarre une heure avant
@@ -2106,10 +2122,10 @@ svg{display:block}
       });
 
       html += '<div class="ovj">'
-        + '<div class="ovv__title' + classeJour(jour) + '"' + attrJour(jour)
-        + ' style="grid-column:' + col + ';grid-row:1"><b' + libelleJour(jour) + '>' + jour + '</b>'
+        + '<div class="ovv__title' + classeJour(jour, decaleOv) + '"' + attrJour(jour, decaleOv)
+        + ' style="grid-column:' + col + ';grid-row:1"><b' + libelleJour(jour, decaleOv) + '>' + jour + '</b>'
         + '<span>' + (jour === 'Samedi' ? 'sans collège' : '') + '</span></div>'
-        + '<div class="ovv__body' + classeJour(jour)
+        + '<div class="ovv__body' + classeJour(jour, decaleOv)
         + '" style="grid-column:' + col + ';grid-row:2;height:' + haut_px + 'px">'
         + '<div class="ovv__rail ovv__rail--local">' + rail + '</div>'
         + '<div class="ovv__plot">' + blocs + '</div></div>'
@@ -2140,14 +2156,39 @@ svg{display:block}
     return d === 0 ? 'Lundi' : noms[d - 1];
   }
 
-  function classeJour(jour) { return jour === jourRepere() ? ' is-today' : ''; }
-  function attrJour(jour) {
-    return (jour === jourRepere() && !estDimanche()) ? ' aria-current="date"' : '';
+  // Date que le repère désigne : aujourd'hui, ou le lundi qui vient le dimanche.
+  function dateRepere() {
+    var d = new Date();
+    var jour = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+    return estDimanche() ? jour + MS_JOUR : jour;
   }
-  function libelleJour(jour) {
+
+  // Quinzaine à laquelle appartient ce jour-là.
+  function quinzaineDuRepere() {
+    var ms = dateRepere();
+    return quinzaineDe(ms - ((new Date(ms).getUTCDay() + 6) % 7) * MS_JOUR);
+  }
+
+  // Vrai quand le collège montre l'autre quinzaine : le jour repéré y tombe une
+  // semaine plus tard, ce n'est donc plus « aujourd'hui » mais une date à venir.
+  function semaineDecalee() { return ttState.week !== quinzaineDuRepere(); }
+
+  function classeJour(jour, decale) {
     if (jour !== jourRepere()) return '';
+    return decale ? ' is-today is-shifted' : ' is-today';
+  }
+  function attrJour(jour, decale) {
+    return (jour === jourRepere() && !estDimanche() && !decale) ? ' aria-current="date"' : '';
+  }
+  function libelleJour(jour, decale) {
+    if (jour !== jourRepere()) return '';
+    // Sur l'autre quinzaine, la date dit tout : « ven. 18 sept. ».
+    if (decale) return ' data-jl-soft data-jl="' + dateDecalee() + '"';
     return ' data-jl="' + (estDimanche() ? 'demain' : 'aujourd’hui') + '"';
   }
+
+  // Le même jour, une semaine plus tard : ce que montre l'autre quinzaine.
+  function dateDecalee() { return FMT_JOUR_MOIS.format(dateRepere() + 7 * MS_JOUR); }
 
   // Le repère de la vue affichée : la grille des cours et sa version en liste
   // coexistent dans le DOM, seule celle qui est visible nous intéresse.
@@ -2226,8 +2267,15 @@ svg{display:block}
     var cible = cibleJour();
     if (!cible) { bouton.hidden = true; return; }
 
+    // Sur l'autre quinzaine, le bouton mène au même jour la semaine suivante :
+    // il en porte la date plutôt que « aujourd'hui ».
     var texte = document.getElementById('today-fab-label');
-    if (texte) texte.textContent = estDimanche() ? 'Demain' : 'Aujourd’hui';
+    if (texte) {
+      var date = dateDecalee();
+      texte.textContent = cible.classList.contains('is-shifted')
+        ? date.charAt(0).toUpperCase() + date.slice(1)
+        : (estDimanche() ? 'Demain' : 'Aujourd’hui');
+    }
 
     bouton.hidden = jourVisible(cible);
   }
