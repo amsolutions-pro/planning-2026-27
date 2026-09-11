@@ -1406,6 +1406,7 @@ svg{display:block}
     if (!table) return;
     var data = PUPILS[ttState.pupil];
     var week = ttState.week;
+    var decale = semaineDecalee();
 
     var grid = {};
     var bornes = {};
@@ -1435,8 +1436,8 @@ svg{display:block}
 
     var html = '<thead><tr><th class="tt__hour"></th>';
     DAYS.forEach(function (day) {
-      html += '<th class="' + (classeJour(day) ? 'is-today' : '') + '"' + attrJour(day)
-        + '><span class="tt__day"><b' + libelleJour(day) + '>'
+      html += '<th class="' + (classeJour(day) ? 'is-today' : '') + '"' + attrJour(day, decale)
+        + '><span class="tt__day"><b' + libelleJour(day, decale) + '>'
         + day + '</b><span>' + bornes[day] + '</span></span></th>';
     });
     html += '</tr></thead><tbody>';
@@ -1484,8 +1485,8 @@ svg{display:block}
             + '<span>' + cell.prof + (cell.salle ? ' · ' + cell.salle : '') + '</span>'
             + (cell.both ? '<span class="both">2 sem.</span>' : '') + '</span></li>';
         });
-        lhtml += '<div class="ttl__day' + classeJour(day) + '"' + attrJour(day) + '>'
-          + '<div class="ttl__head"><b' + libelleJour(day) + '>' + day + '</b>'
+        lhtml += '<div class="ttl__day' + classeJour(day) + '"' + attrJour(day, decale) + '>'
+          + '<div class="ttl__head"><b' + libelleJour(day, decale) + '>' + day + '</b>'
           + '<span>' + bornes[day] + '</span></div>'
           + (cours ? '<ul>' + cours + '</ul>' : '<p class="day__empty">Pas de cours</p>')
           + '</div>';
@@ -2046,6 +2047,7 @@ svg{display:block}
     if (!zone || zone.hidden) return;
 
     var week = ttState.week;
+    var decale = semaineDecalee();
     var actes = activitesRetenues().filter(function (a) { return !a.jalon; });
 
     // La vue ne montre que la fin de journée : l'échelle démarre une heure avant
@@ -2129,8 +2131,8 @@ svg{display:block}
       });
 
       html += '<div class="ovj">'
-        + '<div class="ovv__title' + classeJour(jour) + '"' + attrJour(jour)
-        + ' style="grid-column:' + col + ';grid-row:1"><b' + libelleJour(jour) + '>' + jour + '</b>'
+        + '<div class="ovv__title' + classeJour(jour) + '"' + attrJour(jour, decale)
+        + ' style="grid-column:' + col + ';grid-row:1"><b' + libelleJour(jour, decale) + '>' + jour + '</b>'
         + '<span>' + (jour === 'Samedi' ? 'sans collège' : '') + '</span></div>'
         + '<div class="ovv__body' + classeJour(jour)
         + '" style="grid-column:' + col + ';grid-row:2;height:' + haut_px + 'px">'
@@ -2163,12 +2165,27 @@ svg{display:block}
     return d === 0 ? 'Lundi' : noms[d - 1];
   }
 
-  function classeJour(jour) { return jour === jourRepere() ? ' is-today' : ''; }
-  function attrJour(jour) {
-    return (jour === jourRepere() && !estDimanche()) ? ' aria-current="date"' : '';
+  // Quinzaine à laquelle appartient le jour repéré — le dimanche, celle du lundi
+  // qui vient. `quinzaineDe`, `ANCRAGE` et `MS_JOUR` sont prêts avant le premier
+  // dessin de l'emploi du temps.
+  function quinzaineDuRepere() {
+    var d = new Date();
+    var jour = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate() + (estDimanche() ? 1 : 0));
+    return quinzaineDe(jour - ((new Date(jour).getUTCDay() + 6) % 7) * MS_JOUR);
   }
-  function libelleJour(jour) {
-    if (jour !== jourRepere()) return '';
+
+  // Vrai quand le collège montre l'autre quinzaine : la colonne du jour n'y est
+  // plus celle d'aujourd'hui, mais le même jour d'une autre semaine.
+  function semaineDecalee() { return ttState.week !== quinzaineDuRepere(); }
+
+  function classeJour(jour) { return jour === jourRepere() ? ' is-today' : ''; }
+  function attrJour(jour, decale) {
+    return (jour === jourRepere() && !estDimanche() && !decale) ? ' aria-current="date"' : '';
+  }
+  // Hors de la semaine en cours, la mention disparaît : annoncer « aujourd'hui »
+  // sur une semaine où l'on n'est pas laisserait croire qu'on y est.
+  function libelleJour(jour, decale) {
+    if (jour !== jourRepere() || decale) return '';
     return ' data-jl="' + (estDimanche() ? 'demain' : 'aujourd’hui') + '"';
   }
 
