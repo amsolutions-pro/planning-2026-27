@@ -26,6 +26,15 @@ et sa version en liste, journées superposées) et la page s'y place à l'ouvert
 s'il n'est pas déjà à l'écran ; un bouton « Aujourd'hui » apparaît dès qu'on s'en
 éloigne. Le dimanche, le repère se porte sur le lundi, annoncé comme « demain ».
 
+Les deux barres de réglage — « Afficher » de la semaine type, et celle du
+collège (vue, élève, semaine) — restent collées sous l'en-tête : on change
+d'enfant ou de semaine depuis n'importe quel jour, sans remonter en haut de
+page. Sous 720 px, l'en-tête se réduit à ses seuls onglets dès le premier
+défilement (classe `is-compact`, posée par `majEntete`), et la barre perd ses
+intitulés et sa légende ; à eux deux ils occupent alors environ 170 px. La
+hauteur de l'en-tête est publiée dans la variable CSS `--entete`, sur laquelle
+les barres s'accrochent.
+
 Sous 720 px, les deux grilles horaires abandonnent la lecture en colonnes, qui
 imposait un long défilement latéral : l'emploi du temps devient une liste jour
 par jour (rendue par le même `drawTimetable`, en plus du tableau, le CSS

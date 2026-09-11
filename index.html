@@ -147,6 +147,13 @@ svg{display:block}
   border-bottom:1px solid var(--line);
   position:sticky;top:0;z-index:20;
 }
+/* Sous 720 px, l'en-tête se réduit à ses onglets dès le premier défilement :
+   la hauteur ainsi rendue permet aux barres de réglage de rester collées
+   dessous sans manger la moitié de l'écran. La classe est posée par le script. */
+@media (max-width:720px){
+  .masthead.is-compact .masthead__inner{display:none}
+  .masthead.is-compact .tabs{padding-top:8px}
+}
 .masthead__inner{
   max-width:1180px;margin:0 auto;padding:16px 20px 0;
   display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;
@@ -214,6 +221,11 @@ svg{display:block}
   padding:12px 14px;background:var(--surface);border:1px solid var(--line);
   border-radius:var(--radius);box-shadow:var(--shadow);
 }
+/* Les deux barres de réglage se collent sous l'en-tête : on change d'enfant, de
+   vue ou de semaine depuis n'importe quel jour, sans remonter en haut de page.
+   `--entete`, la hauteur de l'en-tête, est mesurée par le script : elle change
+   au défilement, l'en-tête se réduisant sur petit écran. */
+.filters,.tt-bar{position:sticky;top:var(--entete,0);z-index:15}
 .filters__label{
   font-family:"IBM Plex Mono",ui-monospace,monospace;
   font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
@@ -836,6 +848,14 @@ svg{display:block}
 }
 
 @media (max-width:720px){
+  /* Collées en haut, les barres de réglage doivent tenir en deux lignes : les
+     intitulés et la légende sautent, les boutons rétrécissent. */
+  .filters,.tt-bar{padding:8px 10px;gap:8px;border-radius:8px}
+  .filters .filters__label,.tt-bar .filters__label,.tt-note,.legend{display:none}
+  .seg button{font-size:11.5px;padding:5px 8px}
+  .filters .chip,.tt-bar .chip,.wk{font-size:11.5px;padding:4px 9px;gap:6px}
+  .wk small{font-size:9px}
+
   /* La grille horaire horizontale demandait un long défilement latéral :
      sur petit écran, chaque journée se lit de haut en bas. */
   .tt-wrap{display:none}
@@ -2169,10 +2189,13 @@ svg{display:block}
     return null;
   }
 
-  // Hauteur de l'en-tête collant, sous lequel le jour doit venir se placer.
+  // Hauteur de ce qui reste collé en haut — en-tête et barre de réglage — sous
+  // quoi le jour doit venir se placer.
   function margeHaute() {
-    var entete = document.querySelector('.masthead');
-    return (entete ? entete.getBoundingClientRect().height : 0) + 12;
+    var hauts = document.querySelectorAll('.masthead, .panel:not([hidden]) .tt-bar, .panel:not([hidden]) .filters');
+    var h = 0;
+    for (var i = 0; i < hauts.length; i++) h += hauts[i].getBoundingClientRect().height;
+    return h + 12;
   }
 
   // Visible = une part utile du repère est à l'écran, sous l'en-tête collant.
@@ -2203,7 +2226,23 @@ svg{display:block}
     });
   }
 
+  // Hauteur de l'en-tête : les barres de réglage s'y accrochent, et sous 720 px
+  // il se réduit à ses onglets dès qu'on défile. L'hystérésis évite qu'il
+  // clignote autour du seuil, sa propre hauteur déplaçant la page.
+  function majEntete() {
+    var entete = document.querySelector('.masthead');
+    if (!entete) return;
+
+    var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+    if (y > 80) entete.classList.add('is-compact');
+    else if (y < 24) entete.classList.remove('is-compact');
+
+    document.documentElement.style.setProperty(
+      '--entete', Math.round(entete.getBoundingClientRect().height) + 'px');
+  }
+
   function majAujourdhui() {
+    majEntete();
     var bouton = document.getElementById('today-fab');
     if (!bouton) return;
 
