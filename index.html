@@ -782,6 +782,8 @@ svg{display:block}
   padding:2px 6px;border-radius:5px;
   background:var(--hold-bg);color:var(--hold);border:1px solid var(--hold-line);
 }
+.gd-week__tag--vac{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.gd-now__box--vac{border-style:dashed}
 .gd-months[data-filtre="R"] .gd-week--mama,
 .gd-months[data-filtre="V"] .gd-week--papa{display:none}
 @media (max-width:560px){
@@ -1125,7 +1127,8 @@ svg{display:block}
         <h2>À qui est la semaine ?</h2>
         <p>Toutes les semaines jusqu’en juillet 2027. Un bloc va du vendredi soir
         au vendredi soir : il commence par le week-end, puis couvre la semaine de
-        classe. Les vacances scolaires peuvent suivre un autre partage.</p>
+        classe. Les vacances scolaires de la zone C sont signalées sur les
+        semaines concernées ; le partage y est parfois différent de l’alternance.</p>
       </div>
     </div>
 
@@ -1535,6 +1538,18 @@ svg{display:block}
                     note: 'Deuxième semaine d’affilée chez Papa — déplacement de la mère jusqu’au 22' }
   };
 
+  // Vacances scolaires 2026-2027 de la zone C (Créteil, Paris, Versailles),
+  // d'après le calendrier publié au Journal officiel. `debut` et `fin` sont le
+  // premier et le dernier jour sans classe : les cours reprennent le lendemain.
+  var VACANCES = [
+    { nom: 'Toussaint', debut: '2026-10-17', fin: '2026-11-01' },
+    { nom: 'Noël', debut: '2026-12-19', fin: '2027-01-03' },
+    { nom: 'Hiver', debut: '2027-02-06', fin: '2027-02-21' },
+    { nom: 'Printemps', debut: '2027-04-03', fin: '2027-04-18' },
+    { nom: 'Pont de l’Ascension', court: 'Ascension', debut: '2027-05-06', fin: '2027-05-09' },
+    { nom: 'Grandes vacances', debut: '2027-07-03', fin: '2027-08-31' }
+  ];
+
   var FMT_JOUR = new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', weekday: 'short', day: 'numeric' });
   var FMT_JOUR_MOIS = new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' });
   var FMT_LONG = new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' });
@@ -1550,6 +1565,40 @@ svg{display:block}
 
   function cleJour(ms) {
     return new Date(ms).toISOString().slice(0, 10);
+  }
+
+  function msDeCle(cle) {
+    return Date.UTC(+cle.slice(0, 4), +cle.slice(5, 7) - 1, +cle.slice(8, 10));
+  }
+
+  function vacancesDuJour(ms) {
+    for (var i = 0; i < VACANCES.length; i++) {
+      if (ms >= msDeCle(VACANCES[i].debut) && ms <= msDeCle(VACANCES[i].fin)) return VACANCES[i];
+    }
+    return null;
+  }
+
+  // Vacances qui touchent la semaine de classe, du lundi au vendredi. Un pont
+  // n'en couvre qu'une partie : on retient aussi les jours concernés.
+  function vacancesDeLaSemaine(lundi) {
+    var periode = null, jours = [];
+    for (var i = 0; i < 5; i++) {
+      var v = vacancesDuJour(lundi + i * MS_JOUR);
+      if (!v) continue;
+      if (!periode) periode = v;
+      if (v === periode) jours.push(i);
+    }
+    return periode ? { periode: periode, jours: jours } : null;
+  }
+
+  var ABREGE = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.'];
+
+  function joursDeVacances(vac) {
+    if (!vac || vac.jours.length === 5) return '';
+    var noms = vac.jours.map(function (i) { return ABREGE[i]; });
+    return noms.length > 1
+      ? 'sans classe ' + noms.slice(0, -1).join(', ') + ' et ' + noms[noms.length - 1]
+      : 'sans classe ' + noms[0];
   }
 
   function quinzaineDe(lundi) {
@@ -1604,6 +1653,37 @@ svg{display:block}
       + '</span></div>';
   }
 
+  // Troisième encart : où l'on en est des vacances scolaires.
+  function encartVacances() {
+    var jour = jourUTC(new Date());
+    var titre, nom, detail;
+    var enCours = vacancesDuJour(jour);
+
+    if (enCours) {
+      titre = 'Vacances en cours';
+      nom = enCours.nom;
+      detail = 'jusqu’au ' + FMT_LONG.format(msDeCle(enCours.fin)) + ' inclus';
+    } else {
+      var suivante = null;
+      for (var i = 0; i < VACANCES.length && !suivante; i++) {
+        if (msDeCle(VACANCES[i].debut) > jour) suivante = VACANCES[i];
+      }
+      if (!suivante) return '';
+      var debut = msDeCle(suivante.debut);
+      titre = 'Prochaines vacances';
+      nom = suivante.nom;
+      detail = 'à partir du ' + FMT_LONG.format(debut)
+        + ' · dans ' + Math.round((debut - jour) / MS_JOUR) + ' jours';
+    }
+
+    return '<div class="gd-now__box gd-now__box--vac">'
+      + '<span class="gd-now__txt">'
+      + '<span class="gd-now__when">' + titre + '</span>'
+      + '<b class="gd-now__who">' + nom + '</b>'
+      + '<span class="gd-now__dates">' + detail + '</span>'
+      + '</span></div>';
+  }
+
   function renderGarde() {
     var zone = document.getElementById('gd-months');
     if (!zone) return;
@@ -1613,10 +1693,10 @@ svg{display:block}
 
     var entete = document.getElementById('gd-now');
     if (entete) {
-      entete.innerHTML = courante >= GARDE_DEBUT && courante <= GARDE_FIN
+      entete.innerHTML = (courante >= GARDE_DEBUT && courante <= GARDE_FIN
         ? encartGarde(courante, 'Cette semaine', true)
           + encartGarde(courante + MS_SEMAINE, 'La semaine prochaine', false)
-        : '';
+        : '') + encartVacances();
     }
 
     var html = '';
@@ -1633,7 +1713,9 @@ svg{display:block}
       var ici = lundi === courante;
       // Une semaine sortie de l'alternance garde l'emploi du temps de sa
       // quinzaine : on le rappelle, sinon la grille du collège semble fausse.
-      var note = g.note + (g.qui !== g.habituel
+      var vac = vacancesDeLaSemaine(lundi);
+      var jours = joursDeVacances(vac);
+      var note = g.note + (jours ? (g.note ? ' · ' : '') + jours : '') + (g.qui !== g.habituel
         ? (g.note ? ' · ' : '') + 'au collège, emploi du temps de la quinzaine ' + PARENTS[g.habituel].nom
         : '');
       html += '<div class="gd-week gd-week--' + g.classe + (ici ? ' gd-week--now' : '')
@@ -1645,6 +1727,8 @@ svg{display:block}
         + '</span>'
         + (ici ? '<span class="gd-week__tag">en cours</span>' : '')
         + (g.tag ? '<span class="gd-week__tag">' + g.tag + '</span>' : '')
+        + (vac ? '<span class="gd-week__tag gd-week__tag--vac">'
+            + (vac.periode.court || vac.periode.nom) + '</span>' : '')
         + '<span class="gd-week__who">' + repereGarde(g.classe) + g.nom + '</span>'
         + '</div>';
     }
@@ -1676,8 +1760,10 @@ svg{display:block}
     var g = gardeDeLaSemaine(lundi);
     // Le vendredi, la journée se partage : le relais tombe le soir.
     var vendredi = new Date(jour).getUTCDay() === 5;
+    var vac = vacancesDuJour(jour);
     sortie.innerHTML = repereGarde(g.classe) + '<span>' + FMT_LONG.format(jour) + ' — ' + g.nom
-      + (vendredi ? ' <em>jusqu’au relais du soir</em>' : '') + '</span>';
+      + (vendredi ? ' <em>jusqu’au relais du soir</em>' : '')
+      + (vac ? ' <em>· vacances : ' + vac.nom + '</em>' : '') + '</span>';
 
     var ligne = document.getElementById('gd-' + cleJour(lundi));
     if (!ligne) return;

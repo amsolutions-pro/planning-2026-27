@@ -70,6 +70,13 @@ semaines de la semaine en cours jusqu'à celle du lundi 26 juillet 2027
 - des filtres « Toutes / Papa / Mama » ;
 - la liste mois par mois, avec le numéro de semaine ISO.
 
+Les vacances scolaires de la **zone C** (Créteil, Paris, Versailles) sont
+inscrites dans `VACANCES`, d'après le calendrier officiel 2026-2027 : chaque
+période y va du premier au dernier jour sans classe. Les semaines concernées
+portent une pastille dans la liste, un pont signale les jours qu'il couvre
+(`joursDeVacances`), la recherche par date le mentionne, et un troisième encart
+annonce les vacances en cours ou les prochaines.
+
 Le relais se faisant le vendredi soir, un bloc va **du vendredi soir au vendredi
 soir** : il commence par le week-end, puis couvre la semaine de classe. Un jour
 du samedi ou du dimanche est donc rattaché au lundi suivant (`lundiDuBloc`).
