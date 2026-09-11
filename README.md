@@ -41,7 +41,7 @@ par jour (rendue par le même `drawTimetable`, en plus du tableau, le CSS
 choisissant laquelle afficher) et les journées superposées s'empilent, chacune
 avec son propre rail d'heures.
 
-L'onglet « Collège » reprend les emplois du temps du semestre 1 de Narek (5C) et
+L'onglet « Collège » reprend les emplois du temps du semestre 1 de Narek (5F) et
 Annie (3F). La quinzaine y est notée `R` pour la colonne Q1 des emplois du temps
 papier et `V` pour la colonne Q2 ; un cours marqué `RV` a lieu chaque semaine et
 porte la pastille « 2 sem. ». La semaine affichée par défaut est déduite de

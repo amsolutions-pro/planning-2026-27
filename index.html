@@ -1013,7 +1013,7 @@ svg{display:block}
       </span>
       <span id="tt-eleve" style="display:contents">
         <span class="filters__label">Élève</span>
-        <button class="chip chip--n" type="button" id="tt-narek" aria-pressed="true" onclick="pickPupil('narek')">Narek · 5C</button>
+        <button class="chip chip--n" type="button" id="tt-narek" aria-pressed="true" onclick="pickPupil('narek')">Narek · 5F</button>
         <button class="chip chip--a" type="button" id="tt-annie" aria-pressed="false" onclick="pickPupil('annie')">Annie · 3F</button>
       </span>
       <span class="filters__label" style="margin-left:8px">Semaine</span>
@@ -1047,9 +1047,9 @@ svg{display:block}
     <div class="card tt-insights">
       <h3>Ce que l'emploi du temps impose aux activités</h3>
       <ul>
-        <li class="ins--n"><b>Narek</b> Mercredi, cours de 8h10 à 12h10 : après-midi libre, le tennis de 16h00 passe.</li>
+        <li class="ins--n"><b>Narek</b> Mercredi sans aucun cours : le tennis de 16h00 ne gêne rien.</li>
         <li class="ins--a"><b>Annie</b> Lundi, LCA latin jusqu'à 17h45 — le jour le plus long de la semaine.</li>
-        <li class="ins--n"><b>Narek</b> Jeudi, sortie à 16h50 : compatible avec le ping-pong de 18h30.</li>
+        <li class="ins--n"><b>Narek</b> Jeudi, sortie à 15h35 après l'EPS : le ping-pong de 18h30 est large.</li>
         <li class="ins--a"><b>Annie</b> Jeudi, sortie à 16h50 : piano 18h20 puis théâtre 19h15 → 21h30, la soirée est pleine.</li>
         <li class="ins--a"><b>Annie</b> Mercredi, cours jusqu'à 12h10 : solfège 16h30 puis flûte 18h00.</li>
         <li><b>Samedi</b> Aucun cours pour les deux : ping-pong 11h30 et danse 17h00 sans contrainte.</li>
@@ -1252,60 +1252,55 @@ svg{display:block}
 
   var PUPILS = {
     narek: {
-      nom: 'Narek', classe: '5C', regime: 'Externe libre — pas de repas au collège',
+      nom: 'Narek', classe: '5F', regime: 'Externe libre — pas de repas au collège',
       jours: {
         Lundi: [
-          [0, 'V', 'Français', 'Laurencin M.', '110'],
-          [1, 'R', 'Éd. musicale', 'Bourelly E.', '202 – Musique'],
-          [1, 'V', 'Espagnol LV2', 'Alva Medina M.', '203 – SVT'],
-          [2, 'RV', 'Physique-chimie', 'Issid A.', '205 – PC'],
-          [3, 'R', 'Espagnol LV2', 'Alva Medina M.', '110'],
-          [3, 'V', 'Mathématiques', 'Foerster F.', '102 – Techno'],
-          [4, 'R', 'Français', 'Laurencin M.', '110'],
-          [4, 'V', 'Éd. musicale', 'Bourelly E.', '202 – Musique'],
-          [5, 'V', 'Français', 'Laurencin M.', '110'],
-          [6, 'V', 'Technologie', 'Hammachi R.', '102 – Techno']
+          [0, 'R', 'Français', 'Zarhouni A.', '219'],
+          [1, 'R', 'Français', 'Zarhouni A.', '219'],
+          [1, 'V', 'Anglais LV1', 'Ez-Zaidi A.', '215'],
+          [2, 'RV', 'Éd. musicale', 'Bourelly E.', '202 – Musique'],
+          [3, 'R', 'Physique-chimie', 'Issid A.', '205 – PC'],
+          [3, 'V', 'Mathématiques', 'Saugnac I.', '111'],
+          [4, 'RV', 'Histoire-géo', 'Joseph-Monrose O.', '207'],
+          [5, 'RV', 'Allemand LV2', 'Lejeune Y.', '208']
         ],
         Mardi: [
-          [0, 'R', 'Anglais LV1', 'Jegou M.', '207'],
-          [0, 'V', 'Mathématiques', 'Foerster F.', '102 – Techno'],
-          [1, 'R', 'Français', 'Laurencin M.', '110'],
-          [1, 'V', 'Espagnol LV2', 'Alva Medina M.', '104 – Techno'],
-          [2, 'R', 'Technologie', 'Hammachi R.', '102 – Techno'],
-          [2, 'V', 'SVT', 'Dostert N.', '203 – SVT'],
-          [3, 'R', 'Espagnol LV2', 'Alva Medina M.', '209'],
-          [3, 'V', 'Anglais LV1', 'Jegou M.', '207'],
-          [4, 'RV', 'Histoire-géo', 'Burret V.', '111'],
-          [5, 'R', 'Français', 'Laurencin M.', '110'],
-          [6, 'R', 'Espagnol LV2', 'Alva Medina M.', '209']
+          [0, 'R', 'Allemand LV2', 'Lejeune Y.', '208'],
+          [0, 'V', 'Français', 'Zarhouni A.', '219'],
+          [1, 'RV', 'Mathématiques', 'Saugnac I.', '213'],
+          [2, 'R', 'Anglais LV1', 'Ez-Zaidi A.', '215'],
+          [2, 'V', 'Mathématiques', 'Saugnac I.', '213'],
+          [3, 'R', 'Histoire-géo', 'Joseph-Monrose O.', '001'],
+          [3, 'V', 'Français', 'Zarhouni A.', '219'],
+          [4, 'R', 'Français', 'Zarhouni A.', '219'],
+          [4, 'V', 'Anglais LV1', 'Ez-Zaidi A.', '215'],
+          [5, 'R', 'Mathématiques', 'Saugnac I.', '213'],
+          [5, 'V', 'Histoire-géo', 'Joseph-Monrose O.', '104 – Techno'],
+          [6, 'V', 'SVT', 'Dostert N.', '203 – SVT']
         ],
-        Mercredi: [
-          [0, 'RV', 'EPS', 'Pourre M.', '', 2],
-          [2, 'R', 'Anglais LV1', 'Jegou M.', '207'],
-          [2, 'V', 'Mathématiques', 'Foerster F.', '102 – Techno'],
-          [3, 'R', 'Mathématiques', 'Foerster F.', '102 – Techno'],
-          [3, 'V', 'Physique-chimie', 'Issid A.', '205 – PC']
-        ],
+        Mercredi: [],
         Jeudi: [
-          [0, 'V', 'Français', 'Laurencin M.', '110'],
-          [1, 'R', 'Anglais LV1', 'Jegou M.', '207'],
-          [1, 'V', 'Mathématiques', 'Foerster F.', '205 – PC'],
-          [2, 'RV', 'Arts plastiques', 'Khatchikian A.', '201 – Arts pla', 2],
-          [4, 'R', 'Français', 'Laurencin M.', '110'],
-          [4, 'V', 'SVT', 'Dostert N.', '203 – SVT'],
-          [5, 'R', 'Français', 'Laurencin M.', '110'],
-          [5, 'V', 'Anglais LV1', 'Jegou M.', '207'],
-          [6, 'RV', 'Histoire-géo', 'Burret V.', '111']
+          [0, 'R', 'Technologie', 'Hammachi R.', '102 – Techno'],
+          [0, 'V', 'Anglais LV1', 'Ez-Zaidi A.', '215'],
+          [1, 'R', 'Français', 'Zarhouni A.', '219'],
+          [1, 'V', 'Histoire-géo', 'Joseph-Monrose O.', '212'],
+          [2, 'R', 'Anglais LV1', 'Ez-Zaidi A.', '215'],
+          [3, 'R', 'Histoire-géo', 'Joseph-Monrose O.', '207'],
+          [3, 'V', 'Français', 'Zarhouni A.', '210'],
+          [4, 'RV', 'EPS', 'Saadi Y.', '', 2]
         ],
         Vendredi: [
-          [0, 'R', 'SVT', 'Dostert N.', '203 – SVT'],
-          [0, 'V', 'Technologie', 'Hammachi R.', '102 – Techno'],
-          [1, 'R', 'Histoire-géo', 'Burret V.', '111'],
-          [1, 'V', 'Anglais LV1', 'Jegou M.', '207'],
-          [2, 'R', 'Français', 'Laurencin M.', '111'],
-          [2, 'V', 'Mathématiques', 'Foerster F.', '205 – PC'],
-          [3, 'R', 'Mathématiques', 'Foerster F.', '106'],
-          [3, 'V', 'Histoire-géo', 'Burret V.', '111']
+          [0, 'R', 'Anglais LV1', 'Ez-Zaidi A.', '215'],
+          [0, 'V', 'Mathématiques', 'Saugnac I.', '211'],
+          [1, 'R', 'SVT', 'Dostert N.', '203 – SVT'],
+          [1, 'V', 'Français', 'Zarhouni A.', '219'],
+          [2, 'RV', 'Allemand LV2', 'Lejeune Y.', '208'],
+          [3, 'R', 'Mathématiques', 'Saugnac I.', '207'],
+          [3, 'V', 'Technologie', 'Hammachi R.', '102 – Techno'],
+          [4, 'R', 'Technologie', 'Hammachi R.', '102 – Techno'],
+          [4, 'V', 'SVT', 'Dostert N.', '203 – SVT'],
+          [5, 'RV', 'Physique-chimie', 'Issid A.', '205 – PC'],
+          [6, 'R', 'Français', 'Zarhouni A.', '219']
         ]
       }
     },
@@ -1709,7 +1704,7 @@ svg{display:block}
 
   // ---------- Enfants ----------
   var ENFANTS = {
-    narek: { nom: 'Narek', naissance: '2014-10-19', classe: '5C', initiale: 'N',
+    narek: { nom: 'Narek', naissance: '2014-10-19', classe: '5F', initiale: 'N',
              resume: '2 activités sportives', total: '665 €' },
     annie: { nom: 'Annie', naissance: '2012-07-18', classe: '3F', initiale: 'A',
              resume: 'théâtre, danse et musique', total: '~ 990 €' }
