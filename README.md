@@ -72,10 +72,16 @@ semaines de la semaine en cours jusqu'à celle du lundi 26 juillet 2027
 
 Les vacances scolaires de la **zone C** (Créteil, Paris, Versailles) sont
 inscrites dans `VACANCES`, d'après le calendrier officiel 2026-2027 : chaque
-période y va du premier au dernier jour sans classe. Les semaines concernées
-portent une pastille dans la liste, un pont signale les jours qu'il couvre
-(`joursDeVacances`), la recherche par date le mentionne, et un troisième encart
-annonce les vacances en cours ou les prochaines.
+période y va du premier au dernier jour sans classe. Une carte les montre toutes
+d'un coup (`renderVacances`) avec, pour chacune, ses dates, la reprise et les
+semaines de garde qu'elle recouvre — celle en cours et la suivante y sont
+signalées. Les semaines concernées portent aussi une pastille dans la liste, un
+pont précise les jours qu'il couvre (`joursDeVacances`) et la recherche par date
+nomme la période.
+
+Pendant les vacances, l'onglet Collège ouvre sur un encadré qui l'annonce et
+donne la date de reprise (`renderVacancesCollege`) ; la page ne défile alors pas
+jusqu'au jour, pour ne pas passer par-dessus.
 
 Le relais se faisant le vendredi soir, un bloc va **du vendredi soir au vendredi
 soir** : il commence par le week-end, puis couvre la semaine de classe. Un jour
@@ -140,4 +146,5 @@ la source.
   autres que Google Fonts sont bloquées à la publication.
 - Aucune dépendance JavaScript externe.
 - Thèmes clair et sombre pilotés par variables CSS.
-- Feuille de style d'impression : toutes les sections sont imprimées.
+- Feuille de style d'impression : toutes les sections sont imprimées (par la
+  commande d'impression du navigateur — la page n'a pas de bouton dédié).
