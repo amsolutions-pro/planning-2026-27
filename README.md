@@ -9,8 +9,8 @@ des créneaux. Seul le ping-pong reste à arbitrer : on coche les créneaux rete
 — plusieurs sont possibles — et les autres disparaissent de la semaine type et
 des journées superposées. Les choix sont conservés dans le `localStorage` du
 navigateur, donc propres à chaque appareil. Les créneaux de musique sont
-arrêtés : solfège mercredi 16h30, flûte mercredi 18h00, piano jeudi 18h20, puis
-théâtre jeudi 19h15 → 21h30.
+arrêtés : solfège mercredi 16h30, flûte mercredi 18h00 → 18h20, piano jeudi
+18h20 → 18h40, puis théâtre jeudi 19h15 → 21h30.
 
 L'onglet « Collège » propose deux vues : la grille des cours, et « Journées
 superposées », où les jours sont en colonnes et le temps en vertical. L'échelle
