@@ -162,6 +162,14 @@ donc maintenant de son contenu (`id_signature`), la même des deux côtés ; les
 numéros PRONOTE de toutes ses copies restent à part, dans `ids_pronote`, pour le
 marquage en « lu ».
 
+Changer cette identité change le format publié, d'où le numéro `version` que le
+fichier annonce **en clair**, hors du chiffrement (`VERSION_FICHIER`). Un onglet
+laissé ouvert plusieurs jours tourne sur le JavaScript que le navigateur a mis en
+cache : s'il est plus vieux que le fichier, il lirait de travers ce que le robot
+publie et perdrait les « Vu » sans dire pourquoi. Il l'annonce donc, et propose
+de se recharger — sur une adresse neuve, sinon le navigateur resservirait la même
+page périmée.
+
 Par défaut, elle s'arrête là. Une fois la page **reliée à GitHub**, le même clic
 passe aussi la discussion ou l'information en **lu sur PRONOTE** — de quoi ne
 plus accumuler dans la messagerie du collège ce qu'on a déjà lu ici.

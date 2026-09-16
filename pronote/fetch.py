@@ -62,6 +62,13 @@ MESSAGES_JOURS = 21
 MAX_DETAILS = 15
 
 ITERATIONS_KDF = 200_000
+# Numéro du format publié, lisible sans le mot de passe : une page restée
+# ouverte s'en sert pour voir qu'elle est plus vieille que le fichier, et
+# proposer de se recharger plutôt que de le lire de travers.
+#   1 : premier format
+#   2 : l'identité d'une communication vient de son contenu, plus de son
+#       numéro chez PRONOTE, qui diffère d'un enfant à l'autre
+VERSION_FICHIER = 2
 
 MOTS_CONTROLE = (
     "contrôle", "controle", "évaluation", "evaluation", "interro", "devoir surveillé",
@@ -352,7 +359,7 @@ class Collecte:
         recent = sorted((a for a in self.actualites.values() if a["horizon"] != "avenir"), key=cle, reverse=True)
         liste = avenir + recent
         return {
-            "version": 1,
+            "version": VERSION_FICHIER,
             # À la seconde : la page s'en sert pour reconnaître un passage
             # qu'elle a elle-même demandé, même s'il n'a rien trouvé de neuf.
             "mis_a_jour_le": self.maintenant.isoformat(timespec="seconds"),
@@ -755,7 +762,8 @@ def empreinte(donnees: dict) -> str:
 
 def enveloppe(donnees: dict, passphrase: str | None) -> dict:
     texte = json.dumps(donnees, ensure_ascii=False, separators=(",", ":"))
-    base = {"version": 1, "empreinte": empreinte(donnees), "mis_a_jour_le": donnees["mis_a_jour_le"]}
+    base = {"version": VERSION_FICHIER, "empreinte": empreinte(donnees),
+            "mis_a_jour_le": donnees["mis_a_jour_le"]}
     if not passphrase:
         return {**base, "chiffre": False, "donnees": donnees}
 
