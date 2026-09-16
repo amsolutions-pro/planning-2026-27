@@ -46,6 +46,8 @@ class FauxClient:
     # -- interface pronotepy
 
     def set_child(self, enfant) -> None:
+        if isinstance(enfant, str):
+            enfant = next(c for c in self.children if c.name == enfant)
         self._courant = enfant
 
     @property

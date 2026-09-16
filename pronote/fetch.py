@@ -23,6 +23,7 @@ import base64
 import datetime as dt
 import hashlib
 import json
+import logging
 import os
 import pathlib
 import re
@@ -31,6 +32,7 @@ import unicodedata
 import uuid as uuidlib
 from zoneinfo import ZoneInfo
 
+log = logging.getLogger("pronote.fetch")
 PARIS = ZoneInfo("Europe/Paris")
 ICI = pathlib.Path(__file__).resolve().parent
 SORTIE = ICI / "actualites.json"
@@ -140,16 +142,36 @@ def prochain_jour_de_classe(jour: dt.date) -> dt.date:
 
 # ---------------------------------------------------------------- connexion
 
-def connexion(env: dict = os.environ):
+def classe_client():
     import pronotepy
 
+    class ClientParent(pronotepy.ParentClient):
+        """Quand pronotepy rouvre la session après une erreur, il revient au profil
+        parent : on remet l'enfant en cours, sinon toutes les lectures suivantes
+        portent sur le mauvais profil."""
+
+        def refresh(self) -> None:
+            nom = self._selected_child.name if getattr(self, "_selected_child", None) else None
+            super().refresh()
+            self.children = [
+                pronotepy.dataClasses.ClientInfo(self, c)
+                for c in self.parametres_utilisateur["dataSec"]["data"]["ressource"]["listeRessources"]
+            ]
+            if nom:
+                self.set_child(nom)
+
+    return ClientParent
+
+
+def connexion(env: dict = os.environ):
+    ClientParent = classe_client()
     jeton = env.get("PRONOTE_TOKEN_JSON", "").strip()
     pin = env.get("PRONOTE_PIN", "").strip() or None
     appareil = env.get("PRONOTE_DEVICE_NAME", "").strip() or "Planning famille"
 
     if jeton:
         creds = json.loads(jeton)
-        client = pronotepy.ParentClient.token_login(
+        client = ClientParent.token_login(
             pronote_url=creds["pronote_url"],
             username=creds["username"],
             password=creds["password"],
@@ -168,7 +190,7 @@ def connexion(env: dict = os.environ):
             "Identifiants manquants : définir PRONOTE_TOKEN_JSON, ou "
             "PRONOTE_USERNAME et PRONOTE_PASSWORD (voir README)."
         )
-    client = pronotepy.ParentClient(
+    client = ClientParent(
         url,
         username=utilisateur,
         password=mot_de_passe,
@@ -182,8 +204,9 @@ def connexion(env: dict = os.environ):
 # ---------------------------------------------------------------- collecte
 
 class Collecte:
-    def __init__(self, client, maintenant: dt.datetime) -> None:
+    def __init__(self, client, maintenant: dt.datetime, reconnecter=None) -> None:
         self.client = client
+        self.reconnecter = reconnecter
         self.maintenant = maintenant
         self.aujourdhui = maintenant.date()
         self.erreurs: list[str] = []
@@ -211,16 +234,13 @@ class Collecte:
                 except Exception:  # propriété absente selon les versions
                     etablissement = ""
             self.enfants.append(enfant)
-            self.client.set_child(info)
+            self.client.set_child(info.name)
             for nom, collecteur in (
                 ("devoirs", self.devoirs), ("cours", self.cours), ("notes", self.notes),
                 ("vie scolaire", self.vie_scolaire), ("informations", self.informations),
                 ("messages", self.messages),
             ):
-                try:
-                    collecteur(enfant)
-                except Exception as e:  # une source en panne ne doit pas tout bloquer
-                    self.erreurs.append(f"{enfant['nom']} · {nom} : {type(e).__name__} : {court(str(e), 160)}")
+                self.lire(enfant, nom, collecteur)
 
         cle = lambda a: (a["date"] or "", a.get("heure") or "")
         avenir = sorted((a for a in self.actualites.values() if a["horizon"] == "avenir"), key=cle)
@@ -242,6 +262,28 @@ class Collecte:
             "actualites": liste,
             "erreurs": self.erreurs,
         }
+
+    def lire(self, enfant: dict, nom: str, collecteur) -> None:
+        """Une source en panne ne bloque pas les autres ; PRONOTE ferme parfois la
+        session en cours de route (« La page a expiré ») : on en rouvre une
+        neuve et on réessaie une fois."""
+        try:
+            collecteur(enfant)
+            return
+        except Exception as e:
+            premiere = f"{type(e).__name__} : {court(str(e), 160)}"
+            log.warning("%s · %s : %s", enfant["nom"], nom, premiere)
+        if not self.reconnecter:
+            self.erreurs.append(f"{enfant['nom']} · {nom} : {premiere}")
+            return
+        try:
+            log.info("nouvelle session pour réessayer %s · %s", enfant["nom"], nom)
+            self.client = self.reconnecter()
+            self.client.set_child(enfant["nom_complet"])
+            collecteur(enfant)
+        except Exception as e:
+            self.erreurs.append(
+                f"{enfant['nom']} · {nom} : {premiere} ; après reconnexion : {type(e).__name__} : {court(str(e), 160)}")
 
     def ajoute(self, enfant: dict, item: dict) -> None:
         existant = self.actualites.get(item["id"])
@@ -638,7 +680,11 @@ def main(argv: list[str] | None = None) -> int:
 
     passphrase = None if args.clair else (args.passphrase or os.environ.get("PRONOTE_SITE_PASSPHRASE") or None)
     maintenant = dt.datetime.now(PARIS)
+    # Le journal de pronotepy dit ce que PRONOTE répond ; GitHub masque les secrets.
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s : %(message)s", stream=sys.stderr)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+    reconnecter = None
     if args.exemple:
         from exemple import FauxClient
         client, mode = FauxClient(maintenant), "exemple"
@@ -647,6 +693,8 @@ def main(argv: list[str] | None = None) -> int:
         if not getattr(client, "logged_in", True):
             print("Connexion refusée par PRONOTE (identifiants ?).", file=sys.stderr)
             return 2
+        if mode == "mot de passe":
+            reconnecter = lambda: connexion()[0]
     print(f"Connexion : {mode} · {len(client.children)} enfant(s)")
 
     # Le jeton a déjà tourné à la connexion : on le sauve avant tout le reste.
@@ -655,7 +703,7 @@ def main(argv: list[str] | None = None) -> int:
             json.dumps(client.export_credentials()), encoding="utf-8")
         print("Nouveau jeton écrit (à remettre dans le secret PRONOTE_TOKEN_JSON).")
 
-    donnees = Collecte(client, maintenant).tout()
+    donnees = Collecte(client, maintenant, reconnecter).tout()
 
     change = ecrire(donnees, args.sortie, passphrase, args.forcer)
     print(("Écrit" if change else "Inchangé") + f" : {args.sortie}" + (" (chiffré)" if passphrase else " (en clair)"))
