@@ -105,6 +105,21 @@ def tentatives(s: "Serveur", actu: dict):
     ]
 
 
+def compte_frais(enfant) -> int:
+    """Recompte dans une session neuve.
+
+    Les cinq tours précédents recomptaient dans la session qui venait d'écrire :
+    si PRONOTE y sert une liste figée, ils étaient aveugles. Une reconnexion
+    lève le doute — c'est cher, mais c'est la seule mesure qui vaille.
+    """
+    client, _ = fetch.connexion()
+    client.set_child(enfant.name)
+    brut = client.post("PageActualites", 8, {"modesAffActus": {"_T": 26, "V": "[0..3]"}})
+    entrees = [a for liste in brut["dataSec"]["data"]["listeModesAff"]
+               for a in liste["listeActualites"]["V"]]
+    return len([a for a in entrees if not a.get("lue")])
+
+
 def epreuve(s: "Serveur", enfant) -> bool:
     s.choisir(enfant)
     non_lues = s.non_lues()
@@ -112,30 +127,33 @@ def epreuve(s: "Serveur", enfant) -> bool:
     if not non_lues:
         print(f"  {nom} : aucune information non lue")
         return True
-    # Un sondage se « lit » peut-être en y répondant : on prend d'abord une
-    # information ordinaire, plus représentative de ce qu'on veut marquer.
     cible = next((a for a in non_lues if not a.get("estSondage")), non_lues[0])
     avant = len(non_lues)
     public = (cible.get("public") or {}).get("V") or {}
     print(f"  {nom} : {avant} non lue(s) · cible {fetch.hachage(cible['N'])}"
-          f" · sondage {bool(cible.get('estSondage'))}"
           f" · genrePublic {cible.get('genrePublic')} · public G={public.get('G')}")
 
-    for nom_essai, faire in tentatives(s, cible):
+    essais = [
+        ("saisie, descripteur annoncé", lambda: s.saisir({"N": cible["N"], **s.descripteur(cible), "lue": True})),
+        ("ouvrir le détail", lambda: s.ouvrir(cible)),
+        ("saisie, public = enfant G=4", lambda: s.saisir(
+            {"N": cible["N"], "validationDirecte": True, "genrePublic": 4,
+             "public": {"N": enfant.id, "G": 4}, "lue": True})),
+    ]
+    for nom_essai, faire in essais:
         try:
             faire()
             etat = "posté"
         except Exception as e:
             etat = f"refusé ({type(e).__name__} {fetch.court(str(e), 60)})"
-        reste = len(s.non_lues())
-        pris = reste < avant
-        print(f"    {nom_essai:<30} → {etat:<40} {avant} → {reste} "
+        meme = len(s.non_lues())
+        frais = compte_frais(enfant)
+        pris = frais < avant
+        print(f"    {nom_essai:<28} → {etat:<24} même session {meme} · session neuve {frais} "
               + ("✔ PRIS" if pris else "✗"))
         if pris:
-            remis = s.saisir({"N": cible["N"], **s.descripteur(cible), "lue": False})
-            retour = len(s.non_lues())
-            print(f"    remise en non lue → {retour}"
-                  + ("  ✔ restitué" if retour == avant else "  ⚠ NON RESTITUÉ — à revoir"))
+            s.saisir({"N": cible["N"], **s.descripteur(cible), "lue": False})
+            print(f"    remise en non lue → session neuve {compte_frais(enfant)} (départ {avant})")
             return True
     return False
 
