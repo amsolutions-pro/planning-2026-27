@@ -6,6 +6,7 @@ import pathlib
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
@@ -17,6 +18,52 @@ MAINTENANT = dt.datetime(2026, 9, 16, 10, 0, tzinfo=fetch.PARIS)  # un mercredi
 
 def collecte():
     return fetch.Collecte(FauxClient(MAINTENANT), MAINTENANT).tout()
+
+
+def id_message(ancre):
+    """Les discussions n'ont pas d'identifiant : le nôtre vient du message d'ancrage."""
+    return "message:" + fetch.id_discussion(SimpleNamespace(_participants_message_id=ancre))
+
+
+class ConformitePronotepy(unittest.TestCase):
+    """Le faux client ne doit exposer que ce que pronotepy expose vraiment.
+
+    Sans ce garde-fou, `Discussion.id` — qui n'existe pas — est passé au travers
+    des tests et n'a échoué que devant le vrai serveur.
+    """
+
+    def setUp(self):
+        try:
+            import pronotepy.dataClasses as dc
+        except ImportError:  # pragma: no cover
+            self.skipTest("pronotepy n'est pas installé")
+        self.dc = dc
+        self.client = FauxClient(MAINTENANT)
+
+    def test_discussion_na_pas_d_identifiant(self):
+        self.assertNotIn("id", dir(self.dc.Discussion))
+
+    def test_attributs_connus_de_pronotepy(self):
+        periode = self.client.current_period
+        cas = [
+            ("enfant", self.client.children, self.dc.ClientInfo),
+            ("discussion", self.client.discussions(), self.dc.Discussion),
+            ("information", self.client.information_and_surveys(), self.dc.Information),
+            ("devoir", self.client.homework(MAINTENANT.date(), MAINTENANT.date() + dt.timedelta(days=30)),
+             self.dc.Homework),
+            ("cours", self.client.lessons(MAINTENANT.date(), MAINTENANT.date()), self.dc.Lesson),
+            ("note", periode.grades, self.dc.Grade),
+            ("moyenne", periode.averages, self.dc.Average),
+            ("absence", periode.absences, self.dc.Absence),
+            ("retard", periode.delays, self.dc.Delay),
+            ("punition", periode.punishments, self.dc.Punishment),
+            ("période", [periode], self.dc.Period),
+        ]
+        for nom, objets, classe in cas:
+            permis = set(dir(classe))
+            for objet in objets:
+                inconnus = {a for a in vars(objet) if not a.startswith("_")} - permis
+                self.assertFalse(inconnus, f"{nom} : {sorted(inconnus)} n'existe pas sur {classe.__name__}")
 
 
 class Utilitaires(unittest.TestCase):
@@ -104,20 +151,20 @@ class Classement(unittest.TestCase):
 
     def test_partage_entre_enfants(self):
         self.assertEqual(self.par_id["info:i2"]["enfants"], ["narek", "annie"])
-        self.assertEqual(self.par_id["message:m1"]["enfants"], ["narek", "annie"])
-        self.assertEqual(self.par_id["message:m1"]["niveau"], "important")
-        self.assertEqual(self.par_id["message:m2"]["niveau"], "info")
+        self.assertEqual(self.par_id[id_message("m1")]["enfants"], ["narek", "annie"])
+        self.assertEqual(self.par_id[id_message("m1")]["niveau"], "important")
+        self.assertEqual(self.par_id[id_message("m2")]["niveau"], "info")
 
     def test_meme_message_sous_deux_identifiants(self):
         """Le collège écrit aux deux enfants : une seule nouvelle, un seul clic."""
         client = FauxClient(MAINTENANT)
-        client._donnees["E2"]["discussions"][0].id = "m1-bis"
+        client._donnees["E2"]["discussions"][0]._participants_message_id = "m1-bis"
         donnees = fetch.Collecte(client, MAINTENANT).tout()
         messages = [a for a in donnees["actualites"] if a["type"] == "message"]
-        fusionne = [a for a in messages if a["id"] == "message:m1"][0]
+        fusionne = [a for a in messages if a["id"] == id_message("m1")][0]
         self.assertEqual(len(messages), 3)
         self.assertEqual(fusionne["enfants"], ["narek", "annie"])
-        self.assertEqual(fusionne["ids_pronote"], ["message:m1", "message:m1-bis"])
+        self.assertEqual(fusionne["ids_pronote"], [id_message("m1"), id_message("m1-bis")])
 
     def test_devoirs_jamais_fusionnes(self):
         """Deux devoirs de même intitulé restent deux devoirs."""
@@ -126,8 +173,8 @@ class Classement(unittest.TestCase):
 
     def test_message_lu_mais_a_traiter(self):
         """Une discussion lue qui parle d'autorisation reste importante."""
-        self.assertEqual(self.par_id["message:m3"]["niveau"], "important")
-        self.assertEqual(self.par_id["message:m3"]["raison"], "Mention « sortie »")
+        self.assertEqual(self.par_id[id_message("m3")]["niveau"], "important")
+        self.assertEqual(self.par_id[id_message("m3")]["raison"], "Mention « sortie »")
 
     def test_ordre(self):
         horizons = [a["horizon"] for a in self.donnees["actualites"]]

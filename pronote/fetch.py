@@ -146,6 +146,22 @@ def note_sur_20(note: str, bareme: str) -> float | None:
     return round(n / b * 20, 2)
 
 
+def id_discussion(d) -> str:
+    """Fabrique un identifiant pour une discussion, qui n'en expose pas.
+
+    `Discussion` n'a pas d'attribut `id` — à la différence des messages et des
+    informations. On s'appuie sur le message qui ancre la discussion, stable
+    d'un passage à l'autre, avec deux replis si pronotepy change de structure.
+    """
+    ancre = getattr(d, "_participants_message_id", None)
+    if not ancre:
+        possessions = getattr(d, "_possessions", None) or []
+        ancre = "-".join(str(p.get("N", "")) for p in possessions if isinstance(p, dict))
+    if not ancre:
+        ancre = f"{getattr(d, 'subject', '')}|{getattr(d, 'creator', '')}"
+    return hashlib.sha1(str(ancre).encode()).hexdigest()[:16]
+
+
 def prochain_jour_de_classe(jour: dt.date) -> dt.date:
     suivant = jour + dt.timedelta(days=1)
     while suivant.weekday() >= 5:  # samedi, dimanche
@@ -241,13 +257,13 @@ def marquer_lu(client, ids: list[str]) -> tuple[list[str], list[str]]:
         if not restants:
             break
         client.set_child(info.name)
-        for source, prefixe, marque in (
-            (lambda: client.discussions(only_unread=True), "message", lambda o: o.mark_as(True)),
-            (lambda: client.information_and_surveys(only_unread=True), "info", lambda o: o.mark_as_read(True)),
+        for source, prefixe, identifie, marque in (
+            (lambda: client.discussions(only_unread=True), "message", id_discussion, lambda o: o.mark_as(True)),
+            (lambda: client.information_and_surveys(only_unread=True), "info", lambda o: o.id, lambda o: o.mark_as_read(True)),
         ):
             try:
                 for objet in source():
-                    ident = f"{prefixe}:{objet.id}"
+                    ident = f"{prefixe}:{identifie(objet)}"
                     if ident in restants:
                         marque(objet)
                         restants.discard(ident)
@@ -647,7 +663,7 @@ class Collecte:
         for d in self.client.discussions():
             if "Trash" in (d.labels or []) or "Drafts" in (d.labels or []):
                 continue
-            ident = f"message:{d.id}"
+            ident = f"message:{id_discussion(d)}"
             if ident in self.connus:
                 self.rattache(enfant, self.connus[ident], ident)
                 continue

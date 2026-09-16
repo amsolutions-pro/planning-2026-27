@@ -14,8 +14,10 @@ def _o(**kw) -> NS:
     return NS(**kw)
 
 
-def _discussion(**kw) -> NS:
+def _discussion(ancre: str, **kw) -> NS:
+    """Comme pronotepy : une discussion n'a pas d'`id`, seulement un message d'ancrage."""
     o = NS(**kw)
+    o._participants_message_id = ancre
     o.mark_as = lambda lu, o=o: setattr(o, "unread", 0 if lu else 1)
     return o
 
@@ -154,7 +156,7 @@ class FauxClient:
                 generale="12,4", classe="12,9",
             )],
             "discussions": [
-                _discussion(id="m1", subject="Sortie au musée — autorisation", creator="M. MARTIN", unread=1, closed=False,
+                _discussion("m1", subject="Sortie au musée — autorisation", creator="M. MARTIN", unread=1, closed=False,
                    labels=[], messages=[
                        _o(author="M. MARTIN", created=m.replace(tzinfo=None) - dt.timedelta(hours=5),
                           content="Bonjour, merci de retourner l'autorisation signée avant vendredi."),
@@ -212,17 +214,17 @@ class FauxClient:
                 generale="13,7", classe="12,5",
             )],
             "discussions": [
-                _discussion(id="m1", subject="Sortie au musée — autorisation", creator="M. MARTIN", unread=1, closed=False,
+                _discussion("m1", subject="Sortie au musée — autorisation", creator="M. MARTIN", unread=1, closed=False,
                    labels=[], messages=[
                        _o(author="M. MARTIN", created=m.replace(tzinfo=None) - dt.timedelta(hours=5),
                           content="Bonjour, merci de retourner l'autorisation signée avant vendredi."),
                    ]),
-                _discussion(id="m3", subject="Voyage en Espagne — autorisation de sortie", creator="Direction",
+                _discussion("m3", subject="Voyage en Espagne — autorisation de sortie", creator="Direction",
                    unread=0, closed=False, labels=[], messages=[
                        _o(author="Direction", created=m.replace(tzinfo=None) - dt.timedelta(days=3),
                           content="Le dossier est à rapporter signé avant la fin du mois."),
                    ]),
-                _discussion(id="m2", subject="Absence en espagnol", creator=None, unread=0, closed=False,
+                _discussion("m2", subject="Absence en espagnol", creator=None, unread=0, closed=False,
                    labels=[], messages=[
                        _o(author=None, created=m.replace(tzinfo=None) - dt.timedelta(days=8),
                           content="Bonjour, Annie était chez le médecin."),
