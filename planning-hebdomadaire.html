@@ -877,6 +877,68 @@ svg{display:block}
   .ov-legend{order:-1}
 }
 
+/* ---------- actualités PRONOTE ---------- */
+/* L'important se reconnaît à trois signes : le filet ambre à gauche, l'étiquette
+   ambre et la raison en italique — jamais à la seule couleur. */
+.tab__badge{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;font-weight:600;
+  min-width:18px;height:18px;padding:0 5px;border-radius:99px;
+  display:inline-grid;place-items:center;background:var(--hold);color:var(--surface);
+}
+:root[data-theme="dark"] .tab__badge,
+:root:not([data-theme="light"]) .tab__badge{color:var(--ground)}
+.two-col--seul{grid-template-columns:1fr}
+.swatch--imp{background:var(--hold-bg);border-color:var(--hold)}
+.callout--actu{border-color:var(--line)}
+.callout--actu .callout__icon{color:var(--accent)}
+.callout--actu p{font-size:13.5px;color:var(--ink-soft)}
+.lien{background:none;border:0;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-decoration:underline}
+.actu-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.actu-form input[type="password"]{
+  font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;
+  background:var(--surface-2);color:var(--ink);min-width:200px;
+}
+.actu-form label{font-size:12px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+.actu-err{color:var(--annie);font-size:12.5px;margin-top:8px}
+.actu-groupe{display:flex;flex-direction:column;gap:8px}
+.actu-groupe h4{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);font-weight:600;
+}
+.actu{
+  display:flex;flex-direction:column;gap:4px;padding:9px 11px 9px 13px;
+  border:1px solid var(--line);border-left:3px solid var(--line);border-radius:8px;
+  background:var(--surface-2);
+}
+.actu--imp{border-left-color:var(--hold);background:var(--surface)}
+.actu__top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:11.5px;color:var(--muted)}
+.actu__tag{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 6px;border-radius:4px;white-space:nowrap;
+  background:var(--surface);color:var(--muted);border:1px solid var(--line);
+}
+.actu--imp .actu__tag{background:var(--hold-bg);color:var(--hold);border-color:var(--hold-line)}
+.actu .actu__tag--nouveau{background:var(--accent);color:var(--surface);border-color:transparent}
+:root[data-theme="dark"] .actu .actu__tag--nouveau,
+:root:not([data-theme="light"]) .actu .actu__tag--nouveau{color:var(--ground)}
+.actu .actu__tag--fait{background:var(--go-bg);color:var(--go);border-color:var(--go-line)}
+.actu__date{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.actu__title{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.3}
+.actu--fait .actu__title{color:var(--muted);font-weight:500}
+.actu__detail{font-size:12.5px;color:var(--ink-soft);overflow-wrap:anywhere}
+.actu__why{font-size:11.5px;color:var(--muted);font-style:italic}
+.actu-vide{font-size:13px;color:var(--muted);font-style:italic}
+.actu-moy summary{cursor:pointer;font-size:12.5px;color:var(--muted)}
+.actu-moy table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+.actu-moy td{padding:3px 0;border-bottom:1px dashed var(--line);color:var(--ink-soft)}
+.actu-moy td+td{text-align:right;font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+.actu-moy td+td b{color:var(--ink);font-weight:600}
+.actu-pied{font-size:12px;color:var(--muted)}
+.actu-pied p{font-size:12px}
+.actu-pied #actu-erreurs{color:var(--hold)}
+.card__head .total small{font-weight:400;color:var(--muted);font-size:11px}
+
 @media (prefers-reduced-motion:reduce){
   *{transition:none !important;animation:none !important}
 }
@@ -917,6 +979,8 @@ svg{display:block}
     <symbol id="i-dance" viewBox="0 0 24 24"><circle cx="13" cy="4.6" r="2.1"/><path d="M13 7v5.5M13 12.5 9.5 20M13 12.5 17 20M8 9.5l5 1 4.5-2.5"/></symbol>
     <symbol id="i-solfege" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/><circle cx="9" cy="14" r="2"/><path d="M11 14V7"/></symbol>
     <symbol id="i-relay" viewBox="0 0 24 24"><path d="M3 12h7l-2.5-2.5M21 12h-7l2.5 2.5"/><circle cx="12" cy="12" r="1.6"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><path d="M12 14.5v2.5"/></symbol>
   </defs>
 </svg>
 
@@ -934,6 +998,9 @@ svg{display:block}
   <nav class="tabs" role="tablist" aria-label="Sections du planning">
     <button class="tab" role="tab" id="tab-semaine" aria-controls="panel-semaine" aria-selected="true" onclick="showPanel('semaine')">
       <svg class="icon"><use href="#i-week"></use></svg> Semaine type
+    </button>
+    <button class="tab" role="tab" id="tab-actus" aria-controls="panel-actus" aria-selected="false" onclick="showPanel('actus')">
+      <svg class="icon"><use href="#i-bell"></use></svg> Actualités <span class="tab__badge" id="actu-badge" hidden></span>
     </button>
     <button class="tab" role="tab" id="tab-college" aria-controls="panel-college" aria-selected="false" onclick="showPanel('college')">
       <svg class="icon"><use href="#i-school"></use></svg> Collège
@@ -992,6 +1059,49 @@ svg{display:block}
           <li><span class="callout__hour">JEU 18:00</span> <span>Réunion collective du collège pour Annie, le 10 septembre <em>(info obtenue auprès d'autres parents)</em></span></li>
         </ul>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ ACTUALITÉS PRONOTE ============ -->
+  <section class="panel" id="panel-actus" role="tabpanel" aria-labelledby="tab-actus" hidden>
+    <div class="section-head">
+      <div>
+        <h2>Actualités PRONOTE</h2>
+        <p>Ce qui demande votre attention, enfant par enfant — et le reste en dessous.</p>
+      </div>
+      <div class="stats" id="actu-stats"></div>
+    </div>
+
+    <div class="filters" id="actu-filtres" hidden>
+      <span class="filters__label">Afficher</span>
+      <span id="actu-chips" style="display:contents"></span>
+      <span class="seg" style="margin-left:4px">
+        <button type="button" id="actu-vue-important" aria-pressed="true" onclick="setActuVue('important')">L’important</button>
+        <button type="button" id="actu-vue-tout" aria-pressed="false" onclick="setActuVue('tout')">Tout</button>
+      </span>
+      <div class="legend">
+        <span><i class="swatch swatch--imp"></i> Important</span>
+        <span><i class="swatch"></i> Le reste</span>
+      </div>
+    </div>
+
+    <div id="actu-etat" hidden></div>
+    <div class="two-col" id="actu-grid" hidden></div>
+
+    <div class="card tt-insights actu-pied" id="actu-pied" hidden>
+      <div class="act__foot">
+        <span id="actu-pied-texte"></span>
+        <span style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" type="button" id="actu-oublier" onclick="oublierMotDePasseActus()" hidden>
+            <svg class="icon"><use href="#i-lock"></use></svg> Oublier le mot de passe
+          </button>
+          <button class="btn" type="button" onclick="chargerActus()">
+            <svg class="icon"><use href="#i-swap"></use></svg> Actualiser
+          </button>
+        </span>
+      </div>
+      <p id="actu-regles"></p>
+      <p id="actu-erreurs" hidden></p>
     </div>
   </section>
 
@@ -1227,7 +1337,7 @@ svg{display:block}
 </main>
 
 <script>
-  var PANELS = ['semaine', 'college', 'activites', 'garde', 'budget'];
+  var PANELS = ['semaine', 'actus', 'college', 'activites', 'garde', 'budget'];
 
   function showPanel(id) {
     PANELS.forEach(function (p) {
@@ -1238,6 +1348,7 @@ svg{display:block}
       if (tab) tab.setAttribute('aria-selected', active ? 'true' : 'false');
     });
     majAujourdhui();
+    if (id === 'actus') marquerVisiteActus();
     try { localStorage.setItem('planning.panel', id); } catch (e) {}
   }
 
@@ -2412,6 +2523,292 @@ svg{display:block}
   document.addEventListener('scroll', majAujourdhui, { capture: true, passive: true });
   window.addEventListener('resize', majAujourdhui);
 
+  // ---------- Actualités PRONOTE ----------
+  // Le fichier pronote/actualites.json est produit par l'action « PRONOTE —
+  // actualités » (pronote/fetch.py). Le dépôt étant public, il est chiffré :
+  // on le déverrouille ici avec le mot de passe de la famille (WebCrypto), que
+  // le navigateur peut retenir. Les nouveautés depuis la dernière visite de
+  // l'onglet sont marquées « Nouveau ».
+  var ACTU_FICHIER = './pronote/actualites.json';
+  var ACTU_CLE = 'planning.actus.cle';
+  var ACTU_VISITE = 'planning.actus.visite';
+  var ACTU_TYPES = {
+    absence: 'Absence', retard: 'Retard', punition: 'Punition', cours: 'Cours',
+    controle: 'Contrôle', devoir: 'Devoir', note: 'Note', info: 'Info',
+    sondage: 'Sondage', message: 'Message'
+  };
+  var actu = { env: null, donnees: null, enfant: 'tous', vue: 'important', visitePrecedente: null };
+  try {
+    actu.visitePrecedente = localStorage.getItem(ACTU_VISITE);
+    actu.vue = localStorage.getItem('planning.actus.vue') === 'tout' ? 'tout' : 'important';
+    actu.enfant = localStorage.getItem('planning.actus.enfant') || 'tous';
+  } catch (e) {}
+
+  function echap(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function marquerVisiteActus() {
+    try { localStorage.setItem(ACTU_VISITE, new Date().toISOString()); } catch (e) {}
+  }
+
+  function actuEtat(html) {
+    var el = document.getElementById('actu-etat');
+    el.innerHTML = html || '';
+    el.hidden = !html;
+  }
+
+  function actuCallout(icone, titre, corps, extra) {
+    return '<div class="callout callout--actu"><span class="callout__icon"><svg class="icon"><use href="#' + icone + '"></use></svg></span>'
+      + '<div><h3>' + titre + '</h3><p>' + corps + '</p>' + (extra || '') + '</div></div>';
+  }
+
+  function chargerActus() {
+    actuEtat(actuCallout('i-clock', 'Chargement…', 'Lecture des dernières nouvelles PRONOTE.'));
+    fetch(ACTU_FICHIER, { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (env) {
+      actu.env = env;
+      if (!env.chiffre) { montrerActus(env.donnees); return; }
+      var cle = null;
+      try { cle = localStorage.getItem(ACTU_CLE); } catch (e) {}
+      if (!cle) { demanderMotDePasse(false); return; }
+      return dechiffrerActus(env, cle).then(montrerActus, function () { demanderMotDePasse(true); });
+    }).catch(function () {
+      actuEtat(actuCallout('i-alert', 'Pas encore de nouvelles',
+        'Le fichier des actualités n’est pas disponible : l’action « PRONOTE — actualités » n’a pas encore tourné, ou la page est ouverte hors ligne. La mise en place est décrite dans le README du dépôt.'));
+    });
+  }
+
+  function dechiffrerActus(env, mdp) {
+    if (!(window.crypto && crypto.subtle)) {
+      return Promise.reject(new Error('WebCrypto indisponible : ouvrir la page en https'));
+    }
+    var enc = new TextEncoder();
+    var b64 = function (s) {
+      var bin = atob(s), a = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+      return a;
+    };
+    return crypto.subtle.importKey('raw', enc.encode(mdp), 'PBKDF2', false, ['deriveKey'])
+      .then(function (base) {
+        return crypto.subtle.deriveKey(
+          { name: 'PBKDF2', salt: b64(env.kdf.sel), iterations: env.kdf.iterations, hash: 'SHA-256' },
+          base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+      })
+      .then(function (cle) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(env.iv) }, cle, b64(env.donnees)); })
+      .then(function (buf) { return JSON.parse(new TextDecoder().decode(buf)); });
+  }
+
+  function demanderMotDePasse(erreur) {
+    document.getElementById('actu-grid').hidden = true;
+    document.getElementById('actu-filtres').hidden = true;
+    document.getElementById('actu-pied').hidden = true;
+    actuEtat(actuCallout('i-lock', 'Actualités protégées',
+      'Les nouvelles PRONOTE sont chiffrées : saisissez le mot de passe de la famille. Il ne sert qu’à les lire ici et reste sur cet appareil.',
+      '<form class="actu-form" onsubmit="return deverrouillerActus(event)">'
+      + '<input type="password" id="actu-mdp" autocomplete="current-password" aria-label="Mot de passe" required>'
+      + '<button class="btn" type="submit"><svg class="icon"><use href="#i-lock"></use></svg> Déverrouiller</button>'
+      + '<label><input type="checkbox" id="actu-retenir" checked> Se souvenir sur cet appareil</label>'
+      + '</form>'
+      + '<p class="actu-err" id="actu-mdp-err"' + (erreur ? '' : ' hidden') + '>Mot de passe incorrect.</p>'));
+    var champ = document.getElementById('actu-mdp');
+    if (champ && !document.getElementById('panel-actus').hidden) champ.focus();
+  }
+
+  function deverrouillerActus(ev) {
+    ev.preventDefault();
+    var mdp = document.getElementById('actu-mdp').value;
+    var retenir = document.getElementById('actu-retenir').checked;
+    var err = document.getElementById('actu-mdp-err');
+    err.hidden = true;
+    dechiffrerActus(actu.env, mdp).then(function (d) {
+      if (retenir) { try { localStorage.setItem(ACTU_CLE, mdp); } catch (e) {} }
+      montrerActus(d);
+    }, function (e) {
+      err.textContent = /https/.test(String(e && e.message)) ? e.message : 'Mot de passe incorrect.';
+      err.hidden = false;
+    });
+    return false;
+  }
+
+  function oublierMotDePasseActus() {
+    try { localStorage.removeItem(ACTU_CLE); } catch (e) {}
+    actu.donnees = null;
+    demanderMotDePasse(false);
+  }
+
+  function suffixeEnfant(id) { return id === 'narek' ? 'n' : id === 'annie' ? 'a' : ''; }
+
+  function estNouveau(a) {
+    if (!actu.visitePrecedente || !a.signale_le) return false;
+    var vu = new Date(actu.visitePrecedente), quand = new Date(a.signale_le);
+    return !isNaN(vu) && !isNaN(quand) && quand > vu;
+  }
+
+  function montrerActus(d) {
+    actu.donnees = d;
+    var enfants = d.enfants || [];
+    if (enfants.map(function (e) { return e.id; }).indexOf(actu.enfant) === -1) actu.enfant = 'tous';
+
+    var chips = '<button class="chip" type="button" id="actu-chip-tous" onclick="setActuEnfant(\'tous\')">Les deux</button>';
+    enfants.forEach(function (e) {
+      var s = suffixeEnfant(e.id);
+      chips += '<button class="chip' + (s ? ' chip--' + s : '') + '" type="button" id="actu-chip-' + echap(e.id)
+        + '" onclick="setActuEnfant(\'' + echap(e.id) + '\')">' + echap(e.nom) + (e.classe ? ' · ' + echap(e.classe) : '') + '</button>';
+    });
+    document.getElementById('actu-chips').innerHTML = chips;
+
+    var importants = (d.actualites || []).filter(function (a) { return a.niveau === 'important'; }).length;
+    var badge = document.getElementById('actu-badge');
+    badge.textContent = importants;
+    badge.hidden = importants === 0;
+
+    document.getElementById('actu-oublier').hidden = !(actu.env && actu.env.chiffre);
+    document.getElementById('actu-pied-texte').innerHTML = 'Données PRONOTE du <b>' + echap(dateHeureFr(d.mis_a_jour_le))
+      + '</b> — le fichier n’est réécrit qu’à chaque nouveauté.' + (d.etablissement ? ' ' + echap(d.etablissement) + '.' : '');
+    document.getElementById('actu-regles').textContent = 'Est classé important : ' + ((d.regles && d.regles.important) || []).join(' · ') + '.';
+    var erreurs = document.getElementById('actu-erreurs');
+    erreurs.hidden = !(d.erreurs && d.erreurs.length);
+    erreurs.textContent = erreurs.hidden ? '' : 'Sources en erreur à la dernière collecte : ' + d.erreurs.join(' — ');
+
+    actuEtat('');
+    document.getElementById('actu-filtres').hidden = false;
+    document.getElementById('actu-pied').hidden = false;
+    renderActus();
+  }
+
+  function setActuEnfant(id) {
+    actu.enfant = id;
+    try { localStorage.setItem('planning.actus.enfant', id); } catch (e) {}
+    renderActus();
+  }
+
+  function setActuVue(v) {
+    actu.vue = v;
+    try { localStorage.setItem('planning.actus.vue', v); } catch (e) {}
+    renderActus();
+  }
+
+  function dateHeureFr(iso) {
+    if (!iso) return '?';
+    var d = new Date(iso);
+    if (isNaN(d)) return iso;
+    return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
+      + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // « aujourd'hui », « demain », « hier », sinon le jour en clair.
+  function libelleDateActu(iso, heure) {
+    if (!iso) return '';
+    var j = new Date(iso + 'T00:00:00'), n = new Date();
+    n.setHours(0, 0, 0, 0);
+    var ecart = Math.round((j - n) / 86400000), texte;
+    if (ecart === 0) texte = 'aujourd’hui';
+    else if (ecart === 1) texte = 'demain';
+    else if (ecart === -1) texte = 'hier';
+    else texte = j.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+    return texte + (heure ? ' · ' + heure : '');
+  }
+
+  function renderActuItem(a, nouveau) {
+    var cls = 'actu' + (a.niveau === 'important' ? ' actu--imp' : '') + (a.fait ? ' actu--fait' : '');
+    var tags = '<span class="actu__tag">' + echap(ACTU_TYPES[a.type] || a.type) + '</span>';
+    if (a.matiere && a.type !== 'note' && a.type !== 'devoir' && a.type !== 'controle' && a.type !== 'cours') tags += '<span>' + echap(a.matiere) + '</span>';
+    if (a.fait) tags += '<span class="actu__tag actu__tag--fait">fait</span>';
+    if (a.pieces_jointes) tags += '<span>' + a.pieces_jointes + ' pièce' + (a.pieces_jointes > 1 ? 's' : '') + ' jointe' + (a.pieces_jointes > 1 ? 's' : '') + '</span>';
+    if (a.auteur) tags += '<span>' + echap(a.auteur) + '</span>';
+    if (nouveau) tags += '<span class="actu__tag actu__tag--nouveau">Nouveau</span>';
+    return '<li class="' + cls + '">'
+      + '<div class="actu__top">' + tags + '<span class="actu__date" style="margin-left:auto">' + echap(libelleDateActu(a.date, a.heure)) + '</span></div>'
+      + '<div class="actu__title">' + echap(a.titre) + '</div>'
+      + (a.detail ? '<div class="actu__detail">' + echap(a.detail) + '</div>' : '')
+      + (a.raison && a.niveau === 'important' ? '<div class="actu__why">' + echap(a.raison) + '</div>' : '')
+      + '</li>';
+  }
+
+  function renderActuCarte(cle, titre, sousTitre, liste, enfant) {
+    var s = suffixeEnfant(cle);
+    var visibles = liste.filter(function (a) { return actu.vue === 'tout' || a.niveau === 'important'; });
+    var caches = liste.length - visibles.length;
+    var groupe = function (nom, items) {
+      if (!items.length) return '';
+      return '<div class="actu-groupe"><h4>' + nom + '</h4><ul style="display:flex;flex-direction:column;gap:8px">'
+        + items.map(function (a) { return renderActuItem(a, estNouveau(a)); }).join('') + '</ul></div>';
+    };
+    var corps = groupe('À venir', visibles.filter(function (a) { return a.horizon === 'avenir'; }))
+      + groupe('Ces derniers jours', visibles.filter(function (a) { return a.horizon !== 'avenir'; }));
+    if (!visibles.length) {
+      corps = '<p class="actu-vide">' + (liste.length
+        ? 'Rien d’important — ' + liste.length + ' nouvelle' + (liste.length > 1 ? 's' : '') + ' sans urgence. <button class="lien" type="button" onclick="setActuVue(\'tout\')">Tout voir</button>'
+        : 'Rien de nouveau.') + '</p>';
+    } else if (caches > 0) {
+      corps += '<p class="actu-vide">+ ' + caches + ' nouvelle' + (caches > 1 ? 's' : '') + ' sans urgence. <button class="lien" type="button" onclick="setActuVue(\'tout\')">Tout voir</button></p>';
+    }
+
+    var moyenne = '';
+    if (enfant && enfant.moyenne_generale) {
+      moyenne = '<span class="total" title="Moyenne générale">' + echap(enfant.moyenne_generale)
+        + (enfant.moyenne_classe ? ' <small>/ classe ' + echap(enfant.moyenne_classe) + '</small>' : '') + '</span>';
+    }
+    var moyennes = '';
+    if (enfant && enfant.moyennes && enfant.moyennes.length) {
+      moyennes = '<details class="actu-moy"><summary>Moyennes par matière' + (enfant.periode ? ' — ' + echap(enfant.periode) : '') + '</summary><table>'
+        + enfant.moyennes.map(function (m) {
+          return '<tr><td>' + echap(m.matiere) + '</td><td><b>' + echap(m.eleve) + '</b>' + (m.classe ? ' <span style="color:var(--muted)">· classe ' + echap(m.classe) + '</span>' : '') + '</td></tr>';
+        }).join('') + '</table></details>';
+    }
+
+    return '<div class="card' + (s ? ' card--' + s : '') + '">'
+      + '<div class="card__head"><div class="card__id">'
+      + (enfant ? '<span class="initial">' + echap(enfant.nom.charAt(0)) + '</span>' : '<span class="initial">·</span>')
+      + '<div><h3>' + echap(titre) + '</h3><p>' + echap(sousTitre) + '</p></div></div>' + moyenne + '</div>'
+      + '<div class="card__body">' + corps + moyennes + '</div></div>';
+  }
+
+  function renderActus() {
+    var d = actu.donnees;
+    if (!d) return;
+    var grille = document.getElementById('actu-grid');
+    var liste = d.actualites || [];
+    var enfants = d.enfants || [];
+
+    document.querySelectorAll('#actu-chips .chip').forEach(function (c) {
+      c.setAttribute('aria-pressed', c.id === 'actu-chip-' + actu.enfant ? 'true' : 'false');
+    });
+    document.getElementById('actu-vue-important').setAttribute('aria-pressed', actu.vue === 'important' ? 'true' : 'false');
+    document.getElementById('actu-vue-tout').setAttribute('aria-pressed', actu.vue === 'tout' ? 'true' : 'false');
+
+    var cartes = [];
+    if (actu.enfant === 'tous') {
+      enfants.forEach(function (e) {
+        var miens = liste.filter(function (a) { return a.enfants.length === 1 && a.enfants[0] === e.id; });
+        cartes.push(renderActuCarte(e.id, e.nom, e.classe ? 'Classe de ' + e.classe : '', miens, e));
+      });
+      var communs = liste.filter(function (a) { return a.enfants.length > 1; });
+      if (communs.length) cartes.push(renderActuCarte('tous', 'Pour les deux', 'Informations et messages du collège', communs, null));
+    } else {
+      var e = enfants.filter(function (x) { return x.id === actu.enfant; })[0];
+      var siens = liste.filter(function (a) { return a.enfants.indexOf(actu.enfant) !== -1; });
+      cartes.push(renderActuCarte(e.id, e.nom, e.classe ? 'Classe de ' + e.classe : '', siens, e));
+    }
+    grille.className = 'two-col' + (cartes.length === 1 ? ' two-col--seul' : '');
+    grille.innerHTML = cartes.join('');
+    grille.hidden = false;
+
+    var concernes = actu.enfant === 'tous' ? liste : liste.filter(function (a) { return a.enfants.indexOf(actu.enfant) !== -1; });
+    var nImp = concernes.filter(function (a) { return a.niveau === 'important'; }).length;
+    var nAvenir = concernes.filter(function (a) { return a.horizon === 'avenir'; }).length;
+    var nNouv = concernes.filter(estNouveau).length;
+    document.getElementById('actu-stats').innerHTML =
+      '<span class="stat"><b>' + nImp + '</b> important' + (nImp > 1 ? 's' : '') + '</span>'
+      + '<span class="stat"><b>' + nAvenir + '</b> à venir</span>'
+      + (nNouv ? '<span class="stat"><b>' + nNouv + '</b> depuis votre dernière visite</span>' : '');
+  }
+
   (function restore() {
     var panel = null, child = null;
     try {
@@ -2426,6 +2823,8 @@ svg{display:block}
     var vue = null;
     try { vue = localStorage.getItem('planning.vue'); } catch (e) {}
     setVue(vue === 'super' ? 'super' : 'grille');
+
+    chargerActus();
 
     // Ouverture : on amène le jour à l'écran s'il n'y est pas déjà. Le placement
     // a lieu dès la mise en page, puis une fois les polices prêtes (elles

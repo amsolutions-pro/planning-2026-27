@@ -92,12 +92,95 @@ une seule à ce jour : celle du 14 septembre 2026, deuxième semaine d'affilée 
 Papa pendant le déplacement de la mère. La ligne rappelle alors que l'emploi du
 temps du collège, lui, suit toujours la quinzaine.
 
+## Actualités PRONOTE
+
+L'onglet « Actualités » montre, enfant par enfant, ce que PRONOTE a de nouveau
+et sépare **l'important** du reste. PRONOTE n'a pas d'API publique : la page
+est statique et ne se connecte à rien. C'est l'action GitHub `pronote.yml` qui,
+toutes les deux heures en journée (lundi–samedi), lance `pronote/fetch.py` ;
+le script se connecte à l'espace Parents avec la bibliothèque non officielle
+[pronotepy](https://github.com/bain3/pronotepy), lit pour chaque enfant les
+devoirs (14 jours), l'emploi du temps (7 jours : cours annulés, professeur
+absent, contrôles annoncés), les notes et moyennes (30 jours), absences,
+retards et punitions (30 jours), les informations et sondages, la messagerie,
+puis écrit `pronote/actualites.json` — seulement s'il y a du nouveau — et
+redéploie le site.
+
+### Ce qui est classé important
+
+Absence ou retard **non justifié** ; punition ; cours annulé ou modifié ;
+contrôle annoncé (dans l'emploi du temps, ou un devoir qui mentionne
+« contrôle », « évaluation », « interro »…) ; devoir non fait pour le prochain
+jour de classe ; note en dessous de 10/20 ; sondage sans réponse ; message non
+lu ; information dont le titre ou le texte parle de réunion, sortie, voyage,
+autorisation, orientation, stage, conseil de classe, grève, rendez-vous… (liste
+`MOTS_INFO_IMPORTANTE` dans `fetch.py`). Tout le reste (devoirs courants, bonnes
+notes, informations lues) est visible avec « Tout ». La raison du classement
+est écrite en italique sous chaque nouvelle.
+
+Ce qui concerne les deux enfants (informations du collège, messagerie du compte
+parent) apparaît dans une carte « Pour les deux ». Les nouvelles apparues depuis
+la dernière ouverture de l'onglet, sur cet appareil, portent « Nouveau ».
+
+### Confidentialité
+
+Le dépôt est **public**. Le fichier est donc chiffré (AES-256-GCM, clé dérivée
+par PBKDF2 du secret `PRONOTE_SITE_PASSPHRASE`) ; la page demande ce mot de
+passe une fois et le garde dans le `localStorage` de l'appareil (bouton
+« Oublier le mot de passe » pour l'effacer). Le déchiffrement se fait dans le
+navigateur avec WebCrypto, donc en https (GitHub Pages l'est). Sans mot de
+passe, seuls l'horodatage et une empreinte du contenu sont lisibles.
+
+Les identifiants PRONOTE ne sont jamais dans le dépôt : ils vivent dans les
+secrets du dépôt (Settings → Secrets and variables → Actions), lus par l'action.
+Les journaux de l'action n'affichent aucun identifiant.
+
+### Mise en place (une fois)
+
+1. Sur votre ordinateur : `pip install -r pronote/requirements.txt`.
+2. Choisir la voie de connexion, en lançant `pronote/configurer.py` :
+   - **`--qr` (recommandé)** — sur PRONOTE, Mon compte → générer un QR code
+     pour l'application mobile, avec un code à 4 chiffres ; coller le contenu
+     du QR code dans le script. Il imprime le secret `PRONOTE_TOKEN_JSON`. Le
+     mot de passe du compte ne quitte pas votre ordinateur, et ce jeton se
+     révoque depuis PRONOTE (liste des appareils). Le jeton change à chaque
+     connexion : l'action le remet dans le secret elle-même, ce qui demande un
+     jeton GitHub à granularité fine (Settings → Developer settings →
+     Fine-grained tokens, ce dépôt, permission *Secrets : read and write*)
+     dans le secret `PRONOTE_SECRETS_PAT`.
+   - **`--mdp`** — identifiant et mot de passe de l'espace Parents, plus le code
+     PIN si la double authentification est activée. Le script imprime les
+     secrets à créer : `PRONOTE_URL`, `PRONOTE_USERNAME`, `PRONOTE_PASSWORD`,
+     `PRONOTE_PIN` (si besoin) et `PRONOTE_CLIENT_ID`, l'identifiant qui fait
+     reconnaître l'« appareil » aux connexions suivantes.
+3. Créer le secret `PRONOTE_SITE_PASSPHRASE` : le mot de passe que la page
+   demandera (à partager avec qui doit lire l'onglet).
+4. Lancer une fois l'action « PRONOTE — actualités » (onglet Actions → Run
+   workflow) : le fichier est créé, committé et le site redéployé.
+
+Sans configuration, l'onglet affiche simplement « Pas encore de nouvelles ».
+`python3 pronote/fetch.py --exemple --passphrase test` fabrique un fichier
+fictif pour voir l'onglet en local (servir le dossier en http, par exemple
+`python3 -m http.server`).
+
+### Limites
+
+pronotepy reproduit le protocole de l'application mobile ; un changement chez
+Index Éducation peut casser la collecte jusqu'à une mise à jour de la
+bibliothèque. Chaque source est lue indépendamment : si l'une échoue, les
+autres s'affichent et l'erreur est notée au bas de l'onglet (`erreurs` du JSON).
+L'action échoue — et GitHub prévient par courriel — si la connexion est refusée.
+Tests : `python3 -m unittest discover pronote`.
+
 ## Fichier
 
 - `planning-hebdomadaire.html` — source de la page, au format attendu par les
   Artifacts Claude : le fichier contient directement le `<title>`, les styles,
   le contenu et les scripts (l'enveloppe `<!doctype html><html><head><body>`
   est ajoutée à la publication).
+- `pronote/` — collecte PRONOTE : `fetch.py` (script), `configurer.py`
+  (préparation des secrets, en local), `exemple.py` (données fictives),
+  `test_fetch.py`, et `actualites.json` produit par l'action.
 
 ## Déploiement GitHub Pages
 

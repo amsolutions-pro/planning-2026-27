@@ -32,6 +32,10 @@ jobs:
           cp index.html .nojekyll site.webmanifest _site/
           cp favicon.ico favicon-16x16.png favicon-32x32.png _site/
           cp apple-touch-icon.png android-chrome-192x192.png android-chrome-512x512.png _site/
+          # Actualités PRONOTE (chiffrées), produites par pronote.yml — absentes tant qu'il n'a pas tourné.
+          if [ -f pronote/actualites.json ]; then
+            mkdir -p _site/pronote && cp pronote/actualites.json _site/pronote/
+          fi
 
       - uses: actions/upload-pages-artifact@v3
         with:
