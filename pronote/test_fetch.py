@@ -257,6 +257,14 @@ class Sortie(unittest.TestCase):
             self.assertEqual(fetch.memoire_precedente(chemin, "faux"), {})
             self.assertEqual(fetch.memoire_precedente(pathlib.Path(d) / "rien.json", "secret"), {})
 
+    def test_identites_comptees(self):
+        donnees = collecte()
+        ids = [a["id"] for a in donnees["actualites"]]
+        self.assertIn("pas de passage précédent", fetch.identites({}, donnees))
+        memoire = {i: "2026-09-16T09:00:00+02:00" for i in ids[1:]} | {"parti:1": "x"}
+        self.assertEqual(fetch.identites(memoire, donnees),
+                         f"  identités : {len(ids) - 1} gardée(s), 1 nouvelle(s), 1 disparue(s)")
+
     def test_ecrire_inchange(self):
         donnees = collecte()
         with tempfile.TemporaryDirectory() as d:
