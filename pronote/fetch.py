@@ -312,20 +312,42 @@ def ids_a_marquer(brut: str) -> list[str]:
     return propres
 
 
+def non_lus(client) -> str:
+    """Ce que PRONOTE compte encore de non-lus, enfant par enfant.
+
+    Des nombres, rien du contenu : le journal de l'action est public. Encadrant
+    le marquage, ils disent si PRONOTE l'a vraiment pris — le robot, lui, ne
+    sait que s'il a posté sans erreur.
+    """
+    bouts = []
+    for info in client.children:
+        try:
+            client.set_child(info.name)
+            d = len(list(client.discussions(only_unread=True)))
+            i = len(list(client.information_and_surveys(only_unread=True)))
+            bouts.append(f"{prenom(info.name)} {d} msg / {i} info")
+        except Exception as e:
+            bouts.append(f"{prenom(info.name)} ? ({type(e).__name__})")
+    return " · ".join(bouts)
+
+
 def marquer_lu(client, ids: list[str]) -> tuple[list[str], list[str]]:
     """Passe en « lu » sur PRONOTE les discussions et informations demandées.
 
     La page envoie des identités, pas des numéros PRONOTE : ceux du fichier
     viennent d'une session passée et ne désignent plus rien. On recalcule donc
     l'identité de chaque communication encore non lue, et on marque celles qui
-    répondent à l'appel. Renvoie ce qui a été marqué, et ce qui n'a pas été
-    retrouvé.
+    répondent à l'appel.
+
+    On parcourt les deux enfants jusqu'au bout, sans s'arrêter à la première
+    copie : le collège qui écrit aux deux laisse un exemplaire de chaque côté,
+    et n'en marquer qu'un ne fait pas descendre le compte des non-lus.
+
+    Renvoie ce qui a été marqué, et ce qui n'a pas été retrouvé.
     """
-    restants = set(ids)
-    faits = []
+    demandes = set(ids)
+    faits: set[str] = set()
     for info in client.children:
-        if not restants:
-            break
         client.set_child(info.name)
         for source, contenu, marque in (
             (lambda: client.discussions(only_unread=True), contenu_discussion, lambda o: o.mark_as(True)),
@@ -335,13 +357,12 @@ def marquer_lu(client, ids: list[str]) -> tuple[list[str], list[str]]:
             try:
                 for objet in source():
                     ident = identite(contenu(objet), None)
-                    if ident in restants:
+                    if ident in demandes:
                         marque(objet)
-                        restants.discard(ident)
-                        faits.append(ident)
+                        faits.add(ident)
             except Exception as e:
                 log.warning("marquage %s : %s", info.name, court(str(e), 160))
-    return faits, sorted(restants)
+    return sorted(faits), sorted(demandes - faits)
 
 
 def memoire_precedente(chemin: pathlib.Path, passphrase: str | None) -> dict[str, str]:
@@ -916,8 +937,10 @@ def main(argv: list[str] | None = None) -> int:
 
     ids = ids_a_marquer(args.marquer_lu)
     if ids:
+        print(f"Non lus avant : {non_lus(client)}")
         faits, introuvables = marquer_lu(client, ids)
         print(f"Marqué lu sur PRONOTE : {len(faits)}/{len(ids)}" + (f" · introuvables : {len(introuvables)}" if introuvables else ""))
+        print(f"Non lus après : {non_lus(client)}")
 
     # Le jeton a déjà tourné à la connexion : on le sauve avant tout le reste.
     if mode == "jeton" and os.environ.get("PRONOTE_TOKEN_SORTIE"):
