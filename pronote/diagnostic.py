@@ -115,63 +115,63 @@ def compte_frais(enfant) -> int:
     return len([a for a in entrees if not a.get("lue")])
 
 
+def refuse(reponse) -> bool:
+    """PRONOTE dit « saisie refusée » sans jamais lever d'erreur HTTP.
+
+    C'est ce rapport, que pronotepy ne regarde pas, qui a fait croire pendant
+    huit tours que le marquage passait. Il sert maintenant d'oracle : une
+    tentative qui ne le déclenche pas est la bonne.
+    """
+    return bool(((reponse or {}).get("dataSec") or {}).get("RapportSaisie", {}).get("_erreurSaisie_"))
+
+
 def epreuve(s: "Serveur", enfant) -> bool:
-    """Tour 8 : l'aller-retour, dans l'autre sens.
+    """Tour 9 : trouver la saisie que PRONOTE n'écarte pas.
 
-    Sept tours ont échoué à faire descendre le compte des informations. Reste
-    une question, et une seule : le drapeau « lu » est-il seulement inscriptible
-    depuis un compte parent ? On prend donc une information DÉJÀ LUE et on tente
-    de la repasser en non lue. Si même cela ne prend pas, PRONOTE ne laisse pas
-    écrire ce drapeau, et il faudra le dire au lieu de le promettre.
-
-    On éprouve du même coup la messagerie, où le marquage semble marcher : une
-    discussion lue est repassée non lue, puis relue. Si le compte bouge dans les
-    deux sens, le « Vu » tient sa promesse pour les messages.
+    Acquis du tour 8 : la messagerie s'écrit (0 → 1 → 0), et l'information est
+    refusée — `_erreurSaisie_`. Reste à trouver le destinataire qu'il attend.
+    L'information est adressée à un groupe (genrePublic 2, public G=5) : le
+    lecteur, lui, doit être nommé autrement.
     """
     s.choisir(enfant)
     nom = fetch.prenom(enfant.name)
-
-    # -- messagerie
-    toutes = list(s.client.discussions())
-    if toutes:
-        d = toutes[0]
-        avant = compte_msg(enfant)
-        try:
-            d.mark_as(False)
-            monte = compte_msg(enfant)
-            d.mark_as(True)
-            redescend = compte_msg(enfant)
-            print(f"  {nom} · messagerie : non lus {avant} → {monte} (mise en non lu) "
-                  f"→ {redescend} (remise en lu) "
-                  + ("✔ LE MARQUAGE ÉCRIT" if monte > avant and redescend == avant else "✗"))
-        except Exception as e:
-            print(f"  {nom} · messagerie : {type(e).__name__} {fetch.court(str(e), 70)}")
-    else:
-        print(f"  {nom} · messagerie : aucune discussion")
-
-    # -- informations
     entrees = s.actualites()
-    lues = [a for a in entrees if a.get("lue")]
-    avant = len([a for a in entrees if not a.get("lue")])
-    if not lues:
-        print(f"  {nom} · informations : aucune déjà lue, rien à éprouver dans ce sens")
-        return False
-    cible = lues[0]
-    etat = s.saisir({"N": cible["N"], **s.descripteur(cible), "lue": False})
-    monte = compte_frais(enfant)
-    print(f"  {nom} · informations : non lues {avant} → {monte} (mise en NON lue) → {etat}")
-    if monte > avant:
-        s.saisir({"N": cible["N"], **s.descripteur(cible), "lue": True})
-        print(f"    remise en lue → {compte_frais(enfant)} ✔ le drapeau s'écrit")
+    non_lues = [a for a in entrees if not a.get("lue")]
+    if not non_lues:
+        print(f"  {nom} : aucune information non lue")
         return True
-    print("    ✗ le drapeau « lu » d'une information ne s'écrit pas depuis ce compte")
+    cible = next((a for a in non_lues if not a.get("estSondage")), non_lues[0])
+    avant = len(non_lues)
+    annonce = s.descripteur(cible)
+    parent, enf = s.client.info.id, enfant.id
+    print(f"  {nom} : {avant} non lue(s) · annoncé genrePublic {annonce['genrePublic']} G={annonce['public']['G']}")
+
+    essais = [
+        ("genre 2 · parent G=5", {"genrePublic": 2, "public": {"N": parent, "G": 5}}),
+        ("genre 5 · parent G=5", {"genrePublic": 5, "public": {"N": parent, "G": 5}}),
+        ("genre 2 · enfant G=4", {"genrePublic": 2, "public": {"N": enf, "G": 4}}),
+        ("genre 2 · parent G=4", {"genrePublic": 2, "public": {"N": parent, "G": 4}}),
+        ("genre annoncé (témoin)", annonce),
+        ("sans public", {}),
+    ]
+    for nom_essai, descripteur in essais:
+        corps = {"N": cible["N"], "validationDirecte": True, "lue": True, **descripteur}
+        try:
+            reponse = s.saisir(corps)
+            ecarte = refuse(reponse)
+            etat = "ÉCARTÉ" if ecarte else "accepté"
+        except Exception as e:
+            ecarte, etat = True, f"{type(e).__name__}"
+        print(f"    {nom_essai:<26} → {etat}")
+        if not ecarte:
+            frais = compte_frais(enfant)
+            print(f"      session neuve : {avant} → {frais} "
+                  + ("✔ PRIS" if frais < avant else "✗ accepté mais sans effet"))
+            if frais < avant:
+                s.saisir({"N": cible["N"], "validationDirecte": True, "lue": False, **descripteur})
+                print(f"      remise en non lue → {compte_frais(enfant)} (départ {avant})")
+                return True
     return False
-
-
-def compte_msg(enfant) -> int:
-    client, _ = fetch.connexion()
-    client.set_child(enfant.name)
-    return len(list(client.discussions(only_unread=True)))
 
 
 def main() -> int:
