@@ -9,8 +9,9 @@ Connexion, au choix (variables d'environnement) :
   - PRONOTE_TOKEN_JSON : identifiants exportés par `configurer.py --qr` (jeton
     d'application mobile, tourne à chaque connexion : les nouveaux identifiants
     sont écrits dans PRONOTE_TOKEN_SORTIE pour être remis dans le secret) ;
-  - PRONOTE_URL + PRONOTE_USERNAME + PRONOTE_PASSWORD, avec PRONOTE_PIN et
-    PRONOTE_CLIENT_ID si le compte a la double authentification.
+  - PRONOTE_USERNAME + PRONOTE_PASSWORD (PRONOTE_URL si l'espace Parents n'est
+    pas URL_DEFAUT), avec PRONOTE_PIN et PRONOTE_CLIENT_ID si le compte a la
+    double authentification.
 
 `python3 pronote/fetch.py --exemple` produit un fichier fictif pour voir l'onglet.
 """
@@ -33,6 +34,7 @@ from zoneinfo import ZoneInfo
 PARIS = ZoneInfo("Europe/Paris")
 ICI = pathlib.Path(__file__).resolve().parent
 SORTIE = ICI / "actualites.json"
+URL_DEFAUT = "https://0940575p.index-education.net/pronote/parent.html"
 
 # Fenêtres de collecte, en jours.
 DEVOIRS_JOURS = 14
@@ -158,12 +160,12 @@ def connexion(env: dict = os.environ):
         )
         return client, "jeton"
 
-    url = env.get("PRONOTE_URL", "").strip()
+    url = env.get("PRONOTE_URL", "").strip() or URL_DEFAUT
     utilisateur = env.get("PRONOTE_USERNAME", "").strip()
     mot_de_passe = env.get("PRONOTE_PASSWORD", "")
-    if not (url and utilisateur and mot_de_passe):
+    if not (utilisateur and mot_de_passe):
         raise SystemExit(
-            "Identifiants manquants : définir PRONOTE_TOKEN_JSON, ou PRONOTE_URL, "
+            "Identifiants manquants : définir PRONOTE_TOKEN_JSON, ou "
             "PRONOTE_USERNAME et PRONOTE_PASSWORD (voir README)."
         )
     client = pronotepy.ParentClient(

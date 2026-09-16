@@ -149,10 +149,12 @@ Les journaux de l'action n'affichent aucun identifiant.
      Fine-grained tokens, ce dépôt, permission *Secrets : read and write*)
      dans le secret `PRONOTE_SECRETS_PAT`.
    - **`--mdp`** — identifiant et mot de passe de l'espace Parents, plus le code
-     PIN si la double authentification est activée. Le script imprime les
-     secrets à créer : `PRONOTE_URL`, `PRONOTE_USERNAME`, `PRONOTE_PASSWORD`,
-     `PRONOTE_PIN` (si besoin) et `PRONOTE_CLIENT_ID`, l'identifiant qui fait
-     reconnaître l'« appareil » aux connexions suivantes.
+     PIN si la double authentification est activée. Les secrets `PRONOTE_USERNAME`
+     et `PRONOTE_PASSWORD` suffisent ; s'ajoutent `PRONOTE_PIN` et
+     `PRONOTE_CLIENT_ID` (l'identifiant qui fait reconnaître l'« appareil » aux
+     connexions suivantes) quand la double authentification est activée, et
+     `PRONOTE_URL` seulement si l'espace Parents n'est pas celui inscrit dans
+     `fetch.py` (`URL_DEFAUT`).
 3. Créer le secret `PRONOTE_SITE_PASSPHRASE` : le mot de passe que la page
    demandera (à partager avec qui doit lire l'onglet).
 4. Lancer une fois l'action « PRONOTE — actualités » (onglet Actions → Run
