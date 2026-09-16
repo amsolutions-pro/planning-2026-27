@@ -259,8 +259,8 @@ class Marquage(unittest.TestCase):
         for enfant in client._donnees.values():
             for d in enfant.get("discussions", []):
                 d._participants_message_id = "session2-" + str(d._participants_message_id)
-        faits, introuvables = fetch.marquer_lu(client, [cible["id"]])
-        self.assertEqual((faits, introuvables), ([cible["id"]], []))
+        faits, introuvables, ecartes = fetch.marquer_lu(client, [cible["id"]])
+        self.assertEqual((faits, introuvables, ecartes), ([cible["id"]], [], []))
         lues = [d for e in client._donnees.values() for d in e.get("discussions", []) if not d.unread]
         self.assertTrue(lues)
 
@@ -276,8 +276,8 @@ class Marquage(unittest.TestCase):
         client = FauxClient(MAINTENANT)
         # Chaque enfant porte sa propre copie, sous son propre numéro.
         client._donnees["E2"]["discussions"][0]._participants_message_id = "m1-bis"
-        faits, introuvables = fetch.marquer_lu(client, [cible["id"]])
-        self.assertEqual((faits, introuvables), ([cible["id"]], []))
+        faits, introuvables, ecartes = fetch.marquer_lu(client, [cible["id"]])
+        self.assertEqual((faits, introuvables, ecartes), ([cible["id"]], [], []))
         copies = [d for e in client._donnees.values() for d in e.get("discussions", [])
                   if str(d._participants_message_id).endswith(("m1", "m1-bis"))]
         self.assertEqual(len(copies), 2)
@@ -288,14 +288,27 @@ class Marquage(unittest.TestCase):
         publie = collecte()
         sondage = [a for a in publie["actualites"] if a["type"] == "sondage"][0]
         client = FauxClient(MAINTENANT)
-        faits, introuvables = fetch.marquer_lu(client, [sondage["id"]])
-        self.assertEqual((faits, introuvables), ([sondage["id"]], []))
+        faits, introuvables, ecartes = fetch.marquer_lu(client, [sondage["id"]])
+        self.assertEqual((faits, introuvables, ecartes), ([sondage["id"]], [], []))
         # L'information est vraiment lue côté serveur, pas seulement dans l'objet.
         restant = [i for e in client._donnees.values() for i in e["infos"] if not i.read]
         self.assertFalse([i.id for i in restant if i.id == "i3"], "le sondage est resté non lu")
         publics = [a["public"]["N"] for p in client._postes if p["fonction"] == "SaisieActualites"
                    for a in p["data"]["listeActualites"]]
         self.assertIn("E2", publics, "le marquage doit être adressé à l'enfant")
+
+    def test_un_refus_de_pronote_nest_pas_un_succes(self):
+        """PRONOTE écarte la saisie sans lever d'erreur : il faut lire son rapport.
+
+        C'est ce silence qui a fait croire, huit tours durant, que le marquage
+        passait — le compte des non-lus, lui, ne bougeait pas.
+        """
+        publie = collecte()
+        cible = [a for a in publie["actualites"] if a["type"] == "message"][0]
+        client = FauxClient(MAINTENANT)
+        client.refuse_saisie = True
+        faits, introuvables, ecartes = fetch.marquer_lu(client, [cible["id"]])
+        self.assertEqual((faits, introuvables, ecartes), ([], [], [cible["id"]]))
 
     def test_seules_les_identites_passent(self):
         """Un numéro PRONOTE, ou n'importe quoi d'autre, est écarté."""

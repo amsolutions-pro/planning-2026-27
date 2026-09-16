@@ -1,0 +1,33 @@
+name: PRONOTE — épreuve du marquage
+
+# Épreuve en direct, lancée par une poussée sur `pronote/diagnostic.py` : quelle
+# requête fait descendre le compte des non-lus d'un compte parent ? Elle écrit
+# sur un vrai compte, et remet tout en place derrière elle.
+# Elle écrit sur un vrai compte : elle ne part plus qu'à la demande, maintenant
+# que l'enquête est close.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pronote
+  cancel-in-progress: false
+
+jobs:
+  epreuve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r pronote/requirements.txt
+      - name: Éprouver le marquage
+        env:
+          PRONOTE_URL: ${{ secrets.PRONOTE_URL }}
+          PRONOTE_USERNAME: ${{ secrets.PRONOTE_USERNAME }}
+          PRONOTE_PASSWORD: ${{ secrets.PRONOTE_PASSWORD }}
+          PRONOTE_PIN: ${{ secrets.PRONOTE_PIN }}
+        run: python3 pronote/diagnostic.py

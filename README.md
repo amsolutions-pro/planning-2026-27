@@ -196,6 +196,32 @@ descendait pas. Une fois PRONOTE au courant, la marque locale est retirée : la
 vérité est passée de l'autre côté, et « Remettre les vues » cesse d'accumuler
 sans fin ce qui a déjà été transmis.
 
+#### Ce que PRONOTE accepte, et ce qu'il refuse
+
+Éprouvé en direct contre le vrai serveur, neuf tours, par le workflow
+`diagnostic.yml` (réversible, et muet : il n'imprime que des nombres et des
+empreintes). Deux résultats, mesurés dans des sessions neuves :
+
+- **La messagerie s'écrit.** Une discussion lue est repassée non lue, puis
+  relue : le compte des non-lus fait `0 → 1 → 0`. Le « Vu » d'un message tient
+  donc sa promesse.
+- **Le « lu » d'une information ne s'écrit pas.** Toutes les formes ont été
+  essayées — destinataire enfant, parent, groupe, le descripteur exact que
+  PRONOTE annonce lui-même (`genrePublic 2`, `public G=5`), aucun destinataire du
+  tout, les quatre genres, l'ouverture du détail comme le fait un clic, et
+  jusqu'au sens inverse (repasser une information lue en non lue). PRONOTE
+  répond à chaque fois `RapportSaisie: {_erreurSaisie_: true}` : **la saisie est
+  écartée**, sans la moindre erreur HTTP.
+
+Ce silence est ce qui a fait tourner en rond : pronotepy ne regarde pas ce
+rapport, et le robot croyait donc avoir marqué à chaque fois. `saisie_refusee`
+le lit maintenant, et seul ce que PRONOTE a réellement pris est compté comme
+fait — le journal dit `écartés par PRONOTE : N` le cas échéant.
+
+Conséquence assumée : la page n'envoie plus que les **messages**. Pour une
+information ou un sondage, le « Vu » reste sur l'appareil, et le bandeau le dit
+au lieu de le promettre.
+
 Le marquage des **informations et sondages** demande un détour. pronotepy
 adresse la requête à `client.info`, la ressource fixée à la connexion : sur un
 compte parent, c'est le parent, jamais l'enfant que `set_child` vient de
