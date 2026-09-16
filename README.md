@@ -163,11 +163,20 @@ suit l'affaire : « à transmettre », « transmission… », « lu sur PRONOTE 
 « envoi échoué » avec un bouton pour réessayer. Seuls les messages,
 informations et sondages partent : un devoir n'a pas de « lu » sur PRONOTE.
 
-La même liaison sert au bouton **Actualiser** : il lance un passage du robot
-sans attendre l'heure suivante, puis guette la republication du site (l'empreinte
-du fichier, pas son horodatage, qui ne compte qu'en minutes). Comptez une minute
-ou deux ; si rien n'a changé au bout de trois minutes, il le dit plutôt que de
-tourner sans fin. Sans liaison, le bouton relit simplement le fichier publié.
+La même liaison sert au bouton **Actualiser** : il lance un passage du robot sans
+attendre l'heure suivante, puis guette la republication du site. Comptez une
+minute ou deux. Un passage demandé depuis la page réécrit le fichier **même sans
+nouvelle** (`--forcer`), pour que le bouton reçoive une réponse au lieu
+d'attendre un changement qui ne viendrait pas ; les passages à l'heure, eux,
+restent silencieux quand il n'y a rien. Sans liaison, le bouton relit simplement
+le fichier publié.
+
+Le fichier ne doit changer que lorsque PRONOTE a du neuf — sinon chaque passage
+produirait un commit et une republication pour rien, et l'onglet marquerait tout
+comme « Nouveau ». Or un devoir ou un cours n'a pas de date d'apparition propre.
+Le robot relit donc le fichier précédent pour retrouver quand il a vu chaque
+nouvelle la première fois (`memoire_precedente`), au lieu de leur donner l'heure
+du passage.
 
 Pour relier : dépliez la ligne en bas de l'onglet, puis créez un jeton sur
 [github.com/settings/personal-access-tokens](https://github.com/settings/personal-access-tokens/new)

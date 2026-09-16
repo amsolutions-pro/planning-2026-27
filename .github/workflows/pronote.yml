@@ -62,6 +62,10 @@ jobs:
           options=()
           [ "$EVENEMENT" = schedule ] && options+=(--heures-ouvrees)
           [ -n "$IDS_LUS" ] && options+=(--marquer-lu "$IDS_LUS")
+          # Lancement demandé depuis la page : on réécrit même sans nouveauté,
+          # pour que le bouton « Actualiser » reçoive une réponse au lieu
+          # d'attendre un changement qui ne viendra pas.
+          [ "$EVENEMENT" = repository_dispatch ] && options+=(--forcer)
           code=0
           python3 pronote/fetch.py "${options[@]}" || code=$?
           if [ -f "$PRONOTE_TOKEN_SORTIE" ]; then echo "jeton=true" >> "$GITHUB_OUTPUT"; fi

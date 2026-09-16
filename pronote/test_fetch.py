@@ -199,6 +199,32 @@ class Sortie(unittest.TestCase):
         self.assertFalse(env["chiffre"])
         self.assertEqual(env["donnees"], donnees)
 
+    def test_contenu_stable_entre_deux_passages(self):
+        """Sans nouveauté, deux passages doivent donner le même fichier."""
+        premier = collecte()
+        memoire = {a["id"]: a["signale_le"] for a in premier["actualites"]}
+        plus_tard = MAINTENANT + dt.timedelta(minutes=37)
+        second = fetch.Collecte(FauxClient(MAINTENANT), plus_tard, memoire=memoire).tout()
+        self.assertEqual(fetch.empreinte(premier), fetch.empreinte(second))
+
+    def test_sans_memoire_le_contenu_derive(self):
+        """Le défaut que la mémoire corrige : l'heure du passage entrait dans le contenu."""
+        premier = collecte()
+        plus_tard = MAINTENANT + dt.timedelta(minutes=37)
+        second = fetch.Collecte(FauxClient(MAINTENANT), plus_tard).tout()
+        self.assertNotEqual(fetch.empreinte(premier), fetch.empreinte(second))
+
+    def test_memoire_relue_du_fichier(self):
+        with tempfile.TemporaryDirectory() as d:
+            chemin = pathlib.Path(d) / "a.json"
+            donnees = collecte()
+            fetch.ecrire(donnees, chemin, "secret")
+            memoire = fetch.memoire_precedente(chemin, "secret")
+            self.assertEqual(memoire[donnees["actualites"][0]["id"]],
+                             donnees["actualites"][0]["signale_le"])
+            self.assertEqual(fetch.memoire_precedente(chemin, "faux"), {})
+            self.assertEqual(fetch.memoire_precedente(pathlib.Path(d) / "rien.json", "secret"), {})
+
     def test_ecrire_inchange(self):
         donnees = collecte()
         with tempfile.TemporaryDirectory() as d:

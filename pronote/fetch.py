@@ -273,10 +273,29 @@ def marquer_lu(client, ids: list[str]) -> tuple[list[str], list[str]]:
     return faits, sorted(restants)
 
 
+def memoire_precedente(chemin: pathlib.Path, passphrase: str | None) -> dict[str, str]:
+    """Quand chaque nouvelle a été vue pour la première fois.
+
+    Un devoir ou un cours n'a pas de date d'apparition propre : sans mémoire on
+    leur donnait l'heure du passage, si bien que le fichier changeait à chaque
+    fois — commit inutile, site republié pour rien, et tout marqué « Nouveau ».
+    """
+    try:
+        env = json.loads(chemin.read_text(encoding="utf-8"))
+        donnees = dechiffrer(env, passphrase or "") if env.get("chiffre") else env.get("donnees")
+    except Exception as e:
+        log.info("pas de mémoire du passage précédent (%s)", type(e).__name__)
+        return {}
+    return {a["id"]: a["signale_le"]
+            for a in (donnees or {}).get("actualites", []) if a.get("signale_le")}
+
+
 class Collecte:
-    def __init__(self, client, maintenant: dt.datetime, reconnecter=None) -> None:
+    def __init__(self, client, maintenant: dt.datetime, reconnecter=None,
+                 memoire: dict[str, str] | None = None) -> None:
         self.client = client
         self.reconnecter = reconnecter
+        self.memoire = memoire or {}
         self.maintenant = maintenant
         self.aujourdhui = maintenant.date()
         self.erreurs: list[str] = []
@@ -320,7 +339,9 @@ class Collecte:
         liste = avenir + recent
         return {
             "version": 1,
-            "mis_a_jour_le": self.maintenant.isoformat(timespec="minutes"),
+            # À la seconde : la page s'en sert pour reconnaître un passage
+            # qu'elle a elle-même demandé, même s'il n'a rien trouvé de neuf.
+            "mis_a_jour_le": self.maintenant.isoformat(timespec="seconds"),
             "etablissement": etablissement,
             # Où la page renvoie les « Vu » ; chiffré avec le reste du fichier.
             "depot": os.environ.get("GITHUB_REPOSITORY", ""),
@@ -394,7 +415,7 @@ class Collecte:
         item.setdefault("heure", None)
         item.setdefault("matiere", None)
         item.setdefault("detail", "")
-        item.setdefault("signale_le", iso_instant(self.maintenant))
+        item.setdefault("signale_le", self.memoire.get(item["id"]) or iso_instant(self.maintenant))
         self.actualites[item["id"]] = item
         self.connus[item["id"]] = item
         signature = self.signature(item)
@@ -830,7 +851,8 @@ def main(argv: list[str] | None = None) -> int:
             json.dumps(client.export_credentials()), encoding="utf-8")
         print("Nouveau jeton écrit (à remettre dans le secret PRONOTE_TOKEN_JSON).")
 
-    donnees = Collecte(client, maintenant, reconnecter).tout()
+    donnees = Collecte(client, maintenant, reconnecter,
+                       memoire_precedente(args.sortie, passphrase)).tout()
 
     change = ecrire(donnees, args.sortie, passphrase, args.forcer)
     print(("Écrit" if change else "Inchangé") + f" : {args.sortie}" + (" (chiffré)" if passphrase else " (en clair)"))

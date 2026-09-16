@@ -2735,9 +2735,7 @@ svg{display:block}
         etatActualisation('GitHub a refusé le lancement — le jeton est-il toujours valable ?');
         return;
       }
-      // L'empreinte du contenu, et non l'horodatage : celui-ci ne compte qu'en
-      // minutes, et surtout il ne dit pas si quelque chose a changé.
-      guetterNouvelleVersion((actu.env || {}).empreinte, Date.now() + ACTU_ATTENTE_MAX);
+      guetterNouvelleVersion(versionPubliee(actu.env), Date.now() + ACTU_ATTENTE_MAX);
     });
   }
 
@@ -2747,7 +2745,14 @@ svg{display:block}
     el.hidden = !texte;
   }
 
-  function guetterNouvelleVersion(empreinte, limite) {
+  // Ce qui distingue deux publications : l'empreinte dit si le contenu a changé,
+  // l'horodatage si le robot est repassé — un passage demandé depuis la page
+  // réécrit le fichier même sans nouvelle, pour qu'on sache qu'il a bien eu lieu.
+  function versionPubliee(env) {
+    return (env || {}).empreinte + '|' + (env || {}).mis_a_jour_le;
+  }
+
+  function guetterNouvelleVersion(version, limite) {
     etatActualisation('Le robot interroge PRONOTE, puis le site se republie — une minute ou deux.');
     var fini = function (message) {
       document.getElementById('actu-actualiser').disabled = false;
@@ -2758,11 +2763,9 @@ svg{display:block}
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
       }).then(function (env) {
-        if (env.empreinte && env.empreinte === empreinte) {
-          if (Date.now() < limite) { guetterNouvelleVersion(empreinte, limite); return; }
-          // Le robot n'écrit le fichier que s'il y trouve du neuf : au bout du
-          // compte, l'absence de changement est la réponse.
-          fini('Rien de nouveau : le fichier n’a pas changé.');
+        if (versionPubliee(env) === version) {
+          if (Date.now() < limite) { guetterNouvelleVersion(version, limite); return; }
+          fini('Le robot n’a pas republié le fichier — réessayez dans un moment.');
           return;
         }
         actu.env = env;
