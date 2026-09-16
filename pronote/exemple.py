@@ -18,6 +18,8 @@ def _discussion(ancre: str, **kw) -> NS:
     """Comme pronotepy : une discussion n'a pas d'`id`, seulement un message d'ancrage."""
     o = NS(**kw)
     o._participants_message_id = ancre
+    # Ce que pronotepy renvoie au serveur pour désigner les messages à marquer.
+    o._possessions = [{"N": f"possession-{ancre}"}]
     o.mark_as = lambda lu, o=o: setattr(o, "unread", 0 if lu else 1)
     return o
 
@@ -59,6 +61,7 @@ class FauxClient:
         # elle ne suit pas `set_child`. C'est toute la difficulté du marquage.
         self.info = _o(id="PARENT", name="MELIKSETYAN Arsen")
         self._postes: list = []
+        self.refuse_saisie = False
         self._donnees = {"E1": self._narek(j, maintenant), "E2": self._annie(j, maintenant)}
 
     # -- interface pronotepy
@@ -81,6 +84,11 @@ class FauxClient:
         marqué.
         """
         self._postes.append({"fonction": fonction, "onglet": onglet, "data": data})
+        # Le vrai serveur écarte certaines saisies — celle du « lu » d'une
+        # information par un compte parent, par exemple — sans lever d'erreur.
+        if self.refuse_saisie:
+            return {"dataSec": {"data": {}, "RapportSaisie": {"_erreurSaisie_": True}}}
+        pris = False
         if fonction == "SaisieActualites":
             for saisie in (data or {}).get("listeActualites", []):
                 if saisie.get("public", {}).get("N") != self._courant.id:
@@ -88,7 +96,14 @@ class FauxClient:
                 for i in self._d["infos"]:
                     if i.id == saisie["N"]:
                         i.read = bool(saisie.get("lue"))
-        return {}
+                        pris = True
+        elif fonction == "SaisieMessage" and (data or {}).get("commande") == "pourLu":
+            for d in self._d["discussions"]:
+                if d._possessions == data.get("listePossessionsMessages"):
+                    d.unread = 0 if data.get("lu") else 1
+                    pris = True
+        # Comme le vrai serveur : le refus ne lève rien, il se dit dans le rapport.
+        return {"dataSec": {"data": {}, "RapportSaisie": {"_erreurSaisie_": not pris}}}
 
     @property
     def _d(self) -> dict:

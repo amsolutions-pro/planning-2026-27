@@ -3,9 +3,9 @@ name: PRONOTE — épreuve du marquage
 # Épreuve en direct, lancée par une poussée sur `pronote/diagnostic.py` : quelle
 # requête fait descendre le compte des non-lus d'un compte parent ? Elle écrit
 # sur un vrai compte, et remet tout en place derrière elle.
+# Elle écrit sur un vrai compte : elle ne part plus qu'à la demande, maintenant
+# que l'enquête est close.
 on:
-  push:
-    paths: [pronote/diagnostic.py]
   workflow_dispatch:
 
 permissions:

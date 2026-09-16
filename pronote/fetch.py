@@ -317,38 +317,51 @@ def ids_a_marquer(brut: str) -> list[str]:
     return propres
 
 
-def marquer_information(client, i) -> None:
-    """Marque une information lue, au nom de l'enfant.
+def saisie_refusee(reponse) -> bool:
+    """PRONOTE dit « saisie refusée » sans jamais lever d'erreur.
 
-    pronotepy adresse le marquage à `client.info`, la ressource fixée à la
-    connexion — sur un compte parent, c'est le parent, jamais l'enfant que
-    `set_child` a choisi. PRONOTE accepte la requête et n'en fait rien : le
-    robot croyait avoir marqué, et la pastille du collège ne bougeait pas.
-
-    Quelle ressource PRONOTE attend ici pour un parent, je ne peux pas le
-    vérifier d'ici : on pose les deux, l'enfant d'abord — celui que porte la
-    signature de la requête — puis celle de pronotepy. Marquer deux fois est
-    sans effet de bord, et les compteurs de non-lus encadrant le passage
-    diront laquelle a porté.
+    Le rapport est dans la réponse, et pronotepy ne le regarde pas : le robot
+    croyait donc avoir marqué à chaque fois. Éprouvé en direct — c'est ce que
+    répond le serveur quand un compte parent essaie d'écrire le « lu » d'une
+    information.
     """
-    publics = []
-    enfant = getattr(client, "_selected_child", None)
-    if enfant is not None:
-        publics.append(enfant.id)
-    if getattr(client, "info", None) is not None and client.info.id not in publics:
-        publics.append(client.info.id)
-    for public in publics:
-        client.post("SaisieActualites", 8, {
-            "listeActualites": [{
-                "N": i.id,
-                "validationDirecte": True,
-                "genrePublic": 4,
-                "public": {"N": public, "G": 4},
-                "lue": True,
-            }],
-            "saisieActualite": False,
-        })
+    return bool(((reponse or {}).get("dataSec") or {}).get("RapportSaisie", {}).get("_erreurSaisie_"))
+
+
+def marquer_information(client, i) -> bool:
+    """Passe une information en lu. Renvoie False si PRONOTE a écarté la saisie.
+
+    pronotepy adresse la requête à `client.info`, la ressource fixée à la
+    connexion — sur un compte parent, le parent, jamais l'enfant choisi. On
+    envoie donc l'enfant, et on lit le rapport au lieu de supposer.
+    """
+    enfant = getattr(client, "_selected_child", None) or getattr(client, "info", None)
+    if enfant is None:
+        return False
+    reponse = client.post("SaisieActualites", 8, {
+        "listeActualites": [{
+            "N": i.id,
+            "validationDirecte": True,
+            "genrePublic": 4,
+            "public": {"N": enfant.id, "G": 4},
+            "lue": True,
+        }],
+        "saisieActualite": False,
+    })
+    if saisie_refusee(reponse):
+        return False
     i.read = True
+    return True
+
+
+def marquer_discussion(client, d) -> bool:
+    """Passe une discussion en lu. Même lecture du rapport que pour une information."""
+    reponse = client.post("SaisieMessage", 131, {
+        "commande": "pourLu",
+        "lu": True,
+        "listePossessionsMessages": d._possessions,
+    })
+    return not saisie_refusee(reponse)
 
 
 def non_lus(client) -> str:
@@ -382,14 +395,17 @@ def marquer_lu(client, ids: list[str]) -> tuple[list[str], list[str]]:
     copie : le collège qui écrit aux deux laisse un exemplaire de chaque côté,
     et n'en marquer qu'un ne fait pas descendre le compte des non-lus.
 
-    Renvoie ce qui a été marqué, et ce qui n'a pas été retrouvé.
+    Renvoie ce qui a été marqué, ce qui n'a pas été retrouvé, et ce que PRONOTE
+    a écarté — un refus qu'il n'annonce que dans son rapport de saisie.
     """
     demandes = set(ids)
     faits: set[str] = set()
+    ecartes: set[str] = set()   # trouvées, mais la saisie a été refusée
     for info in client.children:
         client.set_child(info.name)
         for source, contenu, marque in (
-            (lambda: client.discussions(only_unread=True), contenu_discussion, lambda o: o.mark_as(True)),
+            (lambda: client.discussions(only_unread=True), contenu_discussion,
+             lambda o: marquer_discussion(client, o)),
             (lambda: client.information_and_surveys(only_unread=True), contenu_information,
              lambda o: marquer_information(client, o)),
         ):
@@ -397,11 +413,11 @@ def marquer_lu(client, ids: list[str]) -> tuple[list[str], list[str]]:
                 for objet in source():
                     ident = identite(contenu(objet), None)
                     if ident in demandes:
-                        marque(objet)
-                        faits.add(ident)
+                        # Seul ce que PRONOTE a vraiment pris compte comme fait.
+                        (faits if marque(objet) else ecartes).add(ident)
             except Exception as e:
                 log.warning("marquage %s : %s", info.name, court(str(e), 160))
-    return sorted(faits), sorted(demandes - faits)
+    return sorted(faits), sorted(demandes - faits - ecartes), sorted(ecartes)
 
 
 def memoire_precedente(chemin: pathlib.Path, passphrase: str | None) -> dict[str, str]:
@@ -981,13 +997,14 @@ def main(argv: list[str] | None = None) -> int:
     ids = ids_a_marquer(args.marquer_lu)
     if ids:
         print(f"Non lus avant : {non_lus(client)}")
-        faits, introuvables = marquer_lu(client, ids)
+        faits, introuvables, ecartes = marquer_lu(client, ids)
         detail = " · ".join(f"{n} {nom}" for nom, n in (
             ("message(s)", sum(1 for f in faits if f.startswith("message~"))),
             ("information(s)", sum(1 for f in faits if f.startswith(("info~", "sondage~")))),
         ) if n)
         print(f"Marqué lu sur PRONOTE : {len(faits)}/{len(ids)}"
               + (f" ({detail})" if detail else "")
+              + (f" · écartés par PRONOTE : {len(ecartes)}" if ecartes else "")
               + (f" · introuvables : {len(introuvables)}" if introuvables else ""))
         print(f"Non lus après : {non_lus(client)}")
 

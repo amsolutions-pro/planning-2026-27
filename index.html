@@ -2628,7 +2628,13 @@ svg{display:block}
   var ACTU_JETON = 'planning.actus.jeton';
   var ACTU_ENVOIS = 'planning.actus.envois';
   // Seules ces nouvelles ont un « lu » sur PRONOTE ; un devoir n'en a pas.
-  var ACTU_ENVOYABLES = ['message', 'info', 'sondage'];
+  // Seule la messagerie accepte d'être marquée lue depuis un compte parent.
+  // Éprouvé contre le vrai PRONOTE : une discussion passe de non lue à lue et
+  // revient (0 → 1 → 0), tandis que toute saisie du « lu » d'une information est
+  // écartée par le serveur — quel que soit le destinataire, et jusque dans
+  // l'autre sens. Envoyer une information ne ferait qu'un aller-retour pour
+  // rien, et une promesse de plus à ne pas tenir.
+  var ACTU_ENVOYABLES = ['message'];
   // Un clic en amène souvent d'autres : on laisse passer le temps d'en grouper
   // quelques-uns plutôt que de réveiller le robot à chaque pression.
   var ACTU_DELAI_ENVOI = 4000;
@@ -3018,7 +3024,8 @@ svg{display:block}
         ? 'Le « Vu » reste sur cet appareil — <b>relier à PRONOTE</b>'
         : echecs
           ? '<b>' + echecs + ' « Vu » que PRONOTE n’a pas pris</b> — « Réessayer l’envoi », ou revoir le jeton ici'
-          : 'Relié : « Vu » passe la nouvelle en lu sur PRONOTE, « Actualiser » lance le robot';
+          : 'Relié : « Vu » passe <b>un message</b> en lu sur PRONOTE, « Actualiser » lance le robot. '
+            + 'Les informations et sondages ne s’y marquent pas — PRONOTE écarte la saisie depuis un compte parent —, leur « Vu » reste ici.';
     document.getElementById('actu-reessayer').hidden = !echecs;
 
     // Le badge ne compte que l'important encore à voir : un devoir de plus ne
