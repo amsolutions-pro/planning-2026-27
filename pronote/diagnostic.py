@@ -4,10 +4,14 @@ Lancée par le workflow `diagnostic.yml`, elle répond à une seule question : q
 requête fait vraiment descendre le compte des non-lus d'un compte parent ?
 
 Deux garde-fous, parce qu'elle écrit sur un vrai compte :
-  * réversible — tout ce qu'elle marque lu est remis non lu, y compris en cas
-    d'erreur (`finally`) ;
-  * muette — elle n'imprime que des nombres, des codes et des empreintes. Le
-    journal d'une action GitHub est public.
+  * réversible — ce qu'elle marque lu, elle le remet non lu ;
+  * muette — elle n'imprime que des formes, des nombres et des empreintes. Le
+    journal d'une action GitHub est public : aucun texte de message n'en sort.
+
+Tour 1 : aucune variante de `SaisieActualites` n'a eu d'effet, pas même celle de
+pronotepy. On regarde donc ce que PRONOTE dit lui-même de ses informations, et on
+essaie l'ouverture (`PageActualites`), qui est ce que fait le clic dans le
+navigateur.
 """
 
 import os
@@ -18,122 +22,112 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import fetch  # noqa: E402
 
-
-def comptes(client) -> dict:
-    """Non-lus par enfant, relus depuis le serveur."""
-    etat = {}
-    for info in client.children:
-        client.set_child(info.name)
-        etat[fetch.prenom(info.name)] = (
-            len(list(client.discussions(only_unread=True))),
-            len(list(client.information_and_surveys(only_unread=True))),
-        )
-    return etat
+PROFONDEUR = 4
+# Ces clés portent des nombres ou des drapeaux, jamais de texte : on peut les
+# lire telles quelles pour comprendre ce que PRONOTE attend.
+CLES_LISIBLES = {"N", "G", "V", "_T", "genre", "genrePublic", "lue", "estSondage",
+                 "estModele", "estModelePartage", "reponseAnonyme", "avecAccuse",
+                 "estAccuseLecture", "necessiteAccuse", "public", "listePublics"}
 
 
-def ligne(etat: dict) -> str:
-    return " · ".join(f"{nom} {d} msg / {i} info" for nom, (d, i) in etat.items())
+def forme(valeur, profondeur=PROFONDEUR, cle=None):
+    """La forme d'un objet JSON, sans son contenu."""
+    if isinstance(valeur, dict):
+        if profondeur <= 0:
+            return f"{{…{len(valeur)} clés}}"
+        return {k: forme(v, profondeur - 1, k) for k, v in valeur.items()}
+    if isinstance(valeur, list):
+        if profondeur <= 0 or not valeur:
+            return f"[…{len(valeur)}]"
+        return [forme(valeur[0], profondeur - 1, cle), f"…{len(valeur)} au total"] if len(valeur) > 1 \
+            else [forme(valeur[0], profondeur - 1, cle)]
+    if isinstance(valeur, bool) or isinstance(valeur, int):
+        return valeur
+    if valeur is None:
+        return None
+    texte = str(valeur)
+    # Un identifiant court et technique est lisible ; une phrase, non.
+    if cle in ("N", "G", "_T") or (len(texte) <= 24 and "#" in texte):
+        return texte
+    return f"<{len(texte)} car. {fetch.hachage(texte)}>"
 
 
-def saisie(client, ident: str, public: str, genre: int, lue: bool) -> str:
-    """Poste un marquage d'information avec un destinataire donné."""
+def compte(client) -> int:
+    return len(list(client.information_and_surveys(only_unread=True)))
+
+
+def essai(nom, fonction, client, avant) -> bool:
+    """Tente quelque chose, puis recompte. Renvoie True si le compte a bougé."""
     try:
-        client.post("SaisieActualites", 8, {
-            "listeActualites": [{
-                "N": ident,
-                "validationDirecte": True,
-                "genrePublic": genre,
-                "public": {"N": public, "G": genre},
-                "lue": lue,
-            }],
-            "saisieActualite": False,
-        })
-        return "posté"
+        fonction()
+        etat = "posté"
     except Exception as e:
-        return f"refusé ({type(e).__name__} {fetch.court(str(e), 90)})"
-
-
-def essai_informations(client, enfant) -> None:
-    """Marque une information lue de plusieurs façons, jusqu'à ce que ça compte."""
-    client.set_child(enfant.name)
-    non_lues = list(client.information_and_surveys(only_unread=True))
-    if not non_lues:
-        print(f"  {fetch.prenom(enfant.name)} : aucune information non lue, rien à éprouver")
-        return
-    cible = non_lues[0]
-    avant = len(non_lues)
-    print(f"  {fetch.prenom(enfant.name)} : {avant} information(s) non lue(s), cible {fetch.hachage(cible.id)}")
-
-    variantes = [
-        ("enfant  G=4", enfant.id, 4),
-        ("parent  G=4", client.info.id, 4),
-        ("enfant  G=3", enfant.id, 3),
-        ("parent  G=3", client.info.id, 3),
-    ]
-    for nom, public, genre in variantes:
-        etat = saisie(client, cible.id, public, genre, True)
-        reste = len(list(client.information_and_surveys(only_unread=True)))
-        marche = reste < avant
-        print(f"    {nom} → {etat} · non lues : {avant} → {reste} {'✔ PRIS' if marche else '✗ sans effet'}")
-        if marche:
-            remis = saisie(client, cible.id, public, genre, False)
-            retour = len(list(client.information_and_surveys(only_unread=True)))
-            print(f"    remise en non lue → {remis} · non lues : {reste} → {retour}"
-                  + ("" if retour == avant else "  ⚠ ÉTAT NON RESTITUÉ"))
-            return
-    print("    aucune variante n'a fait descendre le compte")
-
-    # pronotepy en dernier recours, pour comparer.
-    try:
-        cible.mark_as_read(True)
-        reste = len(list(client.information_and_surveys(only_unread=True)))
-        print(f"    pronotepy    → non lues : {avant} → {reste} "
-              + ("✔ PRIS" if reste < avant else "✗ sans effet"))
-        if reste < avant:
-            cible.mark_as_read(False)
-            print(f"    remise en non lue → {len(list(client.information_and_surveys(only_unread=True)))}")
-    except Exception as e:
-        print(f"    pronotepy    → {type(e).__name__} : {fetch.court(str(e), 90)}")
-
-
-def essai_discussions(client, enfant) -> None:
-    client.set_child(enfant.name)
-    non_lues = list(client.discussions(only_unread=True))
-    if not non_lues:
-        print(f"  {fetch.prenom(enfant.name)} : aucune discussion non lue, rien à éprouver")
-        return
-    cible = non_lues[0]
-    avant = len(non_lues)
-    print(f"  {fetch.prenom(enfant.name)} : {avant} discussion(s) non lue(s), cible {fetch.hachage(str(cible.subject))}")
-    try:
-        cible.mark_as(True)
-        reste = len(list(client.discussions(only_unread=True)))
-        print(f"    mark_as(True)  → non lues : {avant} → {reste} "
-              + ("✔ PRIS" if reste < avant else "✗ sans effet"))
-    finally:
-        try:
-            cible.mark_as(False)
-            print(f"    mark_as(False) → non lues : {len(list(client.discussions(only_unread=True)))} (restitué)")
-        except Exception as e:
-            print(f"    ⚠ restitution impossible : {type(e).__name__}")
+        etat = f"refusé ({type(e).__name__} {fetch.court(str(e), 80)})"
+    reste = compte(client)
+    print(f"    {nom:<34} → {etat:<46} {avant} → {reste} "
+          + ("✔ PRIS" if reste < avant else "✗ sans effet"))
+    return reste < avant
 
 
 def main() -> int:
     client, mode = fetch.connexion()
-    print(f"Connexion : {mode} · {len(client.children)} enfant(s)")
-    print(f"Onglets autorisés : {sorted(client.communication.authorized_onglets)}")
-    print(f"Ressource de connexion : {fetch.hachage(client.info.id)} "
-          f"· enfants : {[fetch.hachage(c.id) for c in client.children]}")
-    print(f"État initial : {ligne(comptes(client))}")
+    print(f"Connexion : {mode} · {len(client.children)} enfant(s) · onglets {sorted(client.communication.authorized_onglets)}")
+    enfant = client.children[0]
+    client.set_child(enfant.name)
+    non_lues = client.information_and_surveys(only_unread=True)
+    print(f"{fetch.prenom(enfant.name)} : {len(non_lues)} information(s) non lue(s)")
+    if not non_lues:
+        print("rien à éprouver")
+        return 0
+    cible = non_lues[0]
+    avant = len(non_lues)
 
-    print("Informations & sondages :")
-    for enfant in client.children:
-        essai_informations(client, enfant)
-    print("Messagerie :")
-    for enfant in client.children:
-        essai_discussions(client, enfant)
+    import json
+    print("Forme brute d'une information non lue :")
+    print(json.dumps(forme(cible._resolver.json_dict), ensure_ascii=False, indent=1)[:3000])
+    print(f"ressource de connexion : {fetch.hachage(client.info.id)} · enfant : {fetch.hachage(enfant.id)}")
 
-    print(f"État final : {ligne(comptes(client))}")
+    def ouvrir(public, genre):
+        return lambda: client.post("PageActualites", 8, {
+            "actualite": {"N": cible.id, "genrePublic": genre, "public": {"N": public, "G": genre}},
+            "genreRequeteActualite": 1,
+            "modeAffActu": 0,
+        })
+
+    def saisir(public, genre, lue=True):
+        return lambda: client.post("SaisieActualites", 8, {
+            "listeActualites": [{"N": cible.id, "validationDirecte": True, "genrePublic": genre,
+                                 "public": {"N": public, "G": genre}, "lue": lue}],
+            "saisieActualite": False,
+        })
+
+    def accuser(public, genre):
+        return lambda: client.post("SaisieActualites", 8, {
+            "listeActualites": [{"N": cible.id, "genrePublic": genre,
+                                 "public": {"N": public, "G": genre}, "lue": True,
+                                 "avecAccuse": True}],
+            "saisieActualite": True,
+        })
+
+    print("Tentatives :")
+    tentatives = [
+        ("ouvrir  public=enfant G=4", ouvrir(enfant.id, 4)),
+        ("ouvrir  public=parent G=4", ouvrir(client.info.id, 4)),
+        ("ouvrir  public=enfant G=3", ouvrir(enfant.id, 3)),
+        ("lire le contenu (pronotepy)", cible.content),
+        ("saisie  saisieActualite=True", accuser(enfant.id, 4)),
+        ("saisie  public=enfant G=5", saisir(enfant.id, 5)),
+        ("saisie  public=parent G=5", saisir(client.info.id, 5)),
+    ]
+    for nom, fonction in tentatives:
+        if essai(nom, fonction, client, avant):
+            print(f"  ⇒ « {nom} » fait descendre le compte. Remise en l'état :")
+            essai("saisie lue=False (enfant G=4)", saisir(enfant.id, 4, False), client, avant - 1)
+            essai("saisie lue=False (parent G=4)", saisir(client.info.id, 4, False), client, avant - 1)
+            break
+    else:
+        print("  aucune tentative n'a fait descendre le compte")
+    print(f"état final : {compte(client)} non lue(s) (au départ {avant})")
     return 0
 
 
