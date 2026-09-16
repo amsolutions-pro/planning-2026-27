@@ -183,7 +183,18 @@ page périmée.
 
 Par défaut, elle s'arrête là. Une fois la page **reliée à GitHub**, le même clic
 passe aussi la discussion ou l'information en **lu sur PRONOTE** — de quoi ne
-plus accumuler dans la messagerie du collège ce qu'on a déjà lu ici.
+plus accumuler dans la messagerie du collège ce qu'on a déjà lu ici. Le robot
+marque **les deux exemplaires** quand le collège a écrit aux deux enfants :
+s'arrêter au premier laissait l'autre non lu, et le compte de PRONOTE ne
+descendait pas. Une fois PRONOTE au courant, la marque locale est retirée : la
+vérité est passée de l'autre côté, et « Remettre les vues » cesse d'accumuler
+sans fin ce qui a déjà été transmis. Font exception celles qui restent
+importantes — une autorisation à retourner reste à traiter, lue ou non.
+
+Les passages qui marquent affichent dans le journal le nombre de non-lus que
+PRONOTE compte **avant et après**, enfant par enfant. Des nombres, rien du
+contenu : c'est la seule façon de savoir si PRONOTE a vraiment pris le marquage,
+le robot ne sachant, lui, que s'il a posté sans erreur.
 
 Le chemin est indirect, faute de mieux : la page est un fichier statique, elle
 n'a ni les identifiants PRONOTE ni le droit de l'appeler depuis un autre site.

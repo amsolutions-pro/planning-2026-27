@@ -255,6 +255,25 @@ class Marquage(unittest.TestCase):
         lues = [d for e in client._donnees.values() for d in e.get("discussions", []) if not d.unread]
         self.assertTrue(lues)
 
+    def test_les_deux_copies_sont_marquees(self):
+        """Le collège écrit aux deux : un exemplaire de chaque côté à marquer.
+
+        S'arrêter à la première copie laissait l'autre non lue, et le compte des
+        non-lus de PRONOTE ne descendait pas.
+        """
+        publie = collecte()
+        cible = [a for a in publie["actualites"]
+                 if a["type"] == "message" and a["enfants"] == ["narek", "annie"]][0]
+        client = FauxClient(MAINTENANT)
+        # Chaque enfant porte sa propre copie, sous son propre numéro.
+        client._donnees["E2"]["discussions"][0]._participants_message_id = "m1-bis"
+        faits, introuvables = fetch.marquer_lu(client, [cible["id"]])
+        self.assertEqual((faits, introuvables), ([cible["id"]], []))
+        copies = [d for e in client._donnees.values() for d in e.get("discussions", [])
+                  if str(d._participants_message_id).endswith(("m1", "m1-bis"))]
+        self.assertEqual(len(copies), 2)
+        self.assertTrue(all(d.unread == 0 for d in copies), [d.unread for d in copies])
+
     def test_sondage_marque_aussi(self):
         publie = collecte()
         sondage = [a for a in publie["actualites"] if a["type"] == "sondage"][0]
