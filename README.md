@@ -210,6 +210,17 @@ PRONOTE compte **avant et après**, enfant par enfant. Des nombres, rien du
 contenu : c'est la seule façon de savoir si PRONOTE a vraiment pris le marquage,
 le robot ne sachant, lui, que s'il a posté sans erreur.
 
+**« Actualiser » ne marque rien** : il relance le robot, pour aller chercher les
+nouveautés sans attendre l'heure suivante. Seul le clic sur **Vu** demande un
+marquage. Un passage dont le journal ne montre aucune ligne « Marqué lu » est un
+passage à qui on n'a rien demandé.
+
+Un envoi accepté par GitHub n'est pas un marquage réussi : GitHub dit seulement
+qu'il a pris la demande. La page vérifie donc sur pièces — si le robot republie
+après l'envoi et que la communication est toujours non lue chez PRONOTE, elle
+affiche « Vu · pas pris par PRONOTE » et rend la main au bouton **Réessayer
+l'envoi**, au lieu d'un « lu sur PRONOTE » qui n'est pas vrai.
+
 Le chemin est indirect, faute de mieux : la page est un fichier statique, elle
 n'a ni les identifiants PRONOTE ni le droit de l'appeler depuis un autre site.
 Elle demande donc à GitHub de réveiller le robot (`repository_dispatch`, type
