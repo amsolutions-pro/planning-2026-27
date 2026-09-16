@@ -810,6 +810,20 @@ def ecrire(donnees: dict, chemin: pathlib.Path, passphrase: str | None, forcer: 
     return True
 
 
+def identites(memoire: dict[str, str], donnees: dict) -> str:
+    """Combien de nouvelles ont gardé leur identité d'un passage à l'autre.
+
+    Le « Vu » du navigateur est rangé sous cet identifiant : s'il bouge sans
+    raison, la marque se perd et la nouvelle « revient ». Des comptes, rien du
+    contenu — le journal de l'action est public.
+    """
+    if not memoire:
+        return "  identités : pas de passage précédent à comparer"
+    avant, apres = set(memoire), {a["id"] for a in donnees["actualites"]}
+    return (f"  identités : {len(avant & apres)} gardée(s), {len(apres - avant)} nouvelle(s), "
+            f"{len(avant - apres)} disparue(s)")
+
+
 def resume(donnees: dict) -> str:
     lignes = []
     for e in donnees["enfants"]:
@@ -870,11 +884,12 @@ def main(argv: list[str] | None = None) -> int:
             json.dumps(client.export_credentials()), encoding="utf-8")
         print("Nouveau jeton écrit (à remettre dans le secret PRONOTE_TOKEN_JSON).")
 
-    donnees = Collecte(client, maintenant, reconnecter,
-                       memoire_precedente(args.sortie, passphrase)).tout()
+    memoire = memoire_precedente(args.sortie, passphrase)
+    donnees = Collecte(client, maintenant, reconnecter, memoire).tout()
 
     change = ecrire(donnees, args.sortie, passphrase, args.forcer)
     print(("Écrit" if change else "Inchangé") + f" : {args.sortie}" + (" (chiffré)" if passphrase else " (en clair)"))
+    print(identites(memoire, donnees))
     print(resume(donnees))
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
