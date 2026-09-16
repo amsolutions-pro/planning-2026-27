@@ -1131,6 +1131,7 @@ svg{display:block}
       </div>
     </div>
 
+    <div id="actu-vieille" hidden></div>
     <div id="actu-etat" hidden></div>
     <div class="two-col" id="actu-grid" hidden></div>
 
@@ -2601,6 +2602,12 @@ svg{display:block}
   // le navigateur peut retenir. Les nouveautés depuis la dernière visite de
   // l'onglet sont marquées « Nouveau ».
   var ACTU_FICHIER = './pronote/actualites.json';
+  // Format que cette page sait lire. Le fichier annonce le sien en clair,
+  // hors du chiffrement : un onglet laissé ouvert pendant des jours peut
+  // tourner sur un vieux JavaScript que le navigateur garde en cache, et
+  // lire de travers ce que le robot publie — ses « Vu » se perdraient sans
+  // qu'il comprenne pourquoi.
+  var ACTU_VERSION = 2;
   var ACTU_CLE = 'planning.actus.cle';
   var ACTU_VISITE = 'planning.actus.visite';
   var ACTU_TYPES = {
@@ -2781,6 +2788,7 @@ svg{display:block}
           return;
         }
         actu.env = env;
+        verifierVersion(env);
         if (!env.chiffre) { fini(''); montrerActus(env.donnees); return; }
         var cle = null;
         try { cle = localStorage.getItem(ACTU_CLE); } catch (e) {}
@@ -2846,6 +2854,24 @@ svg{display:block}
       + '<div><h3>' + titre + '</h3><p>' + corps + '</p>' + (extra || '') + '</div></div>';
   }
 
+  // Le rechargement passe par une adresse neuve : sans cela le navigateur
+  // resservirait la page qu'il a en cache, celle-là même qui est dépassée.
+  function rechargerPage() {
+    location.replace(location.pathname + '?v=' + ACTU_VERSION + '-' + Date.now() + location.hash);
+  }
+
+  function verifierVersion(env) {
+    var el = document.getElementById('actu-vieille');
+    var vieille = (env && env.version || 1) > ACTU_VERSION;
+    el.hidden = !vieille;
+    el.innerHTML = vieille ? actuCallout('i-alert', 'Cette page est en retard',
+      'Le robot publie dans un format plus récent que celui que cet onglet sait lire. '
+      + 'Rechargez-la : vos « Vu » seront repris.',
+      '<button class="btn" type="button" onclick="rechargerPage()">'
+      + '<svg class="icon"><use href="#i-swap"></use></svg> Recharger la page</button>') : '';
+    return !vieille;
+  }
+
   function chargerActus() {
     actuEtat(actuCallout('i-clock', 'Chargement…', 'Lecture des dernières nouvelles PRONOTE.'));
     fetch(ACTU_FICHIER, { cache: 'no-store' }).then(function (r) {
@@ -2853,6 +2879,7 @@ svg{display:block}
       return r.json();
     }).then(function (env) {
       actu.env = env;
+      verifierVersion(env);
       if (!env.chiffre) { montrerActus(env.donnees); return; }
       var cle = null;
       try { cle = localStorage.getItem(ACTU_CLE); } catch (e) {}
