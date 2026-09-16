@@ -14,6 +14,18 @@ def _o(**kw) -> NS:
     return NS(**kw)
 
 
+def _discussion(**kw) -> NS:
+    o = NS(**kw)
+    o.mark_as = lambda lu, o=o: setattr(o, "unread", 0 if lu else 1)
+    return o
+
+
+def _info(**kw) -> NS:
+    o = NS(**kw)
+    o.mark_as_read = lambda lu, o=o: setattr(o, "read", bool(lu))
+    return o
+
+
 class FauxPeriode:
     def __init__(self, nom, debut, fin, notes, moyennes, absences, retards, punitions,
                  generale=None, classe=None):
@@ -68,11 +80,11 @@ class FauxClient:
     def current_period(self):
         return self._d["periodes"][0]
 
-    def discussions(self):
-        return self._d["discussions"]
+    def discussions(self, only_unread: bool = False):
+        return [d for d in self._d["discussions"] if not only_unread or d.unread]
 
-    def information_and_surveys(self):
-        return self._d["infos"]
+    def information_and_surveys(self, only_unread: bool = False):
+        return [i for i in self._d["infos"] if not only_unread or not i.read]
 
     def export_credentials(self) -> dict:
         return {"pronote_url": "exemple", "username": "exemple", "password": "exemple", "uuid": "exemple",
@@ -142,18 +154,18 @@ class FauxClient:
                 generale="12,4", classe="12,9",
             )],
             "discussions": [
-                _o(id="m1", subject="Sortie au musée — autorisation", creator="M. MARTIN", unread=1, closed=False,
+                _discussion(id="m1", subject="Sortie au musée — autorisation", creator="M. MARTIN", unread=1, closed=False,
                    labels=[], messages=[
                        _o(author="M. MARTIN", created=m.replace(tzinfo=None) - dt.timedelta(hours=5),
                           content="Bonjour, merci de retourner l'autorisation signée avant vendredi."),
                    ]),
             ],
             "infos": [
-                _o(id="i1", title="Réunion parents-professeurs 5e", author="Direction", read=False,
+                _info(id="i1", title="Réunion parents-professeurs 5e", author="Direction", read=False,
                    creation_date=m.replace(tzinfo=None) - dt.timedelta(days=1), start_date=None,
                    category="Information", survey=False, template=False,
                    content=lambda: "La réunion aura lieu le jeudi 8 octobre à 18h00 dans la salle polyvalente."),
-                _o(id="i2", title="Menus de la cantine", author="Intendance", read=True,
+                _info(id="i2", title="Menus de la cantine", author="Intendance", read=True,
                    creation_date=m.replace(tzinfo=None) - dt.timedelta(days=4), start_date=None,
                    category="Information", survey=False, template=False,
                    content=lambda: "Les menus du mois sont disponibles."),
@@ -200,17 +212,17 @@ class FauxClient:
                 generale="13,7", classe="12,5",
             )],
             "discussions": [
-                _o(id="m1", subject="Sortie au musée — autorisation", creator="M. MARTIN", unread=1, closed=False,
+                _discussion(id="m1", subject="Sortie au musée — autorisation", creator="M. MARTIN", unread=1, closed=False,
                    labels=[], messages=[
                        _o(author="M. MARTIN", created=m.replace(tzinfo=None) - dt.timedelta(hours=5),
                           content="Bonjour, merci de retourner l'autorisation signée avant vendredi."),
                    ]),
-                _o(id="m3", subject="Voyage en Espagne — autorisation de sortie", creator="Direction",
+                _discussion(id="m3", subject="Voyage en Espagne — autorisation de sortie", creator="Direction",
                    unread=0, closed=False, labels=[], messages=[
                        _o(author="Direction", created=m.replace(tzinfo=None) - dt.timedelta(days=3),
                           content="Le dossier est à rapporter signé avant la fin du mois."),
                    ]),
-                _o(id="m2", subject="Absence en espagnol", creator=None, unread=0, closed=False,
+                _discussion(id="m2", subject="Absence en espagnol", creator=None, unread=0, closed=False,
                    labels=[], messages=[
                        _o(author=None, created=m.replace(tzinfo=None) - dt.timedelta(days=8),
                           content="Bonjour, Annie était chez le médecin."),
@@ -219,11 +231,11 @@ class FauxClient:
                    ]),
             ],
             "infos": [
-                _o(id="i3", title="Stage d'observation de 3e", author="Direction", read=False,
+                _info(id="i3", title="Stage d'observation de 3e", author="Direction", read=False,
                    creation_date=m.replace(tzinfo=None) - dt.timedelta(days=2), start_date=None,
                    category="Information", survey=True, template=False,
                    content=lambda: "Merci d'indiquer si votre enfant a déjà trouvé un lieu de stage."),
-                _o(id="i2", title="Menus de la cantine", author="Intendance", read=True,
+                _info(id="i2", title="Menus de la cantine", author="Intendance", read=True,
                    creation_date=m.replace(tzinfo=None) - dt.timedelta(days=4), start_date=None,
                    category="Information", survey=False, template=False,
                    content=lambda: "Les menus du mois sont disponibles."),

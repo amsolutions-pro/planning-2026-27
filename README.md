@@ -134,7 +134,7 @@ Ce qui concerne les deux enfants (informations du collège, messagerie du compte
 parent) apparaît dans une carte « Pour les deux ». Les nouvelles apparues depuis
 la dernière ouverture de l'onglet, sur cet appareil, portent « Nouveau ».
 
-### Le bouton « Vu » ne touche pas à PRONOTE
+### Le bouton « Vu », et le « lu » sur PRONOTE
 
 Chaque nouvelle importante ou scolaire porte un bouton **Vu** : elle sort alors
 des deux premières vues et de la pastille, reste visible dans « Tout » avec une
@@ -142,13 +142,34 @@ des deux premières vues et de la pastille, reste visible dans « Tout » avec u
 `localStorage` de l'appareil, et disparaît d'elle-même quand la nouvelle sort de
 PRONOTE.
 
-Rien n'est écrit sur PRONOTE, **délibérément** : le collège continue de voir le
-message comme non lu tant que vous ne l'avez pas ouvert là-bas. Faire marquer
-« lu » par le robot toutes les deux heures aurait deux effets fâcheux : le
-professeur croirait que vous avez lu son message alors que personne ne l'a
-ouvert — ce qui compte pour une autorisation à signer — et l'onglet perdrait son
-principal signal, puisque c'est justement « non lu » qui fait entrer un message
-dans l'important.
+Par défaut, elle s'arrête là. Une fois la page **reliée à GitHub**, le même clic
+passe aussi la discussion ou l'information en **lu sur PRONOTE** — de quoi ne
+plus accumuler dans la messagerie du collège ce qu'on a déjà lu ici.
+
+Le chemin est indirect, faute de mieux : la page est un fichier statique, elle
+n'a ni les identifiants PRONOTE ni le droit de l'appeler depuis un autre site.
+Elle demande donc à GitHub de réveiller le robot (`repository_dispatch`, type
+`pronote-lu`), qui se connecte et marque. Le clic est groupé avec les suivants
+pendant quatre secondes, pour ne pas lancer un passage par pression. L'étiquette
+suit l'affaire : « à transmettre », « transmission… », « lu sur PRONOTE », ou
+« envoi échoué » avec un bouton pour réessayer. Seuls les messages,
+informations et sondages partent : un devoir n'a pas de « lu » sur PRONOTE.
+
+Pour relier : dépliez la ligne en bas de l'onglet, puis créez un jeton sur
+[github.com/settings/personal-access-tokens](https://github.com/settings/personal-access-tokens/new)
+limité à **ce seul dépôt**, avec la permission **Contents : Read and write** (la
+permission que demande `repository_dispatch`), et collez-le. Le jeton reste dans
+le `localStorage` de cet appareil — il n'est jamais publié, ni écrit dans le
+dépôt — et il est à refaire sur chaque appareil. À garder en tête : qui met la
+main sur l'appareil déverrouillé peut s'en servir pour écrire dans ce dépôt ;
+un jeton se révoque en un clic depuis la même page GitHub. « Retirer le jeton »
+l'efface de l'appareil.
+
+Ce que le robot ne fait **pas** de lui-même : marquer lu ce que vous n'avez pas
+cliqué. Un marquage automatique à chaque passage ferait croire au professeur que
+vous avez lu son message alors que personne ne l'a ouvert — ce qui compte pour
+une autorisation à signer — et l'onglet y perdrait son principal signal, puisque
+c'est justement « non lu » qui fait entrer un message dans l'important.
 
 ### Horaires
 

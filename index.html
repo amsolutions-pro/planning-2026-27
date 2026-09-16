@@ -965,6 +965,11 @@ svg{display:block}
 .actu--vu{opacity:.62}
 .actu--vu .actu__title{font-weight:500}
 .actu .actu__tag--vu{background:var(--go-bg);color:var(--go);border-color:var(--go-line)}
+.actu .actu__tag--echec{background:var(--annie-bg);color:var(--annie);border-color:var(--annie-line)}
+.actu-lien{border-top:1px dashed var(--line);padding-top:10px;margin-top:2px}
+.actu-lien summary{cursor:pointer;font-size:12px;color:var(--muted)}
+.actu-lien p{margin-top:8px;max-width:78ch}
+.actu-lien a{color:var(--accent)}
 .actu-vide{font-size:13px;color:var(--muted);font-style:italic}
 .actu-moy summary{cursor:pointer;font-size:12.5px;color:var(--muted)}
 .actu-moy table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
@@ -1131,6 +1136,9 @@ svg{display:block}
       <div class="act__foot">
         <span id="actu-pied-texte"></span>
         <span style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" type="button" id="actu-reessayer" onclick="reessayerEnvois()" hidden>
+            <svg class="icon"><use href="#i-alert"></use></svg> Réessayer l’envoi
+          </button>
           <button class="btn" type="button" id="actu-vus" onclick="oublierVusActus()" hidden>
             <svg class="icon"><use href="#i-swap"></use></svg> <span></span>
           </button>
@@ -1142,6 +1150,23 @@ svg{display:block}
           </button>
         </span>
       </div>
+      <details class="actu-lien" id="actu-lien">
+        <summary id="actu-lien-etat"></summary>
+        <p>Relier la page à GitHub permet au bouton « Vu » de passer aussi la
+        discussion ou l’information en <b>lu sur PRONOTE</b> : la page demande à
+        GitHub de réveiller le robot, seul à savoir se connecter au collège. Sans
+        cela, « Vu » ne range la nouvelle qu’ici.</p>
+        <p>Créez un jeton sur
+        <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer noopener">github.com/settings/personal-access-tokens</a>
+        limité à ce seul dépôt, avec la permission <b>Contents : Read and write</b>,
+        puis collez-le ici. Il reste dans ce navigateur et n’est jamais publié.</p>
+        <form class="actu-form" onsubmit="return relierGithub(event)">
+          <input type="password" id="actu-jeton" autocomplete="off" aria-label="Jeton GitHub"
+                 placeholder="github_pat_…" required>
+          <button class="btn" type="submit"><svg class="icon"><use href="#i-lock"></use></svg> Relier</button>
+          <button class="btn" type="button" onclick="delierGithub()">Retirer le jeton</button>
+        </form>
+      </details>
       <p id="actu-regles"></p>
       <p id="actu-erreurs" hidden></p>
     </div>
@@ -2586,25 +2611,117 @@ svg{display:block}
   var ACTU_VUES = ['important', 'scolaire', 'tout'];
   var ACTU_NIVEAUX = { important: ['important'], scolaire: ['important', 'scolaire'], tout: null };
   var ACTU_VUS = 'planning.actus.vus';
-  var actu = { env: null, donnees: null, enfant: 'tous', vue: 'important', visitePrecedente: null, vus: {} };
+  var ACTU_JETON = 'planning.actus.jeton';
+  var ACTU_ENVOIS = 'planning.actus.envois';
+  // Seules ces nouvelles ont un « lu » sur PRONOTE ; un devoir n'en a pas.
+  var ACTU_ENVOYABLES = ['message', 'info', 'sondage'];
+  // Un clic en amène souvent d'autres : on laisse passer le temps d'en grouper
+  // quelques-uns plutôt que de réveiller le robot à chaque pression.
+  var ACTU_DELAI_ENVOI = 4000;
+  var actu = {
+    env: null, donnees: null, enfant: 'tous', vue: 'important', visitePrecedente: null,
+    vus: {}, envois: {}, jeton: '', minuteur: null
+  };
   try {
     actu.visitePrecedente = localStorage.getItem(ACTU_VISITE);
     actu.vue = ACTU_VUES.indexOf(localStorage.getItem('planning.actus.vue')) !== -1
       ? localStorage.getItem('planning.actus.vue') : 'important';
     actu.enfant = localStorage.getItem('planning.actus.enfant') || 'tous';
     actu.vus = JSON.parse(localStorage.getItem(ACTU_VUS) || '{}') || {};
+    actu.envois = JSON.parse(localStorage.getItem(ACTU_ENVOIS) || '{}') || {};
+    actu.jeton = localStorage.getItem(ACTU_JETON) || '';
   } catch (e) {}
 
-  // « Vu » ne touche pas à PRONOTE : le collège continue de voir le message comme
-  // non lu tant que vous ne l'avez pas ouvert là-bas. La marque reste sur cet
-  // appareil et ne fait que sortir la nouvelle de la liste de ce qui reste à voir.
+  // « Vu » range la nouvelle ici. Si la page est reliée à GitHub, le clic part
+  // aussi vers le robot, seul à savoir se connecter à PRONOTE : il y passera la
+  // discussion ou l'information en « lu ». Sans liaison, la marque reste locale.
   function estVu(a) { return Object.prototype.hasOwnProperty.call(actu.vus, a.id); }
+
+  function estEnvoyable(a) { return ACTU_ENVOYABLES.indexOf(a.type) !== -1; }
+
+  function noteEnvois() {
+    try { localStorage.setItem(ACTU_ENVOIS, JSON.stringify(actu.envois)); } catch (e) {}
+  }
 
   function marquerVu(id) {
     if (!actu.donnees) return;
-    if (actu.vus[id]) delete actu.vus[id];
-    else actu.vus[id] = new Date().toISOString();
+    var item = (actu.donnees.actualites || []).filter(function (a) { return a.id === id; })[0];
+    if (actu.vus[id]) {
+      delete actu.vus[id];
+      // Remettre la nouvelle ne la repasse pas en « non lu » sur PRONOTE : ce
+      // chemin n'existe pas ici. On oublie seulement l'envoi qui n'a pas eu lieu.
+      if (actu.envois[id] === 'attente') { delete actu.envois[id]; noteEnvois(); }
+    } else {
+      actu.vus[id] = new Date().toISOString();
+      if (item && estEnvoyable(item) && actu.jeton && actu.donnees.depot && !actu.envois[id]) {
+        actu.envois[id] = 'attente';
+        noteEnvois();
+        programmerEnvoi();
+      }
+    }
     try { localStorage.setItem(ACTU_VUS, JSON.stringify(actu.vus)); } catch (e) {}
+    montrerActus(actu.donnees);
+  }
+
+  function programmerEnvoi() {
+    clearTimeout(actu.minuteur);
+    actu.minuteur = setTimeout(envoyerLus, ACTU_DELAI_ENVOI);
+  }
+
+  function enAttente() {
+    return Object.keys(actu.envois).filter(function (id) { return actu.envois[id] === 'attente'; });
+  }
+
+  // La page ne parle pas à PRONOTE — elle n'en a ni les identifiants ni le droit.
+  // Elle demande à GitHub de réveiller le robot, qui fera le marquage.
+  function envoyerLus() {
+    var ids = enAttente();
+    if (!ids.length || !actu.jeton || !actu.donnees || !actu.donnees.depot) return;
+    ids.forEach(function (id) { actu.envois[id] = 'envoi'; });
+    noteEnvois();
+    renderActus();
+    fetch('https://api.github.com/repos/' + actu.donnees.depot + '/dispatches', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': 'Bearer ' + actu.jeton,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ event_type: 'pronote-lu', client_payload: { ids: ids.join(',') } })
+    }).then(function (r) {
+      var etat = r.ok ? 'ok' : 'echec';
+      ids.forEach(function (id) { actu.envois[id] = etat; });
+      noteEnvois();
+      montrerActus(actu.donnees);
+    }, function () {
+      ids.forEach(function (id) { actu.envois[id] = 'echec'; });
+      noteEnvois();
+      montrerActus(actu.donnees);
+    });
+  }
+
+  function reessayerEnvois() {
+    Object.keys(actu.envois).forEach(function (id) {
+      if (actu.envois[id] === 'echec') actu.envois[id] = 'attente';
+    });
+    noteEnvois();
+    envoyerLus();
+  }
+
+  function relierGithub(ev) {
+    ev.preventDefault();
+    var champ = document.getElementById('actu-jeton');
+    actu.jeton = champ.value.trim();
+    try { localStorage.setItem(ACTU_JETON, actu.jeton); } catch (e) {}
+    champ.value = '';
+    document.getElementById('actu-lien').open = false;
+    montrerActus(actu.donnees);
+    return false;
+  }
+
+  function delierGithub() {
+    actu.jeton = '';
+    try { localStorage.removeItem(ACTU_JETON); } catch (e) {}
     montrerActus(actu.donnees);
   }
 
@@ -2734,10 +2851,25 @@ svg{display:block}
     document.getElementById('actu-chips').innerHTML = chips;
 
     // Ce qui a disparu de PRONOTE n'a plus à occuper la mémoire du navigateur.
-    var vivants = {};
-    (d.actualites || []).forEach(function (a) { if (estVu(a)) vivants[a.id] = actu.vus[a.id]; });
+    var vivants = {}, envois = {};
+    (d.actualites || []).forEach(function (a) {
+      if (estVu(a)) vivants[a.id] = actu.vus[a.id];
+      if (actu.envois[a.id]) envois[a.id] = actu.envois[a.id];
+    });
     actu.vus = vivants;
+    actu.envois = envois;
     try { localStorage.setItem(ACTU_VUS, JSON.stringify(vivants)); } catch (e) {}
+    noteEnvois();
+
+    var echecs = Object.keys(envois).filter(function (id) { return envois[id] === 'echec'; }).length;
+    document.getElementById('actu-lien-etat').innerHTML = !d.depot
+      ? 'Le « Vu » reste sur cet appareil'
+      : !actu.jeton
+        ? 'Le « Vu » reste sur cet appareil — <b>relier à PRONOTE</b>'
+        : echecs
+          ? '<b>' + echecs + ' envoi' + (echecs > 1 ? 's' : '') + ' vers PRONOTE en échec</b> — ouvrir pour revoir le jeton'
+          : 'Le « Vu » passe aussi la nouvelle en lu sur PRONOTE';
+    document.getElementById('actu-reessayer').hidden = !echecs;
 
     // Le badge ne compte que l'important encore à voir : un devoir de plus ne
     // doit pas faire croire qu'il se passe quelque chose.
@@ -2813,7 +2945,15 @@ svg{display:block}
     if (a.auteur) tags += '<span>' + echap(a.auteur) + '</span>';
     if (nouveau) tags += '<span class="actu__tag actu__tag--nouveau">Nouveau</span>';
     var vu = estVu(a);
-    if (vu) tags += '<span class="actu__tag actu__tag--vu">Vu ici</span>';
+    var ETATS = {
+      attente: ['Vu · à transmettre', 'actu__tag--vu'],
+      envoi: ['Vu · transmission…', 'actu__tag--vu'],
+      ok: ['Vu · lu sur PRONOTE', 'actu__tag--vu'],
+      echec: ['Vu · envoi échoué', 'actu__tag--echec']
+    };
+    var etat = ETATS[actu.envois[a.id]];
+    if (vu) tags += '<span class="actu__tag ' + (etat ? etat[1] : 'actu__tag--vu') + '">'
+      + (etat ? etat[0] : 'Vu ici') + '</span>';
     var bouton = a.niveau === 'info' && !vu ? '' :
       '<button class="actu__vu" type="button" onclick="marquerVu(' + JSON.stringify(a.id).replace(/"/g, '&quot;') + ')">'
       + (vu ? 'Remettre' : 'Vu') + '</button>';

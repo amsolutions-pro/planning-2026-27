@@ -38,6 +38,12 @@ ICI = pathlib.Path(__file__).resolve().parent
 SORTIE = ICI / "actualites.json"
 URL_DEFAUT = "https://0940575p.index-education.net/pronote/parent.html"
 
+# Marquage « lu » demandé depuis la page. Les identifiants viennent du dehors
+# (ils traversent l'API GitHub) : on n'accepte que la forme exacte que le script
+# produit lui-même, et jamais plus d'une poignée à la fois.
+ID_MARQUABLE = re.compile(r"^(message|info):[A-Za-z0-9_-]{1,64}$")
+MAX_MARQUAGES = 60
+
 # Plage horaire des passages automatiques, à Paris : personne ne lit l'onglet à
 # 6 h du matin, et le soir les nouvelles du jour sont déjà tombées.
 HEURE_MIN, HEURE_MAX = 7, 18
@@ -207,6 +213,47 @@ def connexion(env: dict = os.environ):
 
 # ---------------------------------------------------------------- collecte
 
+def ids_a_marquer(brut: str) -> list[str]:
+    """Trie les identifiants reçus : seuls ceux de la forme attendue passent."""
+    vus, propres = set(), []
+    for morceau in re.split(r"[,\s]+", brut or ""):
+        if morceau and ID_MARQUABLE.match(morceau) and morceau not in vus:
+            vus.add(morceau)
+            propres.append(morceau)
+    if len(propres) > MAX_MARQUAGES:
+        log.warning("%d identifiants reçus, on s'arrête à %d", len(propres), MAX_MARQUAGES)
+        propres = propres[:MAX_MARQUAGES]
+    return propres
+
+
+def marquer_lu(client, ids: list[str]) -> tuple[list[str], list[str]]:
+    """Passe en « lu » sur PRONOTE les discussions et informations demandées.
+
+    Seul ce qui est encore non lu est parcouru : une nouvelle déjà lue n'a rien
+    à recevoir. Renvoie ce qui a été marqué, et ce qui n'a pas été retrouvé.
+    """
+    restants = set(ids)
+    faits = []
+    for info in client.children:
+        if not restants:
+            break
+        client.set_child(info.name)
+        for source, prefixe, marque in (
+            (lambda: client.discussions(only_unread=True), "message", lambda o: o.mark_as(True)),
+            (lambda: client.information_and_surveys(only_unread=True), "info", lambda o: o.mark_as_read(True)),
+        ):
+            try:
+                for objet in source():
+                    ident = f"{prefixe}:{objet.id}"
+                    if ident in restants:
+                        marque(objet)
+                        restants.discard(ident)
+                        faits.append(ident)
+            except Exception as e:
+                log.warning("marquage %s · %s : %s", info.name, prefixe, court(str(e), 160))
+    return faits, sorted(restants)
+
+
 class Collecte:
     def __init__(self, client, maintenant: dt.datetime, reconnecter=None) -> None:
         self.client = client
@@ -254,6 +301,8 @@ class Collecte:
             "version": 1,
             "mis_a_jour_le": self.maintenant.isoformat(timespec="minutes"),
             "etablissement": etablissement,
+            # Où la page renvoie les « Vu » ; chiffré avec le reste du fichier.
+            "depot": os.environ.get("GITHUB_REPOSITORY", ""),
             "regles": {
                 "important": [
                     "absence ou retard non justifié", "punition", "cours annulé ou modifié",
@@ -695,6 +744,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--forcer", action="store_true", help="réécrire même si rien n'a changé")
     p.add_argument("--heures-ouvrees", action="store_true",
                    help=f"ne rien faire hors de {HEURE_MIN} h – {HEURE_MAX} h (heure de Paris)")
+    p.add_argument("--marquer-lu", default="", metavar="IDS",
+                   help="passer ces nouvelles en « lu » sur PRONOTE (message:N, info:N)")
     args = p.parse_args(argv)
 
     heure = dt.datetime.now(PARIS).hour
@@ -720,6 +771,11 @@ def main(argv: list[str] | None = None) -> int:
         if mode == "mot de passe":
             reconnecter = lambda: connexion()[0]
     print(f"Connexion : {mode} · {len(client.children)} enfant(s)")
+
+    ids = ids_a_marquer(args.marquer_lu)
+    if ids:
+        faits, introuvables = marquer_lu(client, ids)
+        print(f"Marqué lu sur PRONOTE : {len(faits)}/{len(ids)}" + (f" · introuvables : {len(introuvables)}" if introuvables else ""))
 
     # Le jeton a déjà tourné à la connexion : on le sauve avant tout le reste.
     if mode == "jeton" and os.environ.get("PRONOTE_TOKEN_SORTIE"):
