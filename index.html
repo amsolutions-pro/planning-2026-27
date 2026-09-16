@@ -966,6 +966,8 @@ svg{display:block}
 .actu--vu .actu__title{font-weight:500}
 .actu .actu__tag--vu{background:var(--go-bg);color:var(--go);border-color:var(--go-line)}
 .actu .actu__tag--echec{background:var(--annie-bg);color:var(--annie);border-color:var(--annie-line)}
+#actu-actualisation{color:var(--accent);font-weight:500}
+.btn[disabled]{opacity:.55;cursor:default}
 .actu-lien{border-top:1px dashed var(--line);padding-top:10px;margin-top:2px}
 .actu-lien summary{cursor:pointer;font-size:12px;color:var(--muted)}
 .actu-lien p{margin-top:8px;max-width:78ch}
@@ -1145,17 +1147,19 @@ svg{display:block}
           <button class="btn" type="button" id="actu-oublier" onclick="oublierMotDePasseActus()" hidden>
             <svg class="icon"><use href="#i-lock"></use></svg> Oublier le mot de passe
           </button>
-          <button class="btn" type="button" onclick="chargerActus()">
+          <button class="btn" type="button" id="actu-actualiser" onclick="actualiserActus()">
             <svg class="icon"><use href="#i-swap"></use></svg> Actualiser
           </button>
         </span>
       </div>
+      <p id="actu-actualisation" aria-live="polite" hidden></p>
       <details class="actu-lien" id="actu-lien">
         <summary id="actu-lien-etat"></summary>
-        <p>Relier la page à GitHub permet au bouton « Vu » de passer aussi la
-        discussion ou l’information en <b>lu sur PRONOTE</b> : la page demande à
-        GitHub de réveiller le robot, seul à savoir se connecter au collège. Sans
-        cela, « Vu » ne range la nouvelle qu’ici.</p>
+        <p>Relier la page à GitHub lui permet de réveiller le robot, seul à savoir
+        se connecter au collège : le bouton « Vu » passe alors la discussion ou
+        l’information en <b>lu sur PRONOTE</b>, et « Actualiser » va chercher les
+        nouvelles du moment sans attendre le passage suivant. Sans cela, « Vu » ne
+        range la nouvelle qu’ici et « Actualiser » relit seulement le fichier publié.</p>
         <p>Créez un jeton sur
         <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer noopener">github.com/settings/personal-access-tokens</a>
         limité à ce seul dépôt, avec la permission <b>Contents : Read and write</b>,
@@ -2618,6 +2622,10 @@ svg{display:block}
   // Un clic en amène souvent d'autres : on laisse passer le temps d'en grouper
   // quelques-uns plutôt que de réveiller le robot à chaque pression.
   var ACTU_DELAI_ENVOI = 4000;
+  // Un passage du robot, puis la republication du site : compter une minute et
+  // demie en temps normal, d'où l'attente longue avant de renoncer.
+  var ACTU_GUET = 8000;
+  var ACTU_ATTENTE_MAX = 180000;
   var actu = {
     env: null, donnees: null, enfant: 'tous', vue: 'important', visitePrecedente: null,
     vus: {}, envois: {}, jeton: '', minuteur: null
@@ -2673,14 +2681,9 @@ svg{display:block}
   }
 
   // La page ne parle pas à PRONOTE — elle n'en a ni les identifiants ni le droit.
-  // Elle demande à GitHub de réveiller le robot, qui fera le marquage.
-  function envoyerLus() {
-    var ids = enAttente();
-    if (!ids.length || !actu.jeton || !actu.donnees || !actu.donnees.depot) return;
-    ids.forEach(function (id) { actu.envois[id] = 'envoi'; });
-    noteEnvois();
-    renderActus();
-    fetch('https://api.github.com/repos/' + actu.donnees.depot + '/dispatches', {
+  // Elle demande à GitHub de réveiller le robot, qui fera le travail.
+  function reveillerRobot(ids) {
+    return fetch('https://api.github.com/repos/' + actu.donnees.depot + '/dispatches', {
       method: 'POST',
       headers: {
         'Accept': 'application/vnd.github+json',
@@ -2688,16 +2691,91 @@ svg{display:block}
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ event_type: 'pronote-lu', client_payload: { ids: ids.join(',') } })
-    }).then(function (r) {
-      var etat = r.ok ? 'ok' : 'echec';
-      ids.forEach(function (id) { actu.envois[id] = etat; });
-      noteEnvois();
-      montrerActus(actu.donnees);
-    }, function () {
-      ids.forEach(function (id) { actu.envois[id] = 'echec'; });
+    }).then(function (r) { return r.ok; }, function () { return false; });
+  }
+
+  function relie() {
+    return !!(actu.jeton && actu.donnees && actu.donnees.depot);
+  }
+
+  function envoyerLus() {
+    var enCours = enAttente();
+    if (!enCours.length || !relie()) return;
+    // Une nouvelle adressée aux deux enfants porte deux identifiants PRONOTE :
+    // les deux partent, sinon elle resterait non lue d'un côté.
+    var ids = [];
+    enCours.forEach(function (id) {
+      var a = (actu.donnees.actualites || []).filter(function (x) { return x.id === id; })[0];
+      (a && a.ids_pronote && a.ids_pronote.length ? a.ids_pronote : [id]).forEach(function (p) {
+        if (ids.indexOf(p) === -1) ids.push(p);
+      });
+    });
+    enCours.forEach(function (id) { actu.envois[id] = 'envoi'; });
+    noteEnvois();
+    renderActus();
+    reveillerRobot(ids).then(function (ok) {
+      enCours.forEach(function (id) { actu.envois[id] = ok ? 'ok' : 'echec'; });
       noteEnvois();
       montrerActus(actu.donnees);
     });
+  }
+
+  // Bouton « Actualiser ». Sans liaison GitHub, il relit le fichier publié ;
+  // relié, il lance le robot puis guette la nouvelle version — le temps qu'il
+  // interroge PRONOTE et que le site se republie, il faut compter une minute
+  // ou deux.
+  function actualiserActus() {
+    if (!relie()) { chargerActus(); return; }
+    var bouton = document.getElementById('actu-actualiser');
+    bouton.disabled = true;
+    etatActualisation('Le robot est lancé…');
+    reveillerRobot([]).then(function (ok) {
+      if (!ok) {
+        bouton.disabled = false;
+        etatActualisation('GitHub a refusé le lancement — le jeton est-il toujours valable ?');
+        return;
+      }
+      // L'empreinte du contenu, et non l'horodatage : celui-ci ne compte qu'en
+      // minutes, et surtout il ne dit pas si quelque chose a changé.
+      guetterNouvelleVersion((actu.env || {}).empreinte, Date.now() + ACTU_ATTENTE_MAX);
+    });
+  }
+
+  function etatActualisation(texte) {
+    var el = document.getElementById('actu-actualisation');
+    el.textContent = texte || '';
+    el.hidden = !texte;
+  }
+
+  function guetterNouvelleVersion(empreinte, limite) {
+    etatActualisation('Le robot interroge PRONOTE, puis le site se republie — une minute ou deux.');
+    var fini = function (message) {
+      document.getElementById('actu-actualiser').disabled = false;
+      etatActualisation(message);
+    };
+    setTimeout(function () {
+      fetch(ACTU_FICHIER, { cache: 'no-store' }).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      }).then(function (env) {
+        if (env.empreinte && env.empreinte === empreinte) {
+          if (Date.now() < limite) { guetterNouvelleVersion(empreinte, limite); return; }
+          // Le robot n'écrit le fichier que s'il y trouve du neuf : au bout du
+          // compte, l'absence de changement est la réponse.
+          fini('Rien de nouveau : le fichier n’a pas changé.');
+          return;
+        }
+        actu.env = env;
+        if (!env.chiffre) { fini(''); montrerActus(env.donnees); return; }
+        var cle = null;
+        try { cle = localStorage.getItem(ACTU_CLE); } catch (e) {}
+        dechiffrerActus(env, cle || '').then(function (d) { fini(''); montrerActus(d); },
+                                             function () { fini(''); demanderMotDePasse(true); });
+      }, function () {
+        if (Date.now() < limite) { guetterNouvelleVersion(empreinte, limite); return; }
+        fini('');
+      });
+    }, ACTU_GUET);
   }
 
   function reessayerEnvois() {
@@ -2770,6 +2848,7 @@ svg{display:block}
         'Le fichier des actualités n’est pas disponible : l’action « PRONOTE — actualités » n’a pas encore tourné, ou la page est ouverte hors ligne. La mise en place est décrite dans le README du dépôt.'));
     });
   }
+
 
   function dechiffrerActus(env, mdp) {
     if (!(window.crypto && crypto.subtle)) {
@@ -2868,7 +2947,7 @@ svg{display:block}
         ? 'Le « Vu » reste sur cet appareil — <b>relier à PRONOTE</b>'
         : echecs
           ? '<b>' + echecs + ' envoi' + (echecs > 1 ? 's' : '') + ' vers PRONOTE en échec</b> — ouvrir pour revoir le jeton'
-          : 'Le « Vu » passe aussi la nouvelle en lu sur PRONOTE';
+          : 'Relié : « Vu » passe la nouvelle en lu sur PRONOTE, « Actualiser » lance le robot';
     document.getElementById('actu-reessayer').hidden = !echecs;
 
     // Le badge ne compte que l'important encore à voir : un devoir de plus ne

@@ -131,8 +131,16 @@ La raison du classement est écrite en italique sous chaque nouvelle, et la
 pastille de l'onglet ne compte que l'important.
 
 Ce qui concerne les deux enfants (informations du collège, messagerie du compte
-parent) apparaît dans une carte « Pour les deux ». Les nouvelles apparues depuis
-la dernière ouverture de l'onglet, sur cet appareil, portent « Nouveau ».
+parent) apparaît dans une carte « Pour les deux » : une seule fois, donc un seul
+clic. Le regroupement se fait sur l'identifiant PRONOTE et, pour les messages,
+informations et sondages, sur le contenu lui-même (type, titre, date, auteur) —
+le collège donne parfois un identifiant différent au même message selon l'enfant
+sous lequel on le lit. Les identifiants de toutes les copies sont conservés
+(`ids_pronote`), si bien que le marquage « lu » n'en oublie aucune. Deux devoirs
+de même intitulé, eux, restent deux devoirs.
+
+Les nouvelles apparues depuis la dernière ouverture de l'onglet, sur cet
+appareil, portent « Nouveau ».
 
 ### Le bouton « Vu », et le « lu » sur PRONOTE
 
@@ -154,6 +162,12 @@ pendant quatre secondes, pour ne pas lancer un passage par pression. L'étiquett
 suit l'affaire : « à transmettre », « transmission… », « lu sur PRONOTE », ou
 « envoi échoué » avec un bouton pour réessayer. Seuls les messages,
 informations et sondages partent : un devoir n'a pas de « lu » sur PRONOTE.
+
+La même liaison sert au bouton **Actualiser** : il lance un passage du robot
+sans attendre l'heure suivante, puis guette la republication du site (l'empreinte
+du fichier, pas son horodatage, qui ne compte qu'en minutes). Comptez une minute
+ou deux ; si rien n'a changé au bout de trois minutes, il le dit plutôt que de
+tourner sans fin. Sans liaison, le bouton relit simplement le fichier publié.
 
 Pour relier : dépliez la ligne en bas de l'onglet, puis créez un jeton sur
 [github.com/settings/personal-access-tokens](https://github.com/settings/personal-access-tokens/new)

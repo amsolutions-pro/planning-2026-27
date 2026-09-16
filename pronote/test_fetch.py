@@ -108,6 +108,22 @@ class Classement(unittest.TestCase):
         self.assertEqual(self.par_id["message:m1"]["niveau"], "important")
         self.assertEqual(self.par_id["message:m2"]["niveau"], "info")
 
+    def test_meme_message_sous_deux_identifiants(self):
+        """Le collège écrit aux deux enfants : une seule nouvelle, un seul clic."""
+        client = FauxClient(MAINTENANT)
+        client._donnees["E2"]["discussions"][0].id = "m1-bis"
+        donnees = fetch.Collecte(client, MAINTENANT).tout()
+        messages = [a for a in donnees["actualites"] if a["type"] == "message"]
+        fusionne = [a for a in messages if a["id"] == "message:m1"][0]
+        self.assertEqual(len(messages), 3)
+        self.assertEqual(fusionne["enfants"], ["narek", "annie"])
+        self.assertEqual(fusionne["ids_pronote"], ["message:m1", "message:m1-bis"])
+
+    def test_devoirs_jamais_fusionnes(self):
+        """Deux devoirs de même intitulé restent deux devoirs."""
+        for a in collecte()["actualites"]:
+            self.assertEqual(len(a["ids_pronote"]), 1, a["id"])
+
     def test_message_lu_mais_a_traiter(self):
         """Une discussion lue qui parle d'autorisation reste importante."""
         self.assertEqual(self.par_id["message:m3"]["niveau"], "important")

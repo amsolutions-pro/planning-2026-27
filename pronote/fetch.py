@@ -43,6 +43,9 @@ URL_DEFAUT = "https://0940575p.index-education.net/pronote/parent.html"
 # produit lui-même, et jamais plus d'une poignée à la fois.
 ID_MARQUABLE = re.compile(r"^(message|info):[A-Za-z0-9_-]{1,64}$")
 MAX_MARQUAGES = 60
+# Ce que le collège adresse à la famille, et qui ne vaut qu'une fois même
+# lorsqu'il arrive sous chacun des enfants.
+ACTU_COMMUNES = ("message", "info", "sondage")
 
 # Plage horaire des passages automatiques, à Paris : personne ne lit l'onglet à
 # 6 h du matin, et le soir les nouvelles du jour sont déjà tombées.
@@ -263,6 +266,8 @@ class Collecte:
         self.erreurs: list[str] = []
         self.enfants: list[dict] = []
         self.actualites: dict[str, dict] = {}  # id → actualité (dédoublonnée)
+        self.connus: dict[str, dict] = {}      # tout identifiant → son actualité
+        self.par_signature: dict[tuple, dict] = {}
 
     # -- squelette
 
@@ -341,18 +346,44 @@ class Collecte:
             self.erreurs.append(
                 f"{enfant['nom']} · {nom} : {premiere} ; après reconnexion : {type(e).__name__} : {court(str(e), 160)}")
 
+    @staticmethod
+    def signature(item: dict):
+        """Ce qui fait qu'une communication est « la même » pour les deux enfants.
+
+        Un message du collège adressé aux deux peut porter un identifiant
+        différent selon l'enfant sous lequel on le lit : sans cela, la même
+        nouvelle apparaîtrait deux fois et demanderait deux clics. Réservé aux
+        communications — deux devoirs de même intitulé restent deux devoirs.
+        """
+        if item["type"] not in ACTU_COMMUNES:
+            return None
+        return (item["type"], item.get("titre", ""), item.get("date"), item.get("auteur", ""))
+
+    def rattache(self, enfant: dict, connu: dict, ident: str) -> None:
+        if enfant["id"] not in connu["enfants"]:
+            connu["enfants"].append(enfant["id"])
+        if ident not in connu["ids_pronote"]:
+            connu["ids_pronote"].append(ident)
+        self.connus[ident] = connu
+
     def ajoute(self, enfant: dict, item: dict) -> None:
-        existant = self.actualites.get(item["id"])
-        if existant:
-            if enfant["id"] not in existant["enfants"]:
-                existant["enfants"].append(enfant["id"])
+        connu = self.connus.get(item["id"]) or self.par_signature.get(self.signature(item))
+        if connu:
+            self.rattache(enfant, connu, item["id"])
             return
         item["enfants"] = [enfant["id"]]
+        # Tous les identifiants PRONOTE derrière cette nouvelle : la page les
+        # renvoie tous quand on la marque lue, pour n'en oublier aucun.
+        item["ids_pronote"] = [item["id"]]
         item.setdefault("heure", None)
         item.setdefault("matiere", None)
         item.setdefault("detail", "")
         item.setdefault("signale_le", iso_instant(self.maintenant))
         self.actualites[item["id"]] = item
+        self.connus[item["id"]] = item
+        signature = self.signature(item)
+        if signature:
+            self.par_signature[signature] = item
 
     def periodes_en_cours(self):
         periodes = []
@@ -575,8 +606,8 @@ class Collecte:
             if quand is None or (i.read and quand < depuis):
                 continue
             ident = f"info:{i.id}"
-            if ident in self.actualites:
-                self.ajoute(enfant, {"id": ident})
+            if ident in self.connus:
+                self.rattache(enfant, self.connus[ident], ident)
                 continue
             contenu = ""
             if details < MAX_DETAILS:
@@ -617,8 +648,8 @@ class Collecte:
             if "Trash" in (d.labels or []) or "Drafts" in (d.labels or []):
                 continue
             ident = f"message:{d.id}"
-            if ident in self.actualites:
-                self.ajoute(enfant, {"id": ident})
+            if ident in self.connus:
+                self.rattache(enfant, self.connus[ident], ident)
                 continue
             if details >= MAX_DETAILS:
                 break
