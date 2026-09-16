@@ -2948,15 +2948,14 @@ svg{display:block}
     // de la mémoire du navigateur — mais après quelques semaines, pas au
     // premier passage : une nouvelle absente d'une liste y revient souvent.
     // Et une communication que PRONOTE donne pour lue n'a plus besoin de notre
-    // marque : la vérité est passée de l'autre côté, elle retombe d'elle-même
-    // hors des deux premières vues. La garder ferait grossir sans fin le
-    // « Remettre les vues ». Celles qui restent importantes — une autorisation
-    // à retourner reste à traiter, lue ou non — gardent la leur.
+    // marque : la vérité est passée de l'autre côté, et une lue n'est plus
+    // importante — elle retombe d'elle-même hors des deux premières vues. La
+    // garder ferait grossir sans fin le « Remettre les vues ».
     var courant = {}, transmises = {};
     (d.actualites || []).forEach(function (a) {
       clesActu(a).forEach(function (c) {
         courant[c] = a.id;
-        if (a.lu && a.niveau !== 'important') transmises[c] = true;
+        if (a.lu) transmises[c] = true;
       });
     });
     var perime = Date.now() - ACTU_VUS_JOURS * 86400000;

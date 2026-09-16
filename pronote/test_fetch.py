@@ -225,11 +225,20 @@ class Classement(unittest.TestCase):
             if a["type"] not in fetch.ACTU_COMMUNES:
                 self.assertEqual(len(a["enfants"]), 1, a["id"])
 
-    def test_message_lu_mais_a_traiter(self):
-        """Une discussion lue qui parle d'autorisation reste importante."""
+    def test_communication_lue_nest_plus_importante(self):
+        """L'important, c'est ce qui attend encore : une lue en sort.
+
+        Une discussion lue parlant d'autorisation y restait indéfiniment. Il
+        fallait la masquer d'un « Vu » que rien ne reprenait jamais, et le
+        « Remettre les vues » gonflait sans fin.
+        """
         m3 = self.par_id[id_message("m3")]
-        self.assertEqual(m3["niveau"], "important")
-        self.assertEqual(m3["raison"], "Mention « sortie »")
+        self.assertTrue(m3["lu"])
+        self.assertEqual((m3["niveau"], m3["raison"]), ("info", "Discussion lue"))
+
+    def test_mention_dit_pourquoi_un_non_lu_est_important(self):
+        m1 = self.par_id[id_message("m1")]
+        self.assertEqual((m1["niveau"], m1["raison"]), ("important", "Mention « sortie »"))
 
     def test_ordre(self):
         horizons = [a["horizon"] for a in self.donnees["actualites"]]
@@ -274,12 +283,19 @@ class Marquage(unittest.TestCase):
         self.assertEqual(len(copies), 2)
         self.assertTrue(all(d.unread == 0 for d in copies), [d.unread for d in copies])
 
-    def test_sondage_marque_aussi(self):
+    def test_information_marquee_au_nom_de_l_enfant(self):
+        """pronotepy adresse le marquage au parent ; PRONOTE n'en fait rien."""
         publie = collecte()
         sondage = [a for a in publie["actualites"] if a["type"] == "sondage"][0]
         client = FauxClient(MAINTENANT)
         faits, introuvables = fetch.marquer_lu(client, [sondage["id"]])
         self.assertEqual((faits, introuvables), ([sondage["id"]], []))
+        # L'information est vraiment lue côté serveur, pas seulement dans l'objet.
+        restant = [i for e in client._donnees.values() for i in e["infos"] if not i.read]
+        self.assertFalse([i.id for i in restant if i.id == "i3"], "le sondage est resté non lu")
+        publics = [a["public"]["N"] for p in client._postes if p["fonction"] == "SaisieActualites"
+                   for a in p["data"]["listeActualites"]]
+        self.assertIn("E2", publics, "le marquage doit être adressé à l'enfant")
 
     def test_seules_les_identites_passent(self):
         """Un numéro PRONOTE, ou n'importe quoi d'autre, est écarté."""

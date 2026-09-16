@@ -114,12 +114,18 @@ suivant à la précédente : **L'important**, **+ Le travail**, **Tout**.
 
 - **Important** (filet et étiquette ambre) — ce qui demande une décision de
   votre part : absence ou retard **non justifié**, punition, cours annulé ou
-  modifié, message non lu, sondage sans réponse, et tout message ou information
-  dont l'objet ou le texte parle de réunion, sortie, voyage, autorisation,
+  modifié, message non lu, sondage sans réponse, et toute communication **non
+  lue** dont l'objet ou le texte parle de réunion, sortie, voyage, autorisation,
   orientation, stage, conseil de classe, grève, rendez-vous… (liste
-  `MOTS_INFO_IMPORTANTE` dans `fetch.py`). Un message **déjà lu** y reste s'il
-  porte un de ces mots : une autorisation à signer ne cesse pas d'exister parce
-  qu'on a ouvert le message.
+  `MOTS_INFO_IMPORTANTE` dans `fetch.py`) — ces mots disent alors *pourquoi* elle
+  est importante, au lieu du sec « 1 message non lu ».
+
+  Une communication **lue** en sort. La règle a d'abord été l'inverse : une
+  autorisation à signer ne cesse pas d'exister parce qu'on a ouvert le message.
+  Mais rien ne l'en faisait jamais ressortir — il fallait la masquer d'un « Vu »
+  que rien ne reprenait, et le « Remettre les vues » gonflait sans fin.
+  L'important est ce qui attend encore votre attention ; une fois lue, la
+  communication descend d'elle-même dans « Tout ».
 - **Travail scolaire** (filet et étiquette violets) — ce qui regarde l'enfant :
   contrôle annoncé (emploi du temps, ou devoir mentionnant « contrôle »,
   « évaluation », « interro »…), devoir non fait pour le prochain jour de
@@ -188,8 +194,16 @@ marque **les deux exemplaires** quand le collège a écrit aux deux enfants :
 s'arrêter au premier laissait l'autre non lu, et le compte de PRONOTE ne
 descendait pas. Une fois PRONOTE au courant, la marque locale est retirée : la
 vérité est passée de l'autre côté, et « Remettre les vues » cesse d'accumuler
-sans fin ce qui a déjà été transmis. Font exception celles qui restent
-importantes — une autorisation à retourner reste à traiter, lue ou non.
+sans fin ce qui a déjà été transmis.
+
+Le marquage des **informations et sondages** demande un détour. pronotepy
+adresse la requête à `client.info`, la ressource fixée à la connexion : sur un
+compte parent, c'est le parent, jamais l'enfant que `set_child` vient de
+choisir. PRONOTE accepte la requête et n'en fait rien — le robot croyait avoir
+marqué, et la pastille du collège ne bougeait pas. `marquer_information` poste
+donc au nom de l'enfant. Quelle ressource PRONOTE attend exactement pour un
+parent n'est pas vérifiable hors ligne : les deux sont postées, l'enfant
+d'abord, et les compteurs de non-lus disent laquelle a porté.
 
 Les passages qui marquent affichent dans le journal le nombre de non-lus que
 PRONOTE compte **avant et après**, enfant par enfant. Des nombres, rien du
