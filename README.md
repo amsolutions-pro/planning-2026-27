@@ -148,7 +148,19 @@ Chaque nouvelle importante ou scolaire porte un bouton **Vu** : elle sort alors
 des deux premières vues et de la pastille, reste visible dans « Tout » avec une
 étiquette verte, et « Remettre » la rétablit. La marque est gardée dans le
 `localStorage` de l'appareil, et disparaît d'elle-même quand la nouvelle sort de
-PRONOTE.
+PRONOTE — au bout de quelques semaines, pas au premier passage : les listes de
+PRONOTE sont bornées et se réordonnent, si bien qu'une nouvelle peut manquer à
+l'appel puis revenir.
+
+La marque tient à l'identifiant de la nouvelle, qui doit donc être le même d'un
+passage à l'autre. Celui d'un devoir ou d'une note vient de PRONOTE et ne bouge
+pas. Une communication, elle, porte un numéro différent selon l'enfant sous
+lequel on la lit : tant que le robot retenait celui du premier enfant vu, il
+suffisait que cette copie-là sorte de la liste pour que la nouvelle change
+d'identité et revienne « non vue » après une actualisation. Son identité vient
+donc maintenant de son contenu (`id_signature`), la même des deux côtés ; les
+numéros PRONOTE de toutes ses copies restent à part, dans `ids_pronote`, pour le
+marquage en « lu ».
 
 Par défaut, elle s'arrête là. Une fois la page **reliée à GitHub**, le même clic
 passe aussi la discussion ou l'information en **lu sur PRONOTE** — de quoi ne

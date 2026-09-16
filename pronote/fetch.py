@@ -162,6 +162,20 @@ def id_discussion(d) -> str:
     return hashlib.sha1(str(ancre).encode()).hexdigest()[:16]
 
 
+def id_signature(signature: tuple) -> str:
+    """Identité d'une communication : son contenu, pas son numéro chez PRONOTE.
+
+    Le même message porte un identifiant différent selon l'enfant sous lequel on
+    le lit, et les listes de PRONOTE sont bornées : la copie retenue pouvait
+    changer d'un passage à l'autre, et la nouvelle changeait alors d'identité —
+    le « Vu » du navigateur ne la reconnaissait plus et elle « revenait ». Le
+    tilde la distingue d'un identifiant PRONOTE, qui ne doit jamais être
+    confondu avec elle au moment du marquage.
+    """
+    brut = "|".join(str(x) for x in signature)
+    return f"{signature[0]}~{hashlib.sha1(brut.encode()).hexdigest()[:16]}"
+
+
 def prochain_jour_de_classe(jour: dt.date) -> dt.date:
     suivant = jour + dt.timedelta(days=1)
     while suivant.weekday() >= 5:  # samedi, dimanche
@@ -404,21 +418,26 @@ class Collecte:
         self.connus[ident] = connu
 
     def ajoute(self, enfant: dict, item: dict) -> None:
-        connu = self.connus.get(item["id"]) or self.par_signature.get(self.signature(item))
+        chez_pronote = item["id"]
+        signature = self.signature(item)
+        connu = self.connus.get(chez_pronote) or self.par_signature.get(signature)
         if connu:
-            self.rattache(enfant, connu, item["id"])
+            self.rattache(enfant, connu, chez_pronote)
             return
+        # Une communication se reconnaît à son contenu ; un devoir garde le
+        # numéro que PRONOTE lui donne, il ne dépend d'aucun enfant.
+        item["id"] = id_signature(signature) if signature else chez_pronote
         item["enfants"] = [enfant["id"]]
         # Tous les identifiants PRONOTE derrière cette nouvelle : la page les
         # renvoie tous quand on la marque lue, pour n'en oublier aucun.
-        item["ids_pronote"] = [item["id"]]
+        item["ids_pronote"] = [chez_pronote]
         item.setdefault("heure", None)
         item.setdefault("matiere", None)
         item.setdefault("detail", "")
         item.setdefault("signale_le", self.memoire.get(item["id"]) or iso_instant(self.maintenant))
         self.actualites[item["id"]] = item
+        self.connus[chez_pronote] = item
         self.connus[item["id"]] = item
-        signature = self.signature(item)
         if signature:
             self.par_signature[signature] = item
 
