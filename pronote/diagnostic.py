@@ -73,63 +73,81 @@ class Serveur:
     def non_lues(self) -> list:
         return [a for a in self.actualites() if not a.get("lue")]
 
-    def marquer(self, actu: dict, lue: bool, genre=None, public=None) -> str:
-        """Renvoie à PRONOTE le destinataire qu'il a lui-même annoncé."""
-        genre = actu.get("genrePublic") if genre is None else genre
-        public = (actu.get("public") or {}).get("V") if public is None else public
-        try:
-            self.poste("SaisieActualites", 8, {
-                "listeActualites": [{
-                    "N": actu["N"],
-                    "validationDirecte": True,
-                    "genrePublic": genre,
-                    "public": {"N": public["N"], "G": public["G"]},
-                    "lue": lue,
-                }],
-                "saisieActualite": False,
-            })
-            return "posté"
-        except Exception as e:
-            return f"refusé ({type(e).__name__} {fetch.court(str(e), 70)})"
+    def descripteur(self, actu: dict) -> dict:
+        """Le destinataire tel que PRONOTE l'annonce sur l'information même."""
+        public = (actu.get("public") or {}).get("V") or {}
+        return {"genrePublic": actu.get("genrePublic"),
+                "public": {"N": public.get("N"), "G": public.get("G")}}
+
+    def ouvrir(self, actu: dict):
+        """Ce que fait le clic dans le navigateur : demander le détail."""
+        return self.poste("PageActualites", 8, {
+            "actualite": {"N": actu["N"], **self.descripteur(actu)},
+            "genreRequeteActualite": 1,
+            "modeAffActu": 0,
+        })
+
+    def saisir(self, corps: dict, saisie=False):
+        return self.poste("SaisieActualites", 8,
+                          {"listeActualites": [corps], "saisieActualite": saisie})
 
 
-def epreuve(s: Serveur, enfant) -> bool:
+def tentatives(s: "Serveur", actu: dict):
+    """Chaque façon plausible de dire « lue », avec ce que PRONOTE annonce."""
+    d = s.descripteur(actu)
+    entier = {**{k: v for k, v in actu.items() if k not in ("lue",)}, "lue": True}
+    return [
+        ("ouvrir le détail", lambda: s.ouvrir(actu)),
+        ("saisie N + public annoncé", lambda: s.saisir({"N": actu["N"], **d, "lue": True})),
+        ("saisie N seul", lambda: s.saisir({"N": actu["N"], "lue": True})),
+        ("saisie entrée entière", lambda: s.saisir(entier)),
+        ("saisie saisieActualite=True", lambda: s.saisir({"N": actu["N"], **d, "lue": True}, True)),
+    ]
+
+
+def epreuve(s: "Serveur", enfant) -> bool:
     s.choisir(enfant)
     non_lues = s.non_lues()
     nom = fetch.prenom(enfant.name)
     if not non_lues:
         print(f"  {nom} : aucune information non lue")
         return True
-    cible = non_lues[0]
+    # Un sondage se « lit » peut-être en y répondant : on prend d'abord une
+    # information ordinaire, plus représentative de ce qu'on veut marquer.
+    cible = next((a for a in non_lues if not a.get("estSondage")), non_lues[0])
     avant = len(non_lues)
     public = (cible.get("public") or {}).get("V") or {}
     print(f"  {nom} : {avant} non lue(s) · cible {fetch.hachage(cible['N'])}"
-          f" · genrePublic {cible.get('genrePublic')}"
-          f" · public {fetch.hachage(public.get('N'))} G={public.get('G')}")
+          f" · sondage {bool(cible.get('estSondage'))}"
+          f" · genrePublic {cible.get('genrePublic')} · public G={public.get('G')}")
 
-    etat = s.marquer(cible, True)
-    reste = len(s.non_lues())
-    pris = reste < avant
-    print(f"    tel que PRONOTE l'annonce → {etat} · {avant} → {reste} "
-          + ("✔ PRIS" if pris else "✗ sans effet"))
-    if not pris:
-        return False
-
-    remis = s.marquer(cible, False)
-    retour = len(s.non_lues())
-    print(f"    remise en non lue → {remis} · {reste} → {retour}"
-          + ("  ✔ restitué" if retour == avant else "  ⚠ ÉTAT NON RESTITUÉ"))
-    return True
+    for nom_essai, faire in tentatives(s, cible):
+        try:
+            faire()
+            etat = "posté"
+        except Exception as e:
+            etat = f"refusé ({type(e).__name__} {fetch.court(str(e), 60)})"
+        reste = len(s.non_lues())
+        pris = reste < avant
+        print(f"    {nom_essai:<30} → {etat:<40} {avant} → {reste} "
+              + ("✔ PRIS" if pris else "✗"))
+        if pris:
+            remis = s.saisir({"N": cible["N"], **s.descripteur(cible), "lue": False})
+            retour = len(s.non_lues())
+            print(f"    remise en non lue → {retour}"
+                  + ("  ✔ restitué" if retour == avant else "  ⚠ NON RESTITUÉ — à revoir"))
+            return True
+    return False
 
 
 def main() -> int:
     s = Serveur()
     print(f"Connexion : {s.mode} · {len(s.client.children)} enfant(s)")
     s.choisir(s.client.children[0])
-    exemple = next((a for a in s.actualites() if not a.get("lue")), None)
+    exemple = next((a for a in s.actualites() if not a.get("lue") and not a.get("estSondage")), None)
     if exemple is not None:
-        print("Forme brute d'une information non lue :")
-        print(json.dumps(forme(exemple, 3), ensure_ascii=False)[:1200])
+        print("Forme brute d'une information ordinaire non lue :")
+        print(json.dumps(forme(exemple, 3), ensure_ascii=False)[:1400])
 
     print("Épreuve, enfant par enfant :")
     tous = all(epreuve(s, e) for e in s.client.children)
