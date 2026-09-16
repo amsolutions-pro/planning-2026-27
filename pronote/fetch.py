@@ -41,7 +41,9 @@ URL_DEFAUT = "https://0940575p.index-education.net/pronote/parent.html"
 # Marquage « lu » demandé depuis la page. Les identifiants viennent du dehors
 # (ils traversent l'API GitHub) : on n'accepte que la forme exacte que le script
 # produit lui-même, et jamais plus d'une poignée à la fois.
-ID_MARQUABLE = re.compile(r"^(message|info):[A-Za-z0-9_-]{1,64}$")
+# Ce que la page a le droit de demander de marquer lu : une identité de
+# communication, telle que `identite` la fabrique. Rien d'autre ne passe.
+ID_MARQUABLE = re.compile(r"^(message|info|sondage)~[0-9a-f]{16}$")
 MAX_MARQUAGES = 60
 # Ce que le collège adresse à la famille, et qui ne vaut qu'une fois même
 # lorsqu'il arrive sous chacun des enfants.
@@ -68,7 +70,8 @@ ITERATIONS_KDF = 200_000
 #   1 : premier format
 #   2 : l'identité d'une communication vient de son contenu, plus de son
 #       numéro chez PRONOTE, qui diffère d'un enfant à l'autre
-VERSION_FICHIER = 2
+#   3 : de même pour tout le reste — PRONOTE renumérote à chaque session
+VERSION_FICHIER = 3
 
 MOTS_CONTROLE = (
     "contrôle", "controle", "évaluation", "evaluation", "interro", "devoir surveillé",
@@ -169,18 +172,61 @@ def id_discussion(d) -> str:
     return hashlib.sha1(str(ancre).encode()).hexdigest()[:16]
 
 
-def id_signature(signature: tuple) -> str:
-    """Identité d'une communication : son contenu, pas son numéro chez PRONOTE.
+# Ce qui fait l'identité d'une nouvelle. Une communication se reconnaît à peu de
+# chose : ce qu'on peut relire sans frais au moment de la marquer lue, et qui ne
+# dépend pas de l'enfant sous lequel on la lit. Le travail scolaire y ajoute son
+# descriptif, seul à distinguer deux devoirs de même matière et même échéance.
+# Le classement, l'état lu ou fait, la date de signalement n'en sont pas : ils
+# bougent sans que la nouvelle change.
+CHAMPS_IDENTITE = ("type", "titre", "auteur", "date")
+CHAMPS_IDENTITE_SCOLAIRE = CHAMPS_IDENTITE + ("categorie", "heure", "matiere", "sur20", "detail")
 
-    Le même message porte un identifiant différent selon l'enfant sous lequel on
-    le lit, et les listes de PRONOTE sont bornées : la copie retenue pouvait
-    changer d'un passage à l'autre, et la nouvelle changeait alors d'identité —
-    le « Vu » du navigateur ne la reconnaissait plus et elle « revenait ». Le
-    tilde la distingue d'un identifiant PRONOTE, qui ne doit jamais être
-    confondu avec elle au moment du marquage.
+
+def identite(item: dict, enfant: str | None) -> str:
+    """Identifiant d'une nouvelle, tiré de ce qu'elle dit.
+
+    PRONOTE renumérote tout à chaque session : les identifiants d'un devoir,
+    d'un cours ou d'une note ne survivent pas d'un passage à l'autre — un relevé
+    en a vu 29 sur 39 changer en vingt minutes. Les reprendre tels quels
+    réécrivait le fichier à chaque passage, faisait revenir le bouton « Vu » des
+    nouvelles déjà vues, et envoyait au robot des numéros périmés qu'il ne
+    retrouvait plus pour les marquer lues.
+
+    `enfant` vaut None pour une communication : le même message adressé aux deux
+    n'en fait qu'une, et un seul clic. Le tilde la distingue d'un identifiant
+    PRONOTE, avec lequel elle ne doit jamais être confondue.
     """
-    brut = "|".join(str(x) for x in signature)
-    return f"{signature[0]}~{hashlib.sha1(brut.encode()).hexdigest()[:16]}"
+    champs = CHAMPS_IDENTITE if enfant is None else CHAMPS_IDENTITE_SCOLAIRE
+    brut = "|".join(str(item.get(c) or "") for c in champs)
+    if enfant:
+        brut = f"{enfant}|{brut}"
+    return f"{item['type']}~{hashlib.sha1(brut.encode()).hexdigest()[:16]}"
+
+
+def contenu_discussion(d) -> dict:
+    """Ce qui identifie une discussion — la même chose au marquage et à la collecte."""
+    msgs = list(d.messages)
+    dernier = msgs[-1] if msgs else None
+    auteur = (dernier.author if dernier else None) or "Vous"
+    return {
+        "type": "message",
+        "titre": d.subject or f"Discussion avec {d.creator or auteur}",
+        "auteur": d.creator or auteur,
+        "date": iso_date(dernier.created) if dernier else "",
+        "_dernier": dernier,
+    }
+
+
+def contenu_information(i) -> dict:
+    """De même pour une information ou un sondage."""
+    quand = i.start_date or i.creation_date
+    return {
+        "type": "sondage" if i.survey else "info",
+        "titre": i.title or (i.category or "Information"),
+        "auteur": i.author or "",
+        "date": iso_date(quand) if quand else "",
+        "_quand": quand,
+    }
 
 
 def prochain_jour_de_classe(jour: dt.date) -> dt.date:
@@ -269,8 +315,11 @@ def ids_a_marquer(brut: str) -> list[str]:
 def marquer_lu(client, ids: list[str]) -> tuple[list[str], list[str]]:
     """Passe en « lu » sur PRONOTE les discussions et informations demandées.
 
-    Seul ce qui est encore non lu est parcouru : une nouvelle déjà lue n'a rien
-    à recevoir. Renvoie ce qui a été marqué, et ce qui n'a pas été retrouvé.
+    La page envoie des identités, pas des numéros PRONOTE : ceux du fichier
+    viennent d'une session passée et ne désignent plus rien. On recalcule donc
+    l'identité de chaque communication encore non lue, et on marque celles qui
+    répondent à l'appel. Renvoie ce qui a été marqué, et ce qui n'a pas été
+    retrouvé.
     """
     restants = set(ids)
     faits = []
@@ -278,19 +327,20 @@ def marquer_lu(client, ids: list[str]) -> tuple[list[str], list[str]]:
         if not restants:
             break
         client.set_child(info.name)
-        for source, prefixe, identifie, marque in (
-            (lambda: client.discussions(only_unread=True), "message", id_discussion, lambda o: o.mark_as(True)),
-            (lambda: client.information_and_surveys(only_unread=True), "info", lambda o: o.id, lambda o: o.mark_as_read(True)),
+        for source, contenu, marque in (
+            (lambda: client.discussions(only_unread=True), contenu_discussion, lambda o: o.mark_as(True)),
+            (lambda: client.information_and_surveys(only_unread=True), contenu_information,
+             lambda o: o.mark_as_read(True)),
         ):
             try:
                 for objet in source():
-                    ident = f"{prefixe}:{identifie(objet)}"
+                    ident = identite(contenu(objet), None)
                     if ident in restants:
                         marque(objet)
                         restants.discard(ident)
                         faits.append(ident)
             except Exception as e:
-                log.warning("marquage %s · %s : %s", info.name, prefixe, court(str(e), 160))
+                log.warning("marquage %s : %s", info.name, court(str(e), 160))
     return faits, sorted(restants)
 
 
@@ -321,9 +371,8 @@ class Collecte:
         self.aujourdhui = maintenant.date()
         self.erreurs: list[str] = []
         self.enfants: list[dict] = []
-        self.actualites: dict[str, dict] = {}  # id → actualité (dédoublonnée)
-        self.connus: dict[str, dict] = {}      # tout identifiant → son actualité
-        self.par_signature: dict[tuple, dict] = {}
+        self.actualites: dict[str, dict] = {}  # identité → actualité (dédoublonnée)
+        self.connus: dict[str, dict] = {}      # identifiant PRONOTE → son actualité
 
     # -- squelette
 
@@ -404,49 +453,30 @@ class Collecte:
             self.erreurs.append(
                 f"{enfant['nom']} · {nom} : {premiere} ; après reconnexion : {type(e).__name__} : {court(str(e), 160)}")
 
-    @staticmethod
-    def signature(item: dict):
-        """Ce qui fait qu'une communication est « la même » pour les deux enfants.
-
-        Un message du collège adressé aux deux peut porter un identifiant
-        différent selon l'enfant sous lequel on le lit : sans cela, la même
-        nouvelle apparaîtrait deux fois et demanderait deux clics. Réservé aux
-        communications — deux devoirs de même intitulé restent deux devoirs.
-        """
-        if item["type"] not in ACTU_COMMUNES:
-            return None
-        return (item["type"], item.get("titre", ""), item.get("date"), item.get("auteur", ""))
-
-    def rattache(self, enfant: dict, connu: dict, ident: str) -> None:
+    def rattache(self, enfant: dict, connu: dict, chez_pronote: str) -> None:
         if enfant["id"] not in connu["enfants"]:
             connu["enfants"].append(enfant["id"])
-        if ident not in connu["ids_pronote"]:
-            connu["ids_pronote"].append(ident)
-        self.connus[ident] = connu
+        self.connus[chez_pronote] = connu
 
     def ajoute(self, enfant: dict, item: dict) -> None:
-        chez_pronote = item["id"]
-        signature = self.signature(item)
-        connu = self.connus.get(chez_pronote) or self.par_signature.get(signature)
+        # Le numéro que PRONOTE donne à l'objet ne sert qu'ici, le temps du
+        # passage : il dédouble les lectures des deux enfants sans relire. Il ne
+        # va pas dans le fichier, il ne vaudra plus rien à la prochaine session.
+        chez_pronote = item.pop("id")
+        # Une communication est la même pour les deux enfants ; un devoir, non.
+        ident = identite(item, None if item["type"] in ACTU_COMMUNES else enfant["id"])
+        connu = self.connus.get(chez_pronote) or self.actualites.get(ident)
         if connu:
             self.rattache(enfant, connu, chez_pronote)
             return
-        # Une communication se reconnaît à son contenu ; un devoir garde le
-        # numéro que PRONOTE lui donne, il ne dépend d'aucun enfant.
-        item["id"] = id_signature(signature) if signature else chez_pronote
+        item["id"] = ident
         item["enfants"] = [enfant["id"]]
-        # Tous les identifiants PRONOTE derrière cette nouvelle : la page les
-        # renvoie tous quand on la marque lue, pour n'en oublier aucun.
-        item["ids_pronote"] = [chez_pronote]
         item.setdefault("heure", None)
         item.setdefault("matiere", None)
         item.setdefault("detail", "")
-        item.setdefault("signale_le", self.memoire.get(item["id"]) or iso_instant(self.maintenant))
-        self.actualites[item["id"]] = item
+        item.setdefault("signale_le", self.memoire.get(ident) or iso_instant(self.maintenant))
+        self.actualites[ident] = item
         self.connus[chez_pronote] = item
-        self.connus[item["id"]] = item
-        if signature:
-            self.par_signature[signature] = item
 
     def periodes_en_cours(self):
         periodes = []
@@ -672,6 +702,7 @@ class Collecte:
             if ident in self.connus:
                 self.rattache(enfant, self.connus[ident], ident)
                 continue
+            base = contenu_information(i)
             contenu = ""
             if details < MAX_DETAILS:
                 details += 1
@@ -689,14 +720,16 @@ class Collecte:
                 niveau, raison = "info", "Information" + (" non lue" if not i.read else "")
             self.ajoute(enfant, {
                 "id": ident,
-                "type": "sondage" if i.survey else "info",
+                "type": base["type"],
                 "niveau": niveau,
                 "raison": raison,
-                "titre": i.title or (i.category or "Information"),
+                "titre": base["titre"],
+                # Le descriptif n'est lu que pour les premières informations : il
+                # ne peut pas entrer dans l'identité, il changerait avec l'ordre.
                 "detail": court(contenu),
-                "auteur": i.author or "",
+                "auteur": base["auteur"],
                 "categorie": i.category or "",
-                "date": iso_date(quand),
+                "date": base["date"],
                 "horizon": "recent",
                 "signale_le": iso_instant(quand),
                 "lu": bool(i.read),
@@ -717,10 +750,10 @@ class Collecte:
             if details >= MAX_DETAILS:
                 break
             details += 1
-            msgs = list(d.messages)
-            if not msgs:
+            base = contenu_discussion(d)
+            dernier = base["_dernier"]
+            if dernier is None:
                 continue
-            dernier = msgs[-1]
             if d.unread == 0 and dernier.created < depuis:
                 continue
             non_lus = d.unread or 0
@@ -737,13 +770,13 @@ class Collecte:
                 niveau, raison = "info", "Discussion lue"
             self.ajoute(enfant, {
                 "id": ident,
-                "type": "message",
+                "type": base["type"],
                 "niveau": niveau,
                 "raison": raison,
-                "titre": d.subject or f"Discussion avec {d.creator or auteur}",
+                "titre": base["titre"],
                 "detail": court(f"{auteur} : {dernier.content}", 300),
-                "auteur": d.creator or auteur,
-                "date": iso_date(dernier.created),
+                "auteur": base["auteur"],
+                "date": base["date"],
                 "heure": heure_fr(dernier.created),
                 "horizon": "recent",
                 "signale_le": iso_instant(dernier.created),

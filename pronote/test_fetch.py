@@ -20,18 +20,21 @@ def collecte():
     return fetch.Collecte(FauxClient(MAINTENANT), MAINTENANT).tout()
 
 
+def collecte_indexee(client=None, maintenant=MAINTENANT):
+    """Les données, et par quel numéro PRONOTE on a atteint chaque nouvelle.
+
+    Les nouvelles n'exposent plus ces numéros : ils ne valent que le temps d'une
+    session. Les tests désignent quand même « devoir:d1 », c'est plus lisible.
+    """
+    c = fetch.Collecte(client or FauxClient(maintenant), maintenant)
+    return c.tout(), dict(c.connus)
+
+
 def id_message(ancre):
     """Les discussions n'ont pas d'identifiant : le nôtre vient du message d'ancrage."""
     return "message:" + fetch.id_discussion(SimpleNamespace(_participants_message_id=ancre))
 
 
-def par_pronote(donnees, ident):
-    """La nouvelle qui porte cet identifiant PRONOTE — son identifiant à elle
-    vient de son contenu, et ne dit rien de l'enfant sous lequel on l'a lue."""
-    for a in donnees["actualites"]:
-        if ident in a["ids_pronote"]:
-            return a
-    raise KeyError(ident)
 
 
 class ConformitePronotepy(unittest.TestCase):
@@ -100,8 +103,7 @@ class Utilitaires(unittest.TestCase):
 class Classement(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.donnees = collecte()
-        cls.par_id = {a["id"]: a for a in cls.donnees["actualites"]}
+        cls.donnees, cls.par_id = collecte_indexee()
 
     def test_enfants(self):
         ids = [e["id"] for e in self.donnees["enfants"]]
@@ -153,27 +155,47 @@ class Classement(unittest.TestCase):
         self.assertIn("prévue", p["detail"])
 
     def test_infos_et_sondages(self):
-        self.assertEqual(par_pronote(self.donnees, "info:i1")["niveau"], "important")
-        self.assertEqual(par_pronote(self.donnees, "info:i2")["niveau"], "info")
-        self.assertEqual(par_pronote(self.donnees, "info:i3")["type"], "sondage")
-        self.assertEqual(par_pronote(self.donnees, "info:i3")["niveau"], "important")
+        self.assertEqual(self.par_id["info:i1"]["niveau"], "important")
+        self.assertEqual(self.par_id["info:i2"]["niveau"], "info")
+        self.assertEqual(self.par_id["info:i3"]["type"], "sondage")
+        self.assertEqual(self.par_id["info:i3"]["niveau"], "important")
 
     def test_partage_entre_enfants(self):
-        self.assertEqual(par_pronote(self.donnees, "info:i2")["enfants"], ["narek", "annie"])
-        self.assertEqual(par_pronote(self.donnees, id_message("m1"))["enfants"], ["narek", "annie"])
-        self.assertEqual(par_pronote(self.donnees, id_message("m1"))["niveau"], "important")
-        self.assertEqual(par_pronote(self.donnees, id_message("m2"))["niveau"], "info")
+        self.assertEqual(self.par_id["info:i2"]["enfants"], ["narek", "annie"])
+        self.assertEqual(self.par_id[id_message("m1")]["enfants"], ["narek", "annie"])
+        self.assertEqual(self.par_id[id_message("m1")]["niveau"], "important")
+        self.assertEqual(self.par_id[id_message("m2")]["niveau"], "info")
 
     def test_meme_message_sous_deux_identifiants(self):
         """Le collège écrit aux deux enfants : une seule nouvelle, un seul clic."""
         client = FauxClient(MAINTENANT)
         client._donnees["E2"]["discussions"][0]._participants_message_id = "m1-bis"
-        donnees = fetch.Collecte(client, MAINTENANT).tout()
+        donnees, par_id = collecte_indexee(client)
         messages = [a for a in donnees["actualites"] if a["type"] == "message"]
-        fusionne = par_pronote(donnees, id_message("m1"))
         self.assertEqual(len(messages), 3)
-        self.assertEqual(fusionne["enfants"], ["narek", "annie"])
-        self.assertEqual(fusionne["ids_pronote"], [id_message("m1"), id_message("m1-bis")])
+        self.assertIs(par_id[id_message("m1")], par_id[id_message("m1-bis")])
+        self.assertEqual(par_id[id_message("m1")]["enfants"], ["narek", "annie"])
+
+    def test_identite_survit_a_une_renumerotation(self):
+        """PRONOTE renumérote tout à chaque session : les identités doivent tenir."""
+        def renumerote(client):
+            for cle, enfant in client._donnees.items():
+                for liste in ("devoirs", "cours", "infos"):
+                    for i, o in enumerate(enfant.get(liste, [])):
+                        if hasattr(o, "id"):
+                            # Numéros neufs, mais toujours distincts d'un enfant à l'autre.
+                            o.id = f"session2-{cle}-{liste}-{i}"
+                for d in enfant.get("discussions", []):
+                    d._participants_message_id = "session2-" + str(d._participants_message_id)
+                for periode in enfant["periodes"]:
+                    for liste in (periode.grades, periode.absences, periode.delays, periode.punishments):
+                        for o in liste:
+                            o.id = "session2-" + o.id
+            return client
+
+        avant = {a["id"] for a in collecte()["actualites"]}
+        apres = {a["id"] for a in fetch.Collecte(renumerote(FauxClient(MAINTENANT)), MAINTENANT).tout()["actualites"]}
+        self.assertEqual(avant, apres)
 
     def test_identite_independante_de_l_enfant(self):
         """Le « Vu » du navigateur tient à l'identifiant de la nouvelle.
@@ -188,23 +210,24 @@ class Classement(unittest.TestCase):
             client._donnees["E2"]["discussions"][0]._participants_message_id = "m1-bis"
             if not avec_narek:
                 client._donnees["E1"]["discussions"] = []
-            return fetch.Collecte(client, MAINTENANT).tout()
+            return collecte_indexee(client)
 
-        a_deux = par_pronote(donnees(True), id_message("m1-bis"))
-        seul = par_pronote(donnees(False), id_message("m1-bis"))
+        a_deux = donnees(True)[1][id_message("m1-bis")]
+        seul = donnees(False)[1][id_message("m1-bis")]
         self.assertEqual(a_deux["enfants"], ["narek", "annie"])
         self.assertEqual(seul["enfants"], ["annie"])
         self.assertEqual(seul["id"], a_deux["id"])
         self.assertNotIn(":", seul["id"])  # jamais confondu avec un identifiant PRONOTE
 
     def test_devoirs_jamais_fusionnes(self):
-        """Deux devoirs de même intitulé restent deux devoirs."""
-        for a in collecte()["actualites"]:
-            self.assertEqual(len(a["ids_pronote"]), 1, a["id"])
+        """Le travail scolaire ne se regroupe jamais entre enfants."""
+        for a in self.donnees["actualites"]:
+            if a["type"] not in fetch.ACTU_COMMUNES:
+                self.assertEqual(len(a["enfants"]), 1, a["id"])
 
     def test_message_lu_mais_a_traiter(self):
         """Une discussion lue qui parle d'autorisation reste importante."""
-        m3 = par_pronote(self.donnees, id_message("m3"))
+        m3 = self.par_id[id_message("m3")]
         self.assertEqual(m3["niveau"], "important")
         self.assertEqual(m3["raison"], "Mention « sortie »")
 
@@ -213,6 +236,37 @@ class Classement(unittest.TestCase):
         self.assertEqual(horizons, sorted(horizons, key=lambda h: h != "avenir"))
         recents = [a["date"] for a in self.donnees["actualites"] if a["horizon"] == "recent"]
         self.assertEqual(recents, sorted(recents, reverse=True))
+
+
+class Marquage(unittest.TestCase):
+    """Le clic « Vu » doit vraiment atteindre PRONOTE, une session plus tard."""
+
+    def test_identite_retrouvee_dans_une_session_neuve(self):
+        publie = collecte()
+        cible = [a for a in publie["actualites"]
+                 if a["type"] == "message" and a["niveau"] == "important"][0]
+        # Nouvelle session : PRONOTE renumérote, la page ne sait que l'identité.
+        client = FauxClient(MAINTENANT)
+        for enfant in client._donnees.values():
+            for d in enfant.get("discussions", []):
+                d._participants_message_id = "session2-" + str(d._participants_message_id)
+        faits, introuvables = fetch.marquer_lu(client, [cible["id"]])
+        self.assertEqual((faits, introuvables), ([cible["id"]], []))
+        lues = [d for e in client._donnees.values() for d in e.get("discussions", []) if not d.unread]
+        self.assertTrue(lues)
+
+    def test_sondage_marque_aussi(self):
+        publie = collecte()
+        sondage = [a for a in publie["actualites"] if a["type"] == "sondage"][0]
+        client = FauxClient(MAINTENANT)
+        faits, introuvables = fetch.marquer_lu(client, [sondage["id"]])
+        self.assertEqual((faits, introuvables), ([sondage["id"]], []))
+
+    def test_seules_les_identites_passent(self):
+        """Un numéro PRONOTE, ou n'importe quoi d'autre, est écarté."""
+        bon = "message~0123456789abcdef"
+        self.assertEqual(fetch.ids_a_marquer(f"{bon}, message:d1, devoir~0123456789abcdef, "
+                                             "message~PAS_HEXA, ../../etc"), [bon])
 
 
 class Sortie(unittest.TestCase):
@@ -237,6 +291,20 @@ class Sortie(unittest.TestCase):
         memoire = {a["id"]: a["signale_le"] for a in premier["actualites"]}
         plus_tard = MAINTENANT + dt.timedelta(minutes=37)
         second = fetch.Collecte(FauxClient(MAINTENANT), plus_tard, memoire=memoire).tout()
+        self.assertEqual(fetch.empreinte(premier), fetch.empreinte(second))
+
+    def test_fichier_stable_malgre_une_renumerotation(self):
+        """Le cas réel : PRONOTE renumérote, et le fichier ne doit pas bouger."""
+        premier = collecte()
+        memoire = {a["id"]: a["signale_le"] for a in premier["actualites"]}
+        client = FauxClient(MAINTENANT)
+        for cle, enfant in client._donnees.items():
+            for liste in ("devoirs", "cours", "infos"):
+                for i, o in enumerate(enfant.get(liste, [])):
+                    if hasattr(o, "id"):
+                        o.id = f"session2-{cle}-{liste}-{i}"
+        plus_tard = MAINTENANT + dt.timedelta(minutes=37)
+        second = fetch.Collecte(client, plus_tard, memoire=memoire).tout()
         self.assertEqual(fetch.empreinte(premier), fetch.empreinte(second))
 
     def test_sans_memoire_le_contenu_derive(self):

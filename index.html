@@ -2607,7 +2607,7 @@ svg{display:block}
   // tourner sur un vieux JavaScript que le navigateur garde en cache, et
   // lire de travers ce que le robot publie — ses « Vu » se perdraient sans
   // qu'il comprenne pourquoi.
-  var ACTU_VERSION = 2;
+  var ACTU_VERSION = 3;
   var ACTU_CLE = 'planning.actus.cle';
   var ACTU_VISITE = 'planning.actus.visite';
   var ACTU_TYPES = {
@@ -2653,9 +2653,8 @@ svg{display:block}
   // « Vu » range la nouvelle ici. Si la page est reliée à GitHub, le clic part
   // aussi vers le robot, seul à savoir se connecter à PRONOTE : il y passera la
   // discussion ou l'information en « lu ». Sans liaison, la marque reste locale.
-  // Une nouvelle se reconnaît aussi à ses identifiants PRONOTE : ils changent
-  // quand une copie sort de la fenêtre, et un « Vu » posé avant ne doit pas se
-  // perdre pour autant.
+  // L'identifiant d'une nouvelle vient de son contenu : il tient d'un passage du
+  // robot à l'autre, alors que les numéros de PRONOTE changent à chaque session.
   function estVu(a) {
     return clesActu(a).some(function (id) {
       return Object.prototype.hasOwnProperty.call(actu.vus, id);
@@ -2720,15 +2719,11 @@ svg{display:block}
   function envoyerLus() {
     var enCours = enAttente();
     if (!enCours.length || !relie()) return;
-    // Une nouvelle adressée aux deux enfants porte deux identifiants PRONOTE :
-    // les deux partent, sinon elle resterait non lue d'un côté.
-    var ids = [];
-    enCours.forEach(function (id) {
-      var a = (actu.donnees.actualites || []).filter(function (x) { return x.id === id; })[0];
-      (a && a.ids_pronote && a.ids_pronote.length ? a.ids_pronote : [id]).forEach(function (p) {
-        if (ids.indexOf(p) === -1) ids.push(p);
-      });
-    });
+    // C'est l'identité de la nouvelle qui part, pas un numéro PRONOTE : ceux du
+    // fichier viennent d'une session passée et ne désignent plus rien. Le robot
+    // la retrouve en direct, des deux côtés s'il le faut — une seule adressée
+    // aux deux enfants ne demande qu'un clic.
+    var ids = enCours.slice();
     enCours.forEach(function (id) { actu.envois[id] = 'envoi'; });
     noteEnvois();
     renderActus();

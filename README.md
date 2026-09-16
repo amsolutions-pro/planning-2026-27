@@ -132,12 +132,11 @@ pastille de l'onglet ne compte que l'important.
 
 Ce qui concerne les deux enfants (informations du collège, messagerie du compte
 parent) apparaît dans une carte « Pour les deux » : une seule fois, donc un seul
-clic. Le regroupement se fait sur l'identifiant PRONOTE et, pour les messages,
-informations et sondages, sur le contenu lui-même (type, titre, date, auteur) —
-le collège donne parfois un identifiant différent au même message selon l'enfant
-sous lequel on le lit. Les identifiants de toutes les copies sont conservés
-(`ids_pronote`), si bien que le marquage « lu » n'en oublie aucune. Deux devoirs
-de même intitulé, eux, restent deux devoirs.
+clic. Le regroupement se fait sur le contenu lui-même — type, titre, date,
+auteur —, car le collège donne un numéro différent au même message selon l'enfant
+sous lequel on le lit. Le marquage « lu » repart de là et retrouve les deux
+copies en direct. Deux devoirs de même intitulé, eux, restent deux devoirs : le
+travail scolaire garde l'enfant dans son identité.
 
 Les nouvelles apparues depuis la dernière ouverture de l'onglet, sur cet
 appareil, portent « Nouveau ».
@@ -153,14 +152,26 @@ PRONOTE sont bornées et se réordonnent, si bien qu'une nouvelle peut manquer �
 l'appel puis revenir.
 
 La marque tient à l'identifiant de la nouvelle, qui doit donc être le même d'un
-passage à l'autre. Celui d'un devoir ou d'une note vient de PRONOTE et ne bouge
-pas. Une communication, elle, porte un numéro différent selon l'enfant sous
-lequel on la lit : tant que le robot retenait celui du premier enfant vu, il
-suffisait que cette copie-là sorte de la liste pour que la nouvelle change
-d'identité et revienne « non vue » après une actualisation. Son identité vient
-donc maintenant de son contenu (`id_signature`), la même des deux côtés ; les
-numéros PRONOTE de toutes ses copies restent à part, dans `ids_pronote`, pour le
-marquage en « lu ».
+passage à l'autre. Or **PRONOTE renumérote tout à chaque session** : un relevé a
+vu 29 nouvelles sur 39 changer de numéro en vingt minutes. Reprendre ces numéros
+tels quels réécrivait le fichier à chaque passage — commit et republication pour
+rien —, faisait revenir le bouton « Vu » des nouvelles déjà vues à chaque
+actualisation, et envoyait au robot des numéros périmés qu'il ne retrouvait plus
+pour les marquer lues.
+
+L'identité d'une nouvelle vient donc de ce qu'elle dit (`identite`) : son type,
+son titre, son auteur, sa date — et pour le travail scolaire, son descriptif et
+l'enfant, seuls à distinguer deux devoirs de même matière et même échéance. Une
+communication n'emporte pas l'enfant : le même message adressé aux deux n'en
+fait qu'une, et un seul clic. Le classement, l'état lu ou fait, la date de
+signalement n'en sont pas : ils bougent sans que la nouvelle change. Les numéros
+PRONOTE ne sont plus publiés du tout — ils ne servent que le temps du passage, à
+ne pas relire deux fois la même chose pour les deux enfants. Le clic « Vu » envoie
+l'identité, et le robot retrouve la discussion en direct pour la marquer lue.
+
+Le journal de l'action affiche à chaque passage `identités : N gardée(s), N
+nouvelle(s), N disparue(s)` — des comptes, rien du contenu. C'est ce relevé qui a
+mis le défaut en évidence, et c'est lui qui dirait qu'il revient.
 
 Changer cette identité change le format publié, d'où le numéro `version` que le
 fichier annonce **en clair**, hors du chiffrement (`VERSION_FICHIER`). Un onglet
