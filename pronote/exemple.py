@@ -205,6 +205,11 @@ class FauxClient:
                        _o(author="M. MARTIN", created=m.replace(tzinfo=None) - dt.timedelta(hours=5),
                           content="Bonjour, merci de retourner l'autorisation signée avant vendredi."),
                    ]),
+                _o(id="m3", subject="Voyage en Espagne — autorisation de sortie", creator="Direction",
+                   unread=0, closed=False, labels=[], messages=[
+                       _o(author="Direction", created=m.replace(tzinfo=None) - dt.timedelta(days=3),
+                          content="Le dossier est à rapporter signé avant la fin du mois."),
+                   ]),
                 _o(id="m2", subject="Absence en espagnol", creator=None, unread=0, closed=False,
                    labels=[], messages=[
                        _o(author=None, created=m.replace(tzinfo=None) - dt.timedelta(days=8),

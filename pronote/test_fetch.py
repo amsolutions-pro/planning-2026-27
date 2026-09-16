@@ -55,11 +55,16 @@ class Classement(unittest.TestCase):
         self.assertEqual(self.donnees["etablissement"], "Collège de démonstration")
         self.assertEqual(self.donnees["erreurs"], [])
 
-    def test_devoir_pour_demain_important(self):
+    def test_devoir_pour_demain_scolaire(self):
         a = self.par_id["devoir:d1"]
-        self.assertEqual(a["niveau"], "important")
+        self.assertEqual(a["niveau"], "scolaire")
         self.assertEqual(a["horizon"], "avenir")
         self.assertEqual(a["date"], "2026-09-17")
+
+    def test_niveaux_connus(self):
+        niveaux = {a["niveau"] for a in self.donnees["actualites"]}
+        self.assertTrue(niveaux <= {"important", "scolaire", "info"}, niveaux)
+        self.assertIn("scolaire", self.donnees["regles"])
 
     def test_devoir_fait_ou_lointain_info(self):
         self.assertEqual(self.par_id["devoir:d3"]["niveau"], "info")
@@ -68,7 +73,7 @@ class Classement(unittest.TestCase):
 
     def test_controle_dans_devoir(self):
         a = self.par_id["devoir:d2"]
-        self.assertEqual((a["type"], a["niveau"]), ("controle", "important"))
+        self.assertEqual((a["type"], a["niveau"]), ("controle", "scolaire"))
         self.assertEqual(a["pieces_jointes"], 1)
 
     def test_cours(self):
@@ -78,7 +83,7 @@ class Classement(unittest.TestCase):
         self.assertNotIn("cours:c3", self.par_id)
 
     def test_notes(self):
-        self.assertEqual(self.par_id["note:n1"]["niveau"], "important")
+        self.assertEqual(self.par_id["note:n1"]["niveau"], "scolaire")
         self.assertEqual(self.par_id["note:n2"]["niveau"], "info")
         self.assertEqual(self.par_id["note:n3"]["titre"], "Technologie — 8/10 (16/20)")
         self.assertEqual(self.par_id["note:n5"]["raison"], "Note non chiffrée")
@@ -102,6 +107,11 @@ class Classement(unittest.TestCase):
         self.assertEqual(self.par_id["message:m1"]["enfants"], ["narek", "annie"])
         self.assertEqual(self.par_id["message:m1"]["niveau"], "important")
         self.assertEqual(self.par_id["message:m2"]["niveau"], "info")
+
+    def test_message_lu_mais_a_traiter(self):
+        """Une discussion lue qui parle d'autorisation reste importante."""
+        self.assertEqual(self.par_id["message:m3"]["niveau"], "important")
+        self.assertEqual(self.par_id["message:m3"]["raison"], "Mention « sortie »")
 
     def test_ordre(self):
         horizons = [a["horizon"] for a in self.donnees["actualites"]]

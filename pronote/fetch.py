@@ -253,9 +253,12 @@ class Collecte:
             "regles": {
                 "important": [
                     "absence ou retard non justifié", "punition", "cours annulé ou modifié",
+                    "message non lu", "sondage sans réponse",
+                    "message ou information parlant de réunion, sortie, autorisation, orientation…",
+                ],
+                "scolaire": [
                     "contrôle annoncé", "devoir pour le prochain jour de classe non fait",
-                    "note en dessous de 10/20", "sondage sans réponse", "message non lu",
-                    "information sur une réunion, sortie, autorisation, orientation…",
+                    "note en dessous de 10/20",
                 ],
             },
             "enfants": self.enfants,
@@ -324,9 +327,9 @@ class Collecte:
             except Exception:
                 pass
             if mot and not hw.done:
-                niveau, raison, type_ = "important", f"Mention « {mot} »", "controle"
+                niveau, raison, type_ = "scolaire", f"Mention « {mot} »", "controle"
             elif not hw.done and hw.date <= prochain:
-                niveau, raison, type_ = "important", "Pour le prochain jour de classe, non fait", "devoir"
+                niveau, raison, type_ = "scolaire", "Pour le prochain jour de classe, non fait", "devoir"
             else:
                 niveau, raison, type_ = "info", "Devoir fait" if hw.done else "Devoir à venir", "devoir"
             self.ajoute(enfant, {
@@ -375,7 +378,7 @@ class Collecte:
                 self.ajoute(enfant, {
                     "id": f"controle:{lecon.id}",
                     "type": "controle",
-                    "niveau": "important",
+                    "niveau": "scolaire",
                     "raison": "Contrôle prévu",
                     "titre": f"Contrôle — {matiere}, {jour_fr(lecon.start.date())} {plage}",
                     "detail": lecon.teacher_name or "",
@@ -402,7 +405,7 @@ class Collecte:
                 if abs(float(str(g.out_of).replace(",", ".")) - 20) > 0.01:
                     titre += f" ({sur20:g}/20)"
                 if sur20 < 10:
-                    niveau, raison = "important", "Note en dessous de 10/20"
+                    niveau, raison = "scolaire", "Note en dessous de 10/20"
                 else:
                     niveau, raison = "info", "Note au-dessus de 10/20"
             morceaux = []
@@ -575,12 +578,21 @@ class Collecte:
                 continue
             non_lus = d.unread or 0
             auteur = dernier.author or "Vous"
+            # Un message déjà lu peut rester à traiter : on relit son objet et son
+            # dernier texte à la recherche de ce qui demande une réponse.
+            mot = contient(f"{d.subject or ''} {dernier.content or ''}", MOTS_INFO_IMPORTANTE)
+            if non_lus and not d.closed:
+                niveau = "important"
+                raison = f"{non_lus} message{'s' if non_lus > 1 else ''} non lu{'s' if non_lus > 1 else ''}"
+            elif mot and dernier.author and not d.closed:
+                niveau, raison = "important", f"Mention « {mot} »"
+            else:
+                niveau, raison = "info", "Discussion lue"
             self.ajoute(enfant, {
                 "id": ident,
                 "type": "message",
-                "niveau": "important" if non_lus and not d.closed else "info",
-                "raison": f"{non_lus} message{'s' if non_lus > 1 else ''} non lu{'s' if non_lus > 1 else ''}"
-                          if non_lus else "Discussion lue",
+                "niveau": niveau,
+                "raison": raison,
                 "titre": d.subject or f"Discussion avec {d.creator or auteur}",
                 "detail": court(f"{auteur} : {dernier.content}", 300),
                 "auteur": d.creator or auteur,
@@ -662,8 +674,9 @@ def resume(donnees: dict) -> str:
     lignes = []
     for e in donnees["enfants"]:
         miens = [a for a in donnees["actualites"] if e["id"] in a["enfants"]]
-        imp = sum(1 for a in miens if a["niveau"] == "important")
-        lignes.append(f"  {e['nom']} ({e['classe'] or '?'}) : {imp} important(s), {len(miens) - imp} autre(s)")
+        compte = lambda n: sum(1 for a in miens if a["niveau"] == n)
+        lignes.append(f"  {e['nom']} ({e['classe'] or '?'}) : {compte('important')} important(s), "
+                      f"{compte('scolaire')} scolaire(s), {compte('info')} autre(s)")
     for err in donnees["erreurs"]:
         lignes.append(f"  ! {err}")
     return "\n".join(lignes)

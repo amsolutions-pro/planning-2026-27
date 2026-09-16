@@ -106,21 +106,48 @@ retards et punitions (30 jours), les informations et sondages, la messagerie,
 puis écrit `pronote/actualites.json` — seulement s'il y a du nouveau — et
 redéploie le site.
 
-### Ce qui est classé important
+### Trois niveaux
 
-Absence ou retard **non justifié** ; punition ; cours annulé ou modifié ;
-contrôle annoncé (dans l'emploi du temps, ou un devoir qui mentionne
-« contrôle », « évaluation », « interro »…) ; devoir non fait pour le prochain
-jour de classe ; note en dessous de 10/20 ; sondage sans réponse ; message non
-lu ; information dont le titre ou le texte parle de réunion, sortie, voyage,
-autorisation, orientation, stage, conseil de classe, grève, rendez-vous… (liste
-`MOTS_INFO_IMPORTANTE` dans `fetch.py`). Tout le reste (devoirs courants, bonnes
-notes, informations lues) est visible avec « Tout ». La raison du classement
-est écrite en italique sous chaque nouvelle.
+Les nouvelles sont rangées en trois niveaux, et chaque vue ajoute le niveau
+suivant à la précédente : **L'important**, **+ Le travail**, **Tout**.
+
+- **Important** (filet et étiquette ambre) — ce qui demande une décision de
+  votre part : absence ou retard **non justifié**, punition, cours annulé ou
+  modifié, message non lu, sondage sans réponse, et tout message ou information
+  dont l'objet ou le texte parle de réunion, sortie, voyage, autorisation,
+  orientation, stage, conseil de classe, grève, rendez-vous… (liste
+  `MOTS_INFO_IMPORTANTE` dans `fetch.py`). Un message **déjà lu** y reste s'il
+  porte un de ces mots : une autorisation à signer ne cesse pas d'exister parce
+  qu'on a ouvert le message.
+- **Travail scolaire** (filet et étiquette violets) — ce qui regarde l'enfant :
+  contrôle annoncé (emploi du temps, ou devoir mentionnant « contrôle »,
+  « évaluation », « interro »…), devoir non fait pour le prochain jour de
+  classe, note en dessous de 10/20.
+- **Le reste** — devoirs courants, bonnes notes, absences justifiées,
+  informations déjà lues.
+
+La raison du classement est écrite en italique sous chaque nouvelle, et la
+pastille de l'onglet ne compte que l'important.
 
 Ce qui concerne les deux enfants (informations du collège, messagerie du compte
 parent) apparaît dans une carte « Pour les deux ». Les nouvelles apparues depuis
 la dernière ouverture de l'onglet, sur cet appareil, portent « Nouveau ».
+
+### Le bouton « Vu » ne touche pas à PRONOTE
+
+Chaque nouvelle importante ou scolaire porte un bouton **Vu** : elle sort alors
+des deux premières vues et de la pastille, reste visible dans « Tout » avec une
+étiquette verte, et « Remettre » la rétablit. La marque est gardée dans le
+`localStorage` de l'appareil, et disparaît d'elle-même quand la nouvelle sort de
+PRONOTE.
+
+Rien n'est écrit sur PRONOTE, **délibérément** : le collège continue de voir le
+message comme non lu tant que vous ne l'avez pas ouvert là-bas. Faire marquer
+« lu » par le robot toutes les deux heures aurait deux effets fâcheux : le
+professeur croirait que vous avez lu son message alors que personne ne l'a
+ouvert — ce qui compte pour une autorisation à signer — et l'onglet perdrait son
+principal signal, puisque c'est justement « non lu » qui fait entrer un message
+dans l'important.
 
 ### Confidentialité
 
