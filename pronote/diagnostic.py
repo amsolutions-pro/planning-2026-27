@@ -83,8 +83,16 @@ def main() -> int:
     avant = len(non_lues)
 
     import json
+    # pronotepy jette le JSON brut après construction (`del self._resolver`) :
+    # on redemande la liste pour voir ce que PRONOTE dit lui-même de ses
+    # informations — c'est là que doit se lire ce qu'il attend en retour.
+    brut = client.post("PageActualites", 8, {"modesAffActus": {"_T": 26, "V": "[0..3]"}})
+    entrees = [a for liste in brut["dataSec"]["data"]["listeModesAff"]
+               for a in liste["listeActualites"]["V"]]
+    print(f"Forme de l'enveloppe : {json.dumps(forme(brut['dataSec']['data'], 2), ensure_ascii=False)[:600]}")
+    non_lue = next((a for a in entrees if not a.get("lue")), None)
     print("Forme brute d'une information non lue :")
-    print(json.dumps(forme(cible._resolver.json_dict), ensure_ascii=False, indent=1)[:3000])
+    print(json.dumps(forme(non_lue), ensure_ascii=False, indent=1)[:3500])
     print(f"ressource de connexion : {fetch.hachage(client.info.id)} · enfant : {fetch.hachage(enfant.id)}")
 
     def ouvrir(public, genre):
