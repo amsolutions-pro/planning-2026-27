@@ -116,36 +116,68 @@ def compte_frais(enfant) -> int:
 
 
 def epreuve(s: "Serveur", enfant) -> bool:
-    """Tour 7 : on ouvre le détail et on regarde ce que PRONOTE y déclare.
+    """Tour 8 : l'aller-retour, dans l'autre sens.
 
-    Six tours ont montré que ni `SaisieActualites` ni l'ouverture ne font
-    descendre le compte, quel que soit le destinataire envoyé — et la mesure est
-    bonne, une session neuve dit la même chose. Le détail de l'information doit
-    porter le descripteur du lecteur, ou la commande d'accusé de lecture.
+    Sept tours ont échoué à faire descendre le compte des informations. Reste
+    une question, et une seule : le drapeau « lu » est-il seulement inscriptible
+    depuis un compte parent ? On prend donc une information DÉJÀ LUE et on tente
+    de la repasser en non lue. Si même cela ne prend pas, PRONOTE ne laisse pas
+    écrire ce drapeau, et il faudra le dire au lieu de le promettre.
+
+    On éprouve du même coup la messagerie, où le marquage semble marcher : une
+    discussion lue est repassée non lue, puis relue. Si le compte bouge dans les
+    deux sens, le « Vu » tient sa promesse pour les messages.
     """
     s.choisir(enfant)
-    non_lues = s.non_lues()
     nom = fetch.prenom(enfant.name)
-    if not non_lues:
-        print(f"  {nom} : aucune information non lue")
-        return True
-    cible = next((a for a in non_lues if not a.get("estSondage")), non_lues[0])
-    print(f"  {nom} : {len(non_lues)} non lue(s) · cible {fetch.hachage(cible['N'])}")
 
-    detail = s.ouvrir(cible)["dataSec"]["data"]
-    print("  Détail de l'information, forme :")
-    print("  " + json.dumps(forme(detail, 4), ensure_ascii=False)[:2600])
+    # -- messagerie
+    toutes = list(s.client.discussions())
+    if toutes:
+        d = toutes[0]
+        avant = compte_msg(enfant)
+        try:
+            d.mark_as(False)
+            monte = compte_msg(enfant)
+            d.mark_as(True)
+            redescend = compte_msg(enfant)
+            print(f"  {nom} · messagerie : non lus {avant} → {monte} (mise en non lu) "
+                  f"→ {redescend} (remise en lu) "
+                  + ("✔ LE MARQUAGE ÉCRIT" if monte > avant and redescend == avant else "✗"))
+        except Exception as e:
+            print(f"  {nom} · messagerie : {type(e).__name__} {fetch.court(str(e), 70)}")
+    else:
+        print(f"  {nom} · messagerie : aucune discussion")
+
+    # -- informations
+    entrees = s.actualites()
+    lues = [a for a in entrees if a.get("lue")]
+    avant = len([a for a in entrees if not a.get("lue")])
+    if not lues:
+        print(f"  {nom} · informations : aucune déjà lue, rien à éprouver dans ce sens")
+        return False
+    cible = lues[0]
+    etat = s.saisir({"N": cible["N"], **s.descripteur(cible), "lue": False})
+    monte = compte_frais(enfant)
+    print(f"  {nom} · informations : non lues {avant} → {monte} (mise en NON lue) → {etat}")
+    if monte > avant:
+        s.saisir({"N": cible["N"], **s.descripteur(cible), "lue": True})
+        print(f"    remise en lue → {compte_frais(enfant)} ✔ le drapeau s'écrit")
+        return True
+    print("    ✗ le drapeau « lu » d'une information ne s'écrit pas depuis ce compte")
     return False
+
+
+def compte_msg(enfant) -> int:
+    client, _ = fetch.connexion()
+    client.set_child(enfant.name)
+    return len(list(client.discussions(only_unread=True)))
 
 
 def main() -> int:
     s = Serveur()
     print(f"Connexion : {s.mode} · {len(s.client.children)} enfant(s)")
     s.choisir(s.client.children[0])
-    exemple = next((a for a in s.actualites() if not a.get("lue") and not a.get("estSondage")), None)
-    if exemple is not None:
-        print("Forme brute d'une information ordinaire non lue :")
-        print(json.dumps(forme(exemple, 3), ensure_ascii=False)[:1400])
 
     print("Épreuve, enfant par enfant :")
     tous = all(epreuve(s, e) for e in s.client.children)
