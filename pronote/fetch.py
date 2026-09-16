@@ -156,6 +156,11 @@ def note_sur_20(note: str, bareme: str) -> float | None:
     return round(n / b * 20, 2)
 
 
+def hachage(valeur) -> str:
+    """Une empreinte courte, à mettre dans un journal public sans rien révéler."""
+    return hashlib.sha1(str(valeur).encode()).hexdigest()[:8]
+
+
 def id_discussion(d) -> str:
     """Fabrique un identifiant pour une discussion, qui n'en expose pas.
 
