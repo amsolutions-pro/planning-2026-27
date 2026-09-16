@@ -106,12 +106,7 @@ def tentatives(s: "Serveur", actu: dict):
 
 
 def compte_frais(enfant) -> int:
-    """Recompte dans une session neuve.
-
-    Les cinq tours précédents recomptaient dans la session qui venait d'écrire :
-    si PRONOTE y sert une liste figée, ils étaient aveugles. Une reconnexion
-    lève le doute — c'est cher, mais c'est la seule mesure qui vaille.
-    """
+    """Recompte dans une session neuve : la session qui écrit peut être aveugle."""
     client, _ = fetch.connexion()
     client.set_child(enfant.name)
     brut = client.post("PageActualites", 8, {"modesAffActus": {"_T": 26, "V": "[0..3]"}})
@@ -121,6 +116,13 @@ def compte_frais(enfant) -> int:
 
 
 def epreuve(s: "Serveur", enfant) -> bool:
+    """Tour 7 : on ouvre le détail et on regarde ce que PRONOTE y déclare.
+
+    Six tours ont montré que ni `SaisieActualites` ni l'ouverture ne font
+    descendre le compte, quel que soit le destinataire envoyé — et la mesure est
+    bonne, une session neuve dit la même chose. Le détail de l'information doit
+    porter le descripteur du lecteur, ou la commande d'accusé de lecture.
+    """
     s.choisir(enfant)
     non_lues = s.non_lues()
     nom = fetch.prenom(enfant.name)
@@ -128,33 +130,11 @@ def epreuve(s: "Serveur", enfant) -> bool:
         print(f"  {nom} : aucune information non lue")
         return True
     cible = next((a for a in non_lues if not a.get("estSondage")), non_lues[0])
-    avant = len(non_lues)
-    public = (cible.get("public") or {}).get("V") or {}
-    print(f"  {nom} : {avant} non lue(s) · cible {fetch.hachage(cible['N'])}"
-          f" · genrePublic {cible.get('genrePublic')} · public G={public.get('G')}")
+    print(f"  {nom} : {len(non_lues)} non lue(s) · cible {fetch.hachage(cible['N'])}")
 
-    essais = [
-        ("saisie, descripteur annoncé", lambda: s.saisir({"N": cible["N"], **s.descripteur(cible), "lue": True})),
-        ("ouvrir le détail", lambda: s.ouvrir(cible)),
-        ("saisie, public = enfant G=4", lambda: s.saisir(
-            {"N": cible["N"], "validationDirecte": True, "genrePublic": 4,
-             "public": {"N": enfant.id, "G": 4}, "lue": True})),
-    ]
-    for nom_essai, faire in essais:
-        try:
-            faire()
-            etat = "posté"
-        except Exception as e:
-            etat = f"refusé ({type(e).__name__} {fetch.court(str(e), 60)})"
-        meme = len(s.non_lues())
-        frais = compte_frais(enfant)
-        pris = frais < avant
-        print(f"    {nom_essai:<28} → {etat:<24} même session {meme} · session neuve {frais} "
-              + ("✔ PRIS" if pris else "✗"))
-        if pris:
-            s.saisir({"N": cible["N"], **s.descripteur(cible), "lue": False})
-            print(f"    remise en non lue → session neuve {compte_frais(enfant)} (départ {avant})")
-            return True
+    detail = s.ouvrir(cible)["dataSec"]["data"]
+    print("  Détail de l'information, forme :")
+    print("  " + json.dumps(forme(detail, 4), ensure_ascii=False)[:2600])
     return False
 
 
