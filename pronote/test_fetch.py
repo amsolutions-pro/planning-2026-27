@@ -25,6 +25,15 @@ def id_message(ancre):
     return "message:" + fetch.id_discussion(SimpleNamespace(_participants_message_id=ancre))
 
 
+def par_pronote(donnees, ident):
+    """La nouvelle qui porte cet identifiant PRONOTE — son identifiant à elle
+    vient de son contenu, et ne dit rien de l'enfant sous lequel on l'a lue."""
+    for a in donnees["actualites"]:
+        if ident in a["ids_pronote"]:
+            return a
+    raise KeyError(ident)
+
+
 class ConformitePronotepy(unittest.TestCase):
     """Le faux client ne doit exposer que ce que pronotepy expose vraiment.
 
@@ -144,16 +153,16 @@ class Classement(unittest.TestCase):
         self.assertIn("prévue", p["detail"])
 
     def test_infos_et_sondages(self):
-        self.assertEqual(self.par_id["info:i1"]["niveau"], "important")
-        self.assertEqual(self.par_id["info:i2"]["niveau"], "info")
-        self.assertEqual(self.par_id["info:i3"]["type"], "sondage")
-        self.assertEqual(self.par_id["info:i3"]["niveau"], "important")
+        self.assertEqual(par_pronote(self.donnees, "info:i1")["niveau"], "important")
+        self.assertEqual(par_pronote(self.donnees, "info:i2")["niveau"], "info")
+        self.assertEqual(par_pronote(self.donnees, "info:i3")["type"], "sondage")
+        self.assertEqual(par_pronote(self.donnees, "info:i3")["niveau"], "important")
 
     def test_partage_entre_enfants(self):
-        self.assertEqual(self.par_id["info:i2"]["enfants"], ["narek", "annie"])
-        self.assertEqual(self.par_id[id_message("m1")]["enfants"], ["narek", "annie"])
-        self.assertEqual(self.par_id[id_message("m1")]["niveau"], "important")
-        self.assertEqual(self.par_id[id_message("m2")]["niveau"], "info")
+        self.assertEqual(par_pronote(self.donnees, "info:i2")["enfants"], ["narek", "annie"])
+        self.assertEqual(par_pronote(self.donnees, id_message("m1"))["enfants"], ["narek", "annie"])
+        self.assertEqual(par_pronote(self.donnees, id_message("m1"))["niveau"], "important")
+        self.assertEqual(par_pronote(self.donnees, id_message("m2"))["niveau"], "info")
 
     def test_meme_message_sous_deux_identifiants(self):
         """Le collège écrit aux deux enfants : une seule nouvelle, un seul clic."""
@@ -161,10 +170,32 @@ class Classement(unittest.TestCase):
         client._donnees["E2"]["discussions"][0]._participants_message_id = "m1-bis"
         donnees = fetch.Collecte(client, MAINTENANT).tout()
         messages = [a for a in donnees["actualites"] if a["type"] == "message"]
-        fusionne = [a for a in messages if a["id"] == id_message("m1")][0]
+        fusionne = par_pronote(donnees, id_message("m1"))
         self.assertEqual(len(messages), 3)
         self.assertEqual(fusionne["enfants"], ["narek", "annie"])
         self.assertEqual(fusionne["ids_pronote"], [id_message("m1"), id_message("m1-bis")])
+
+    def test_identite_independante_de_l_enfant(self):
+        """Le « Vu » du navigateur tient à l'identifiant de la nouvelle.
+
+        Le message est le même, mais chaque enfant le porte sous son propre
+        numéro. Tant que l'identité venait du premier enfant lu, la disparition
+        de sa copie — liste bornée, réordonnée — rebaptisait la nouvelle, qui
+        revenait « non vue » après une actualisation.
+        """
+        def donnees(avec_narek):
+            client = FauxClient(MAINTENANT)
+            client._donnees["E2"]["discussions"][0]._participants_message_id = "m1-bis"
+            if not avec_narek:
+                client._donnees["E1"]["discussions"] = []
+            return fetch.Collecte(client, MAINTENANT).tout()
+
+        a_deux = par_pronote(donnees(True), id_message("m1-bis"))
+        seul = par_pronote(donnees(False), id_message("m1-bis"))
+        self.assertEqual(a_deux["enfants"], ["narek", "annie"])
+        self.assertEqual(seul["enfants"], ["annie"])
+        self.assertEqual(seul["id"], a_deux["id"])
+        self.assertNotIn(":", seul["id"])  # jamais confondu avec un identifiant PRONOTE
 
     def test_devoirs_jamais_fusionnes(self):
         """Deux devoirs de même intitulé restent deux devoirs."""
@@ -173,8 +204,9 @@ class Classement(unittest.TestCase):
 
     def test_message_lu_mais_a_traiter(self):
         """Une discussion lue qui parle d'autorisation reste importante."""
-        self.assertEqual(self.par_id[id_message("m3")]["niveau"], "important")
-        self.assertEqual(self.par_id[id_message("m3")]["raison"], "Mention « sortie »")
+        m3 = par_pronote(self.donnees, id_message("m3"))
+        self.assertEqual(m3["niveau"], "important")
+        self.assertEqual(m3["raison"], "Mention « sortie »")
 
     def test_ordre(self):
         horizons = [a["horizon"] for a in self.donnees["actualites"]]

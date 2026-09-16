@@ -2615,6 +2615,9 @@ svg{display:block}
   var ACTU_VUES = ['important', 'scolaire', 'tout'];
   var ACTU_NIVEAUX = { important: ['important'], scolaire: ['important', 'scolaire'], tout: null };
   var ACTU_VUS = 'planning.actus.vus';
+  // Une nouvelle peut sortir d'un passage du robot puis revenir au suivant :
+  // on garde sa marque quelques semaines même quand elle n'est plus là.
+  var ACTU_VUS_JOURS = 45;
   var ACTU_JETON = 'planning.actus.jeton';
   var ACTU_ENVOIS = 'planning.actus.envois';
   // Seules ces nouvelles ont un « lu » sur PRONOTE ; un devoir n'en a pas.
@@ -2643,7 +2646,16 @@ svg{display:block}
   // « Vu » range la nouvelle ici. Si la page est reliée à GitHub, le clic part
   // aussi vers le robot, seul à savoir se connecter à PRONOTE : il y passera la
   // discussion ou l'information en « lu ». Sans liaison, la marque reste locale.
-  function estVu(a) { return Object.prototype.hasOwnProperty.call(actu.vus, a.id); }
+  // Une nouvelle se reconnaît aussi à ses identifiants PRONOTE : ils changent
+  // quand une copie sort de la fenêtre, et un « Vu » posé avant ne doit pas se
+  // perdre pour autant.
+  function estVu(a) {
+    return clesActu(a).some(function (id) {
+      return Object.prototype.hasOwnProperty.call(actu.vus, id);
+    });
+  }
+
+  function clesActu(a) { return [a.id].concat(a.ids_pronote || []); }
 
   function estEnvoyable(a) { return ACTU_ENVOYABLES.indexOf(a.type) !== -1; }
 
@@ -2653,15 +2665,15 @@ svg{display:block}
 
   function marquerVu(id) {
     if (!actu.donnees) return;
-    var item = (actu.donnees.actualites || []).filter(function (a) { return a.id === id; })[0];
-    if (actu.vus[id]) {
-      delete actu.vus[id];
+    var item = (actu.donnees.actualites || []).filter(function (a) { return a.id === id; })[0] || { id: id };
+    if (estVu(item)) {
+      clesActu(item).forEach(function (c) { delete actu.vus[c]; });
       // Remettre la nouvelle ne la repasse pas en « non lu » sur PRONOTE : ce
       // chemin n'existe pas ici. On oublie seulement l'envoi qui n'a pas eu lieu.
       if (actu.envois[id] === 'attente') { delete actu.envois[id]; noteEnvois(); }
     } else {
       actu.vus[id] = new Date().toISOString();
-      if (item && estEnvoyable(item) && actu.jeton && actu.donnees.depot && !actu.envois[id]) {
+      if (estEnvoyable(item) && actu.jeton && actu.donnees.depot && !actu.envois[id]) {
         actu.envois[id] = 'attente';
         noteEnvois();
         programmerEnvoi();
@@ -2932,11 +2944,22 @@ svg{display:block}
     });
     document.getElementById('actu-chips').innerHTML = chips;
 
-    // Ce qui a disparu de PRONOTE n'a plus à occuper la mémoire du navigateur.
-    var vivants = {}, envois = {};
+    // Chaque marque suit sa nouvelle, quel que soit l'identifiant sous lequel
+    // elle a été posée. Ce qui a vraiment disparu de PRONOTE finit par sortir
+    // de la mémoire du navigateur — mais après quelques semaines, pas au
+    // premier passage : une nouvelle absente d'une liste y revient souvent.
+    var courant = {};
     (d.actualites || []).forEach(function (a) {
-      if (estVu(a)) vivants[a.id] = actu.vus[a.id];
-      if (actu.envois[a.id]) envois[a.id] = actu.envois[a.id];
+      clesActu(a).forEach(function (c) { courant[c] = a.id; });
+    });
+    var perime = Date.now() - ACTU_VUS_JOURS * 86400000;
+    var vivants = {}, envois = {};
+    Object.keys(actu.vus).forEach(function (id) {
+      var quand = Date.parse(actu.vus[id]);
+      if (courant[id] || !(quand < perime)) vivants[courant[id] || id] = actu.vus[id];
+    });
+    Object.keys(actu.envois).forEach(function (id) {
+      if (courant[id]) envois[courant[id]] = actu.envois[id];
     });
     actu.vus = vivants;
     actu.envois = envois;
@@ -2962,7 +2985,7 @@ svg{display:block}
     badge.textContent = importants;
     badge.hidden = importants === 0;
 
-    var nVus = Object.keys(actu.vus).length;
+    var nVus = (d.actualites || []).filter(estVu).length;
     var boutonVus = document.getElementById('actu-vus');
     boutonVus.hidden = nVus === 0;
     boutonVus.querySelector('span').textContent = 'Remettre ' + nVus + (nVus > 1 ? ' vues' : ' vue');
