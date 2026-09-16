@@ -2642,6 +2642,13 @@ svg{display:block}
 
   function estEnvoyable(a) { return ACTU_ENVOYABLES.indexOf(a.type) !== -1; }
 
+  // « ok » veut dire « GitHub a pris la demande », pas « PRONOTE a marqué » :
+  // l'horodatage permet de démentir le premier avec le second, quand le robot
+  // aura republié un fichier postérieur à l'envoi.
+  function etatEnvoi(id) { return String(actu.envois[id] || '').split('|')[0]; }
+
+  function envoiLe(id) { return Date.parse(String(actu.envois[id] || '').split('|')[1] || 0); }
+
   function noteEnvois() {
     try { localStorage.setItem(ACTU_ENVOIS, JSON.stringify(actu.envois)); } catch (e) {}
   }
@@ -2653,7 +2660,7 @@ svg{display:block}
       clesActu(item).forEach(function (c) { delete actu.vus[c]; });
       // Remettre la nouvelle ne la repasse pas en « non lu » sur PRONOTE : ce
       // chemin n'existe pas ici. On oublie seulement l'envoi qui n'a pas eu lieu.
-      if (actu.envois[id] === 'attente') { delete actu.envois[id]; noteEnvois(); }
+      if (etatEnvoi(id) === 'attente') { delete actu.envois[id]; noteEnvois(); }
     } else {
       actu.vus[id] = new Date().toISOString();
       if (estEnvoyable(item) && actu.jeton && actu.donnees.depot && !actu.envois[id]) {
@@ -2672,7 +2679,7 @@ svg{display:block}
   }
 
   function enAttente() {
-    return Object.keys(actu.envois).filter(function (id) { return actu.envois[id] === 'attente'; });
+    return Object.keys(actu.envois).filter(function (id) { return etatEnvoi(id) === 'attente'; });
   }
 
   // La page ne parle pas à PRONOTE — elle n'en a ni les identifiants ni le droit.
@@ -2705,7 +2712,8 @@ svg{display:block}
     noteEnvois();
     renderActus();
     reveillerRobot(ids).then(function (ok) {
-      enCours.forEach(function (id) { actu.envois[id] = ok ? 'ok' : 'echec'; });
+      var quand = new Date().toISOString();
+      enCours.forEach(function (id) { actu.envois[id] = ok ? 'ok|' + quand : 'echec'; });
       noteEnvois();
       montrerActus(actu.donnees);
     });
@@ -2775,7 +2783,7 @@ svg{display:block}
 
   function reessayerEnvois() {
     Object.keys(actu.envois).forEach(function (id) {
-      if (actu.envois[id] === 'echec') actu.envois[id] = 'attente';
+      if (etatEnvoi(id) === 'echec') actu.envois[id] = 'attente';
     });
     noteEnvois();
     envoyerLus();
@@ -2965,21 +2973,28 @@ svg{display:block}
       var quand = Date.parse(actu.vus[id]);
       if (courant[id] || !(quand < perime)) vivants[courant[id] || id] = actu.vus[id];
     });
+    // Le robot a republié depuis l'envoi, et la communication est toujours non
+    // lue chez PRONOTE : la demande est partie, le marquage n'a pas pris. On le
+    // dit au lieu de laisser un « lu sur PRONOTE » qui n'est pas vrai — le
+    // bouton « Réessayer l'envoi » reprend la main.
+    var publieLe = Date.parse(d.mis_a_jour_le);
     Object.keys(actu.envois).forEach(function (id) {
-      if (courant[id] && !transmises[id]) envois[courant[id]] = actu.envois[id];
+      if (!courant[id] || transmises[id]) return;
+      var dementi = etatEnvoi(id) === 'ok' && !isNaN(publieLe) && !(publieLe < envoiLe(id));
+      envois[courant[id]] = dementi ? 'echec' : actu.envois[id];
     });
     actu.vus = vivants;
     actu.envois = envois;
     try { localStorage.setItem(ACTU_VUS, JSON.stringify(vivants)); } catch (e) {}
     noteEnvois();
 
-    var echecs = Object.keys(envois).filter(function (id) { return envois[id] === 'echec'; }).length;
+    var echecs = Object.keys(envois).filter(function (id) { return String(envois[id]).indexOf('echec') === 0; }).length;
     document.getElementById('actu-lien-etat').innerHTML = !d.depot
       ? 'Le « Vu » reste sur cet appareil'
       : !actu.jeton
         ? 'Le « Vu » reste sur cet appareil — <b>relier à PRONOTE</b>'
         : echecs
-          ? '<b>' + echecs + ' envoi' + (echecs > 1 ? 's' : '') + ' vers PRONOTE en échec</b> — ouvrir pour revoir le jeton'
+          ? '<b>' + echecs + ' « Vu » que PRONOTE n’a pas pris</b> — « Réessayer l’envoi », ou revoir le jeton ici'
           : 'Relié : « Vu » passe la nouvelle en lu sur PRONOTE, « Actualiser » lance le robot';
     document.getElementById('actu-reessayer').hidden = !echecs;
 
@@ -3061,9 +3076,9 @@ svg{display:block}
       attente: ['Vu · à transmettre', 'actu__tag--vu'],
       envoi: ['Vu · transmission…', 'actu__tag--vu'],
       ok: ['Vu · lu sur PRONOTE', 'actu__tag--vu'],
-      echec: ['Vu · envoi échoué', 'actu__tag--echec']
+      echec: ['Vu · pas pris par PRONOTE', 'actu__tag--echec']
     };
-    var etat = ETATS[actu.envois[a.id]];
+    var etat = ETATS[etatEnvoi(a.id)];
     if (vu) tags += '<span class="actu__tag ' + (etat ? etat[1] : 'actu__tag--vu') + '">'
       + (etat ? etat[0] : 'Vu ici') + '</span>';
     var bouton = a.niveau === 'info' && !vu ? '' :
