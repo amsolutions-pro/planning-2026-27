@@ -38,6 +38,10 @@ ICI = pathlib.Path(__file__).resolve().parent
 SORTIE = ICI / "actualites.json"
 URL_DEFAUT = "https://0940575p.index-education.net/pronote/parent.html"
 
+# Plage horaire des passages automatiques, à Paris : personne ne lit l'onglet à
+# 6 h du matin, et le soir les nouvelles du jour sont déjà tombées.
+HEURE_MIN, HEURE_MAX = 7, 18
+
 # Fenêtres de collecte, en jours.
 DEVOIRS_JOURS = 14
 COURS_JOURS = 7
@@ -689,7 +693,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--passphrase", default=None, help="sinon PRONOTE_SITE_PASSPHRASE")
     p.add_argument("--clair", action="store_true", help="ne pas chiffrer, même si un mot de passe est défini")
     p.add_argument("--forcer", action="store_true", help="réécrire même si rien n'a changé")
+    p.add_argument("--heures-ouvrees", action="store_true",
+                   help=f"ne rien faire hors de {HEURE_MIN} h – {HEURE_MAX} h (heure de Paris)")
     args = p.parse_args(argv)
+
+    heure = dt.datetime.now(PARIS).hour
+    if args.heures_ouvrees and not (HEURE_MIN <= heure <= HEURE_MAX):
+        print(f"{heure} h à Paris : hors de la plage {HEURE_MIN} h – {HEURE_MAX} h, rien à faire.")
+        return 0
 
     passphrase = None if args.clair else (args.passphrase or os.environ.get("PRONOTE_SITE_PASSPHRASE") or None)
     maintenant = dt.datetime.now(PARIS)

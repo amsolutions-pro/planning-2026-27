@@ -97,7 +97,8 @@ temps du collège, lui, suit toujours la quinzaine.
 L'onglet « Actualités » montre, enfant par enfant, ce que PRONOTE a de nouveau
 et sépare **l'important** du reste. PRONOTE n'a pas d'API publique : la page
 est statique et ne se connecte à rien. C'est l'action GitHub `pronote.yml` qui,
-toutes les deux heures en journée (lundi–samedi), lance `pronote/fetch.py` ;
+toutes les deux heures entre 7 h et 18 h du lundi au samedi, lance
+`pronote/fetch.py` ;
 le script se connecte à l'espace Parents avec la bibliothèque non officielle
 [pronotepy](https://github.com/bain3/pronotepy), lit pour chaque enfant les
 devoirs (14 jours), l'emploi du temps (7 jours : cours annulés, professeur
@@ -148,6 +149,16 @@ professeur croirait que vous avez lu son message alors que personne ne l'a
 ouvert — ce qui compte pour une autorisation à signer — et l'onglet perdrait son
 principal signal, puisque c'est justement « non lu » qui fait entrer un message
 dans l'important.
+
+### Horaires
+
+Le cron de GitHub est en UTC et ignore l'heure d'été : à heures fixes, les
+passages glisseraient d'une heure entre juin et décembre. Le cron couvre donc
+large et c'est `fetch.py --heures-ouvrees` qui décide, en heure de Paris : rien
+avant `HEURE_MIN` (7 h) ni après `HEURE_MAX` (18 h). Résultat, six passages par
+jour en toute saison — 7 h à 17 h l'été, 8 h à 18 h l'hiver — et aucun le
+dimanche. Un lancement à la main (**Run workflow**) passe outre et s'exécute
+toujours.
 
 ### Confidentialité
 
