@@ -312,6 +312,40 @@ def ids_a_marquer(brut: str) -> list[str]:
     return propres
 
 
+def marquer_information(client, i) -> None:
+    """Marque une information lue, au nom de l'enfant.
+
+    pronotepy adresse le marquage à `client.info`, la ressource fixée à la
+    connexion — sur un compte parent, c'est le parent, jamais l'enfant que
+    `set_child` a choisi. PRONOTE accepte la requête et n'en fait rien : le
+    robot croyait avoir marqué, et la pastille du collège ne bougeait pas.
+
+    Quelle ressource PRONOTE attend ici pour un parent, je ne peux pas le
+    vérifier d'ici : on pose les deux, l'enfant d'abord — celui que porte la
+    signature de la requête — puis celle de pronotepy. Marquer deux fois est
+    sans effet de bord, et les compteurs de non-lus encadrant le passage
+    diront laquelle a porté.
+    """
+    publics = []
+    enfant = getattr(client, "_selected_child", None)
+    if enfant is not None:
+        publics.append(enfant.id)
+    if getattr(client, "info", None) is not None and client.info.id not in publics:
+        publics.append(client.info.id)
+    for public in publics:
+        client.post("SaisieActualites", 8, {
+            "listeActualites": [{
+                "N": i.id,
+                "validationDirecte": True,
+                "genrePublic": 4,
+                "public": {"N": public, "G": 4},
+                "lue": True,
+            }],
+            "saisieActualite": False,
+        })
+    i.read = True
+
+
 def non_lus(client) -> str:
     """Ce que PRONOTE compte encore de non-lus, enfant par enfant.
 
@@ -352,7 +386,7 @@ def marquer_lu(client, ids: list[str]) -> tuple[list[str], list[str]]:
         for source, contenu, marque in (
             (lambda: client.discussions(only_unread=True), contenu_discussion, lambda o: o.mark_as(True)),
             (lambda: client.information_and_surveys(only_unread=True), contenu_information,
-             lambda o: o.mark_as_read(True)),
+             lambda o: marquer_information(client, o)),
         ):
             try:
                 for objet in source():
@@ -440,7 +474,7 @@ class Collecte:
                 "important": [
                     "absence ou retard non justifié", "punition", "cours annulé ou modifié",
                     "message non lu", "sondage sans réponse",
-                    "message ou information parlant de réunion, sortie, autorisation, orientation…",
+                    "message ou information non lus parlant de réunion, sortie, autorisation…",
                 ],
                 "scolaire": [
                     "contrôle annoncé", "devoir pour le prochain jour de classe non fait",
@@ -733,9 +767,14 @@ class Collecte:
                     contenu = ""
             texte = f"{i.title or ''} {i.category or ''} {contenu}"
             mot = contient(texte, MOTS_INFO_IMPORTANTE)
+            # Lue, une communication n'est plus « importante » : l'important est
+            # ce qui attend encore votre attention. Sans quoi une information
+            # parlant de réunion y restait pour toujours, et il fallait la
+            # masquer à la main — un « Vu » de plus à chaque fois, que rien ne
+            # venait jamais reprendre.
             if i.survey and not i.read:
                 niveau, raison = "important", "Sondage sans réponse"
-            elif mot:
+            elif mot and not i.read:
                 niveau, raison = "important", f"Mention « {mot} »"
             else:
                 niveau, raison = "info", "Information" + (" non lue" if not i.read else "")
@@ -784,9 +823,8 @@ class Collecte:
             mot = contient(f"{d.subject or ''} {dernier.content or ''}", MOTS_INFO_IMPORTANTE)
             if non_lus and not d.closed:
                 niveau = "important"
-                raison = f"{non_lus} message{'s' if non_lus > 1 else ''} non lu{'s' if non_lus > 1 else ''}"
-            elif mot and dernier.author and not d.closed:
-                niveau, raison = "important", f"Mention « {mot} »"
+                raison = (f"Mention « {mot} »" if mot else
+                          f"{non_lus} message{'s' if non_lus > 1 else ''} non lu{'s' if non_lus > 1 else ''}")
             else:
                 niveau, raison = "info", "Discussion lue"
             self.ajoute(enfant, {
@@ -939,7 +977,13 @@ def main(argv: list[str] | None = None) -> int:
     if ids:
         print(f"Non lus avant : {non_lus(client)}")
         faits, introuvables = marquer_lu(client, ids)
-        print(f"Marqué lu sur PRONOTE : {len(faits)}/{len(ids)}" + (f" · introuvables : {len(introuvables)}" if introuvables else ""))
+        detail = " · ".join(f"{n} {nom}" for nom, n in (
+            ("message(s)", sum(1 for f in faits if f.startswith("message~"))),
+            ("information(s)", sum(1 for f in faits if f.startswith(("info~", "sondage~")))),
+        ) if n)
+        print(f"Marqué lu sur PRONOTE : {len(faits)}/{len(ids)}"
+              + (f" ({detail})" if detail else "")
+              + (f" · introuvables : {len(introuvables)}" if introuvables else ""))
         print(f"Non lus après : {non_lus(client)}")
 
     # Le jeton a déjà tourné à la connexion : on le sauve avant tout le reste.

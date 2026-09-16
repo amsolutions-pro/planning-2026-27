@@ -55,6 +55,10 @@ class FauxClient:
         ]
         self.logged_in = True
         self._courant = self.children[0]
+        # Comme pronotepy : `info` est la ressource de connexion — le parent —, et
+        # elle ne suit pas `set_child`. C'est toute la difficulté du marquage.
+        self.info = _o(id="PARENT", name="MELIKSETYAN Arsen")
+        self._postes: list = []
         self._donnees = {"E1": self._narek(j, maintenant), "E2": self._annie(j, maintenant)}
 
     # -- interface pronotepy
@@ -63,6 +67,28 @@ class FauxClient:
         if isinstance(enfant, str):
             enfant = next(c for c in self.children if c.name == enfant)
         self._courant = enfant
+
+    @property
+    def _selected_child(self):
+        return self._courant
+
+    def post(self, fonction: str, onglet=None, data=None) -> dict:
+        """Ce que PRONOTE ferait de la requête — et surtout ce qu'il n'en ferait pas.
+
+        Une information n'est marquée lue que si le marquage est adressé à
+        l'enfant. Adressé au parent, le serveur répond sans broncher et ne
+        change rien : c'est ce silence qui a fait croire au robot qu'il avait
+        marqué.
+        """
+        self._postes.append({"fonction": fonction, "onglet": onglet, "data": data})
+        if fonction == "SaisieActualites":
+            for saisie in (data or {}).get("listeActualites", []):
+                if saisie.get("public", {}).get("N") != self._courant.id:
+                    continue
+                for i in self._d["infos"]:
+                    if i.id == saisie["N"]:
+                        i.read = bool(saisie.get("lue"))
+        return {}
 
     @property
     def _d(self) -> dict:
