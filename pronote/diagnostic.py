@@ -1,20 +1,20 @@
 """Épreuve en direct du marquage « lu », contre le vrai PRONOTE.
 
-Lancée par le workflow `diagnostic.yml`. Réversible — ce qu'elle marque lu, elle
-le remet non lu — et muette : elle n'imprime que des formes, des nombres et des
-empreintes, le journal d'une action GitHub étant public.
+Lancée par le workflow `diagnostic.yml`. Réversible — ce qu'elle change, elle le
+remet — et muette : elle n'imprime que des nombres et des empreintes, le journal
+d'une action GitHub étant public.
 
-Ce que les tours précédents ont établi :
-  1. aucune variante de `SaisieActualites` n'a d'effet, pas même celle de
-     pronotepy : PRONOTE accepte la requête et ne fait rien ;
-  3. la liste brute dit pourquoi — une information porte `genrePublic: 3` et un
-     `public` bien à elle, là où pronotepy envoie `genrePublic: 4` et la
-     ressource de connexion.
+Neuf tours d'enquête ont établi ceci, mesuré dans des sessions neuves :
+  * la messagerie s'écrit (une discussion passe de lue à non lue et revient) ;
+  * le « lu » d'une information est écarté par le serveur, quel que soit le
+    destinataire envoyé et jusque dans l'autre sens — `_erreurSaisie_` —, sans
+    la moindre erreur HTTP. pronotepy ne regarde pas ce rapport : c'est ce
+    silence qui faisait croire au robot qu'il avait marqué.
 
-Ce tour-ci renvoie à PRONOTE exactement ce qu'il annonce.
+Ce dernier tour n'éprouve plus des requêtes, mais le code livré : `marquer_lu`
+doit marquer le message et ranger l'information parmi les écartés.
 """
 
-import json
 import os
 import sys
 import traceback
@@ -24,164 +24,53 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fetch  # noqa: E402
 
 
-def forme(valeur, profondeur=4, cle=None):
-    """La forme d'un objet JSON, sans son contenu."""
-    if isinstance(valeur, dict):
-        if profondeur <= 0:
-            return f"{{…{len(valeur)} clés}}"
-        return {k: forme(v, profondeur - 1, k) for k, v in valeur.items()}
-    if isinstance(valeur, list):
-        if profondeur <= 0 or not valeur:
-            return f"[…{len(valeur)}]"
-        return [forme(valeur[0], profondeur - 1, cle), f"…{len(valeur)} au total"]
-    if isinstance(valeur, (bool, int)) or valeur is None:
-        return valeur
-    texte = str(valeur)
-    if cle in ("N", "G", "_T") or (len(texte) <= 24 and "#" in texte):
-        return texte
-    return f"<{len(texte)} car. {fetch.hachage(texte)}>"
-
-
-class Serveur:
-    """Le client, et de quoi repartir quand PRONOTE fait expirer la page."""
-
-    def __init__(self):
-        self.client, self.mode = fetch.connexion()
-        self.enfant = None
-
-    def choisir(self, enfant) -> None:
-        self.enfant = enfant
-        self.client.set_child(enfant.name)
-
-    def poste(self, fonction, onglet, data):
-        try:
-            return self.client.post(fonction, onglet, data)
-        except Exception as e:
-            if "expir" not in str(e).lower():
-                raise
-            self.client, _ = fetch.connexion()
-            if self.enfant is not None:
-                self.client.set_child(self.enfant.name)
-            return self.client.post(fonction, onglet, data)
-
-    def actualites(self) -> list:
-        """La liste brute, celle que PRONOTE envoie vraiment."""
-        brut = self.poste("PageActualites", 8, {"modesAffActus": {"_T": 26, "V": "[0..3]"}})
-        return [a for liste in brut["dataSec"]["data"]["listeModesAff"]
-                for a in liste["listeActualites"]["V"]]
-
-    def non_lues(self) -> list:
-        return [a for a in self.actualites() if not a.get("lue")]
-
-    def descripteur(self, actu: dict) -> dict:
-        """Le destinataire tel que PRONOTE l'annonce sur l'information même."""
-        public = (actu.get("public") or {}).get("V") or {}
-        return {"genrePublic": actu.get("genrePublic"),
-                "public": {"N": public.get("N"), "G": public.get("G")}}
-
-    def ouvrir(self, actu: dict):
-        """Ce que fait le clic dans le navigateur : demander le détail."""
-        return self.poste("PageActualites", 8, {
-            "actualite": {"N": actu["N"], **self.descripteur(actu)},
-            "genreRequeteActualite": 1,
-            "modeAffActu": 0,
-        })
-
-    def saisir(self, corps: dict, saisie=False):
-        return self.poste("SaisieActualites", 8,
-                          {"listeActualites": [corps], "saisieActualite": saisie})
-
-
-def tentatives(s: "Serveur", actu: dict):
-    """Chaque façon plausible de dire « lue », avec ce que PRONOTE annonce."""
-    d = s.descripteur(actu)
-    entier = {**{k: v for k, v in actu.items() if k not in ("lue",)}, "lue": True}
-    return [
-        ("ouvrir le détail", lambda: s.ouvrir(actu)),
-        ("saisie N + public annoncé", lambda: s.saisir({"N": actu["N"], **d, "lue": True})),
-        ("saisie N seul", lambda: s.saisir({"N": actu["N"], "lue": True})),
-        ("saisie entrée entière", lambda: s.saisir(entier)),
-        ("saisie saisieActualite=True", lambda: s.saisir({"N": actu["N"], **d, "lue": True}, True)),
-    ]
-
-
-def compte_frais(enfant) -> int:
+def non_lus(enfant) -> tuple[int, int]:
     """Recompte dans une session neuve : la session qui écrit peut être aveugle."""
     client, _ = fetch.connexion()
     client.set_child(enfant.name)
-    brut = client.post("PageActualites", 8, {"modesAffActus": {"_T": 26, "V": "[0..3]"}})
-    entrees = [a for liste in brut["dataSec"]["data"]["listeModesAff"]
-               for a in liste["listeActualites"]["V"]]
-    return len([a for a in entrees if not a.get("lue")])
-
-
-def refuse(reponse) -> bool:
-    """PRONOTE dit « saisie refusée » sans jamais lever d'erreur HTTP.
-
-    C'est ce rapport, que pronotepy ne regarde pas, qui a fait croire pendant
-    huit tours que le marquage passait. Il sert maintenant d'oracle : une
-    tentative qui ne le déclenche pas est la bonne.
-    """
-    return bool(((reponse or {}).get("dataSec") or {}).get("RapportSaisie", {}).get("_erreurSaisie_"))
-
-
-def epreuve(s: "Serveur", enfant) -> bool:
-    """Tour 9 : trouver la saisie que PRONOTE n'écarte pas.
-
-    Acquis du tour 8 : la messagerie s'écrit (0 → 1 → 0), et l'information est
-    refusée — `_erreurSaisie_`. Reste à trouver le destinataire qu'il attend.
-    L'information est adressée à un groupe (genrePublic 2, public G=5) : le
-    lecteur, lui, doit être nommé autrement.
-    """
-    s.choisir(enfant)
-    nom = fetch.prenom(enfant.name)
-    entrees = s.actualites()
-    non_lues = [a for a in entrees if not a.get("lue")]
-    if not non_lues:
-        print(f"  {nom} : aucune information non lue")
-        return True
-    cible = next((a for a in non_lues if not a.get("estSondage")), non_lues[0])
-    avant = len(non_lues)
-    annonce = s.descripteur(cible)
-    parent, enf = s.client.info.id, enfant.id
-    print(f"  {nom} : {avant} non lue(s) · annoncé genrePublic {annonce['genrePublic']} G={annonce['public']['G']}")
-
-    essais = [
-        ("genre 2 · parent G=5", {"genrePublic": 2, "public": {"N": parent, "G": 5}}),
-        ("genre 5 · parent G=5", {"genrePublic": 5, "public": {"N": parent, "G": 5}}),
-        ("genre 2 · enfant G=4", {"genrePublic": 2, "public": {"N": enf, "G": 4}}),
-        ("genre 2 · parent G=4", {"genrePublic": 2, "public": {"N": parent, "G": 4}}),
-        ("genre annoncé (témoin)", annonce),
-        ("sans public", {}),
-    ]
-    for nom_essai, descripteur in essais:
-        corps = {"N": cible["N"], "validationDirecte": True, "lue": True, **descripteur}
-        try:
-            reponse = s.saisir(corps)
-            ecarte = refuse(reponse)
-            etat = "ÉCARTÉ" if ecarte else "accepté"
-        except Exception as e:
-            ecarte, etat = True, f"{type(e).__name__}"
-        print(f"    {nom_essai:<26} → {etat}")
-        if not ecarte:
-            frais = compte_frais(enfant)
-            print(f"      session neuve : {avant} → {frais} "
-                  + ("✔ PRIS" if frais < avant else "✗ accepté mais sans effet"))
-            if frais < avant:
-                s.saisir({"N": cible["N"], "validationDirecte": True, "lue": False, **descripteur})
-                print(f"      remise en non lue → {compte_frais(enfant)} (départ {avant})")
-                return True
-    return False
+    return (len(list(client.discussions(only_unread=True))),
+            len(list(client.information_and_surveys(only_unread=True))))
 
 
 def main() -> int:
-    s = Serveur()
-    print(f"Connexion : {s.mode} · {len(s.client.children)} enfant(s)")
-    s.choisir(s.client.children[0])
+    client, mode = fetch.connexion()
+    enfant = client.children[0]
+    client.set_child(enfant.name)
+    nom = fetch.prenom(enfant.name)
+    print(f"Connexion : {mode} · épreuve sur {nom}")
 
-    print("Épreuve, enfant par enfant :")
-    tous = all(epreuve(s, e) for e in s.client.children)
-    print("RÉSULTAT : " + ("le marquage prend ✔" if tous else "le marquage ne prend toujours pas ✗"))
+    discussions = list(client.discussions())
+    informations = client.information_and_surveys(only_unread=True)
+    if not discussions:
+        print("aucune discussion : rien à éprouver")
+        return 0
+
+    # On se donne un non-lu à marquer, puisqu'il n'en reste plus.
+    d = discussions[0]
+    d.mark_as(False)
+    depart = non_lus(enfant)
+    print(f"départ (session neuve) : {depart[0]} msg / {depart[1]} info")
+
+    demandes = [fetch.identite(fetch.contenu_discussion(d), None)]
+    attendu_ecarte = []
+    if informations:
+        i = informations[0]
+        attendu_ecarte = [fetch.identite(fetch.contenu_information(i), None)]
+        demandes += attendu_ecarte
+
+    client, _ = fetch.connexion()          # comme le robot : une session à lui
+    faits, introuvables, ecartes = fetch.marquer_lu(client, demandes)
+    apres = non_lus(enfant)
+    print(f"marquer_lu : {len(faits)} fait(s) · {len(ecartes)} écarté(s) · {len(introuvables)} introuvable(s)")
+    print(f"après (session neuve) : {apres[0]} msg / {apres[1]} info")
+
+    msg_ok = (faits == demandes[:1]) and apres[0] == depart[0] - 1
+    info_ok = (ecartes == attendu_ecarte) and apres[1] == depart[1]
+    print(f"  message marqué et compté comme fait : {'✔' if msg_ok else '✗'}")
+    print(f"  information écartée, et dite écartée : {'✔' if info_ok else '✗'}"
+          + ("" if attendu_ecarte else "  (aucune information non lue à éprouver)"))
+    print("RÉSULTAT : " + ("le code livré dit vrai ✔" if msg_ok and info_ok
+                           else "à revoir ✗"))
     return 0
 
 
