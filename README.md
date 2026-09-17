@@ -213,6 +213,11 @@ empreintes). Deux résultats, mesurés dans des sessions neuves :
   répond à chaque fois `RapportSaisie: {_erreurSaisie_: true}` : **la saisie est
   écartée**, sans la moindre erreur HTTP.
 
+Le code livré a été éprouvé tel quel contre le vrai serveur, en dernier tour :
+`marquer_lu` rend `1 fait · 1 écarté · 0 introuvable`, le message passe de non lu
+à lu (`1 → 0`) et l'information ne bouge pas (`8 → 8`) — dite écartée, jamais
+donnée pour marquée.
+
 Ce silence est ce qui a fait tourner en rond : pronotepy ne regarde pas ce
 rapport, et le robot croyait donc avoir marqué à chaque fois. `saisie_refusee`
 le lit maintenant, et seul ce que PRONOTE a réellement pris est compté comme
