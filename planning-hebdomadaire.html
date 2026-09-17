@@ -1134,10 +1134,16 @@ svg{display:block}
       <details class="actu-lien" id="actu-lien">
         <summary id="actu-lien-etat"></summary>
         <p>Relier la page à GitHub lui permet de réveiller le robot, seul à savoir
-        se connecter au collège : le bouton « Vu » passe alors la discussion ou
-        l’information en <b>lu sur PRONOTE</b>, et « Actualiser » va chercher les
-        nouvelles du moment sans attendre le passage suivant. Sans cela, « Vu » ne
-        range la nouvelle qu’ici et « Actualiser » relit seulement le fichier publié.</p>
+        se connecter au collège : le bouton « Vu » passe alors <b>un message</b> en
+        lu sur PRONOTE, et « Actualiser » va chercher les nouvelles du moment sans
+        attendre le passage suivant. Sans cela, « Vu » ne range la nouvelle qu’ici
+        et « Actualiser » relit seulement le fichier publié.</p>
+        <p>Une information ou un sondage ne s’y marque pas : PRONOTE écarte la
+        saisie depuis un compte parent, éprouvé contre le serveur. Leur « Vu »
+        reste sur cet appareil.</p>
+        <p>Le jeton vit dans ce navigateur, sur cet appareil : il est à coller une
+        fois par téléphone et par ordinateur. Sans lui, « Actualiser » relit le
+        fichier mais ne lance pas le robot.</p>
         <p>Créez un jeton sur
         <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer noopener">github.com/settings/personal-access-tokens</a>
         limité à ce seul dépôt, avec la permission <b>Contents : Read and write</b>,
@@ -2730,8 +2736,24 @@ svg{display:block}
   // interroge PRONOTE et que le site se republie, il faut compter une minute
   // ou deux.
   function actualiserActus() {
-    if (!relie()) { chargerActus(); return; }
     var bouton = document.getElementById('actu-actualiser');
+    // Sans jeton, la page ne sait que relire le fichier publié : réveiller le
+    // robot demande un appareil relié, et le jeton vit par navigateur. Sur un
+    // téléphone qui ne l'a pas, le bouton ne faisait rien, sans un mot — il
+    // passait pour cassé. Il rend compte, et ouvre la marche à suivre.
+    if (!relie()) {
+      bouton.disabled = true;
+      etatActualisation('Relecture du fichier publié…');
+      chargerActus().then(function (ok) {
+        bouton.disabled = false;
+        var quand = actu.donnees && actu.donnees.mis_a_jour_le;
+        etatActualisation(!ok ? 'Le fichier des actualités n’a pas pu être relu.'
+          : 'Fichier relu' + (quand ? ' — données PRONOTE du ' + dateHeureFr(quand) : '')
+            + '. Pour lancer le robot depuis cet appareil, reliez-le à GitHub ci-dessous.');
+        if (ok) { var lien = document.getElementById('actu-lien'); if (lien) lien.open = true; }
+      });
+      return;
+    }
     bouton.disabled = true;
     etatActualisation('Le robot est lancé…');
     reveillerRobot([]).then(function (ok) {
@@ -2858,22 +2880,27 @@ svg{display:block}
     return !vieille;
   }
 
+  // Renvoie une promesse qui dit si les nouvelles ont bien été affichées : le
+  // bouton « Actualiser » en a besoin pour rendre compte de ce qu'il a fait.
   function chargerActus() {
     actuEtat(actuCallout('i-clock', 'Chargement…', 'Lecture des dernières nouvelles PRONOTE.'));
-    fetch(ACTU_FICHIER, { cache: 'no-store' }).then(function (r) {
+    return fetch(ACTU_FICHIER, { cache: 'no-store' }).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
     }).then(function (env) {
       actu.env = env;
       verifierVersion(env);
-      if (!env.chiffre) { montrerActus(env.donnees); return; }
+      if (!env.chiffre) { montrerActus(env.donnees); return true; }
       var cle = null;
       try { cle = localStorage.getItem(ACTU_CLE); } catch (e) {}
-      if (!cle) { demanderMotDePasse(false); return; }
-      return dechiffrerActus(env, cle).then(montrerActus, function () { demanderMotDePasse(true); });
+      if (!cle) { demanderMotDePasse(false); return false; }
+      return dechiffrerActus(env, cle).then(
+        function (d) { montrerActus(d); return true; },
+        function () { demanderMotDePasse(true); return false; });
     }).catch(function () {
       actuEtat(actuCallout('i-alert', 'Pas encore de nouvelles',
         'Le fichier des actualités n’est pas disponible : l’action « PRONOTE — actualités » n’a pas encore tourné, ou la page est ouverte hors ligne. La mise en place est décrite dans le README du dépôt.'));
+      return false;
     });
   }
 

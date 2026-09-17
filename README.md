@@ -242,7 +242,11 @@ contenu : c'est la seule façon de savoir si PRONOTE a vraiment pris le marquage
 le robot ne sachant, lui, que s'il a posté sans erreur.
 
 **« Actualiser » ne marque rien** : il relance le robot, pour aller chercher les
-nouveautés sans attendre l'heure suivante. Seul le clic sur **Vu** demande un
+nouveautés sans attendre l'heure suivante. Et il ne le relance que depuis un
+appareil **relié** : le jeton vit dans le `localStorage` de ce navigateur-là, à
+recoller sur le téléphone comme sur chaque ordinateur. Sans jeton, le bouton
+relit le fichier publié — il le dit, et ouvre la marche à suivre, au lieu de ne
+rien faire sans un mot comme il le faisait. Seul le clic sur **Vu** demande un
 marquage. Un passage dont le journal ne montre aucune ligne « Marqué lu » est un
 passage à qui on n'a rien demandé.
 
