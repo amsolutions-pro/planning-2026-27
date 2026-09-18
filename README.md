@@ -300,7 +300,29 @@ Le robot relit donc le fichier précédent pour retrouver quand il a vu chaque
 nouvelle la première fois (`memoire_precedente`), au lieu de leur donner l'heure
 du passage.
 
-Pour relier : dépliez la ligne en bas de l'onglet, puis créez un jeton sur
+#### Un jeton pour tous les appareils, ou un par appareil
+
+Deux façons de relier la page, au choix.
+
+**Porté par le fichier (recommandé).** Mettez le jeton dans un secret de dépôt
+nommé `PRONOTE_PAGE_PAT`. Le robot le glisse dans le fichier **chiffré** qu'il
+publie (`jeton_page`), et la page s'en sert : tout appareil qui a le mot de passe
+peut lancer le robot, sans rien coller nulle part. C'est la réponse à « je ne sais
+plus sur quel navigateur j'ai mis le jeton ».
+
+Le prix, dit franchement : le mot de passe de la famille protège alors **aussi**
+un jeton capable d'écrire sur le dépôt. Il doit être à la hauteur, et si vous le
+partagez un jour, révoquez le jeton et changez le secret. Deux garde-fous dans le
+code : le jeton n'est **jamais** écrit dans un fichier non chiffré (`--clair` ou
+mot de passe absent : il est retiré, avec un avertissement dans le journal), et la
+page ne l'affiche nulle part — il ne sert que dans l'en-tête de la requête.
+
+**Collé sur l'appareil.** Le champ en bas de l'onglet garde le jeton dans le
+`localStorage` de ce navigateur-là. Il l'emporte sur celui du fichier : c'est le
+recours si celui du fichier a été révoqué. Sans secret de dépôt ni jeton collé,
+« Actualiser » relit simplement le fichier publié et le dit.
+
+Pour relier à la main : dépliez la ligne en bas de l'onglet, puis créez un jeton sur
 [github.com/settings/personal-access-tokens](https://github.com/settings/personal-access-tokens/new)
 limité à **ce seul dépôt**, avec la permission **Contents : Read and write** (la
 permission que demande `repository_dispatch`), et collez-le. Le jeton reste dans

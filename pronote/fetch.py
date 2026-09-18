@@ -931,6 +931,28 @@ def ecrire(donnees: dict, chemin: pathlib.Path, passphrase: str | None, forcer: 
     return True
 
 
+def jeton_de_page(passphrase: str | None) -> dict:
+    """Le jeton GitHub que la page pourra utiliser, glissé dans le fichier chiffré.
+
+    Sans lui, « Actualiser » ne lance le robot que depuis le navigateur où l'on a
+    collé un jeton à la main — et on finit par ne plus savoir lequel. Porté par le
+    fichier, il suit le mot de passe : tout appareil qui sait lire les nouvelles
+    sait aussi réveiller le robot, sans rien coller.
+
+    Il n'y va **jamais sans chiffrement** : le dépôt est public, et un jeton en
+    clair y serait un jeton donné. Le mot de passe de la famille protège alors
+    aussi un jeton capable d'écrire sur le dépôt — il doit être à la hauteur.
+    """
+    jeton = (os.environ.get("PRONOTE_PAGE_PAT") or "").strip()
+    if not jeton:
+        return {}
+    if not passphrase:
+        log.warning("PRONOTE_PAGE_PAT ignoré : sans mot de passe, le fichier est publié en clair")
+        print("::warning::PRONOTE_PAGE_PAT ignoré : le fichier serait publié en clair.")
+        return {}
+    return {"jeton_page": jeton}
+
+
 def identites(memoire: dict[str, str], donnees: dict) -> str:
     """Combien de nouvelles ont gardé leur identité d'un passage à l'autre.
 
@@ -1016,6 +1038,7 @@ def main(argv: list[str] | None = None) -> int:
 
     memoire = memoire_precedente(args.sortie, passphrase)
     donnees = Collecte(client, maintenant, reconnecter, memoire).tout()
+    donnees.update(jeton_de_page(passphrase))
 
     change = ecrire(donnees, args.sortie, passphrase, args.forcer)
     print(("Écrit" if change else "Inchangé") + f" : {args.sortie}" + (" (chiffré)" if passphrase else " (en clair)"))

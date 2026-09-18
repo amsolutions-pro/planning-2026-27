@@ -50,6 +50,10 @@ jobs:
           PRONOTE_CLIENT_ID: ${{ secrets.PRONOTE_CLIENT_ID }}
           PRONOTE_DEVICE_NAME: ${{ secrets.PRONOTE_DEVICE_NAME }}
           PRONOTE_SITE_PASSPHRASE: ${{ secrets.PRONOTE_SITE_PASSPHRASE }}
+          # Facultatif : le jeton que la page utilisera pour réveiller le robot.
+          # Il voyage dans le fichier chiffré, donc sur tous les appareils qui
+          # ont le mot de passe. Absent, chacun colle le sien comme avant.
+          PRONOTE_PAGE_PAT: ${{ secrets.PRONOTE_PAGE_PAT }}
           PRONOTE_TOKEN_SORTIE: ${{ runner.temp }}/pronote-jeton.json
           # Passe par l'environnement, jamais par la ligne de commande : le
           # contenu vient du dehors, et le script le filtre lui-même.
