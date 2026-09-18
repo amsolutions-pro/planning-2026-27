@@ -409,6 +409,25 @@ svg{display:block}
   font-family:"IBM Plex Mono",ui-monospace,monospace;
   font-style:normal;font-size:10.5px;color:var(--muted);
 }
+/* Ce que PRONOTE annonce pour cette séance-là. La grille est la vérité de la
+   semaine : c'est là qu'un cours annulé doit se lire, pas dans une liste. */
+.lesson--perturbe{
+  background:var(--hold-bg);border-color:var(--hold-line);border-left:3px solid var(--hold);
+}
+.lesson--annule b{text-decoration:line-through;text-decoration-color:var(--hold);color:var(--muted)}
+.lesson__flag{
+  align-self:flex-start;order:-1;margin-bottom:2px;
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:1px 5px;border-radius:4px;
+  background:var(--hold);color:var(--surface);border:1px solid transparent;
+}
+:root[data-theme="dark"] .lesson__flag,
+:root:not([data-theme="light"]) .lesson__flag{color:var(--ground)}
+/* Une séance que l'emploi du temps ne connaît pas — la grille est un décalque,
+   PRONOTE fait foi : on la montre quand même, à sa place. */
+.lesson--hors{background:var(--hold-bg);border:1px dashed var(--hold-line);--m:var(--hold)}
+
 .lesson .both{
   align-self:flex-start;margin-top:3px;
   font-family:"IBM Plex Mono",ui-monospace,monospace;
@@ -1613,6 +1632,28 @@ svg{display:block}
     try { localStorage.setItem('planning.week', w); } catch (e) {}
   }
 
+  // Ce que PRONOTE annonce pour la semaine affichée, rangé par jour et par
+  // créneau. Rien si la grille montre une autre quinzaine que celle en cours :
+  // poser l'annulation de cette semaine sur la semaine d'après tromperait.
+  function perturbationsGrille() {
+    // La grille est dessinée avant que le bloc des actualités ne soit évalué :
+    // `actu` est hissée mais encore vide. On la relit, on ne la suppose pas.
+    var par = {}, d = actu && actu.donnees;
+    if (!d || !d.actualites || semaineDecalee()) return par;
+    var lundi = lundiUTC(new Date()), jourDe = {};
+    DAYS.forEach(function (jour, i) { jourDe[cleJour(lundi + i * MS_JOUR)] = jour; });
+    d.actualites.forEach(function (a) {
+      if (a.type !== 'cours') return;
+      var jour = jourDe[a.date];
+      if (!jour || (a.enfants || []).indexOf(ttState.pupil) === -1) return;
+      var creneau = -1;
+      for (var i = 0; i < SLOTS.length; i++) if (SLOTS[i][0] === a.heure) creneau = i;
+      if (creneau === -1) return;              // hors des créneaux du collège
+      (par[jour] = par[jour] || {})[creneau] = a;
+    });
+    return par;
+  }
+
   function drawTimetable() {
     var table = document.getElementById('tt-grid');
     if (!table) return;
@@ -1620,6 +1661,7 @@ svg{display:block}
     var week = ttState.week;
     var decale = semaineDecalee();
 
+    var perturbations = perturbationsGrille();
     var grid = {};
     var bornes = {};
     DAYS.forEach(function (day) {
@@ -1663,12 +1705,25 @@ svg{display:block}
       DAYS.forEach(function (day) {
         var cell = grid[day][i];
         var jourJ = classeJour(day) ? ' class="col-today"' : '';
+        var vu = (perturbations[day] || {})[i];
+        var drapeau = vu ? '<span class="lesson__flag">' + echap(vu.raison) + '</span>' : '';
+        var annule = vu && /annul/i.test(vu.raison || '');
         if (cell === 'occupe') return;
-        if (!cell) { html += '<td' + jourJ + '></td>'; return; }
+        if (!cell) {
+          // PRONOTE signale une séance que la grille ne connaît pas : on la
+          // montre plutôt que de la perdre.
+          html += '<td' + jourJ + '>' + (vu
+            ? '<div class="lesson lesson--hors lesson--perturbe' + (annule ? ' lesson--annule' : '') + '">'
+              + drapeau + '<b>' + echap(vu.matiere || 'Cours') + '</b>'
+              + (vu.detail ? '<span>' + echap(vu.detail) + '</span>' : '') + '</div>'
+            : '') + '</td>';
+          return;
+        }
         var famille = FAMILLES[cell.matiere] || 'lettres';
         var plage = cell.span > 1 ? SLOTS[i][0] + ' – ' + SLOTS[i + cell.span - 1][1] : '';
         html += '<td' + jourJ + (cell.span > 1 ? ' rowspan="' + cell.span + '"' : '') + '>'
-          + '<div class="lesson m-' + famille + '">'
+          + '<div class="lesson m-' + famille + (vu ? ' lesson--perturbe' : '') + (annule ? ' lesson--annule' : '') + '">'
+          + drapeau
           + '<b>' + cell.matiere + '</b>'
           + '<span>' + cell.prof + '</span>'
           + (cell.salle ? '<em>' + cell.salle + '</em>' : '')
@@ -2181,7 +2236,7 @@ svg{display:block}
   // rangés par jour. Hors de cette semaine, rien : une annulation de la semaine
   // prochaine n'a pas à s'afficher sur le lundi d'aujourd'hui.
   function perturbationsParJour() {
-    var par = {}, d = actu.donnees;
+    var par = {}, d = actu && actu.donnees;
     if (!d || !d.actualites) return par;
     var lundi = lundiUTC(new Date()), jourDe = {};
     JOURS_SEMAINE.forEach(function (jour, i) { jourDe[cleJour(lundi + i * MS_JOUR)] = jour; });
@@ -3159,10 +3214,11 @@ svg{display:block}
     document.getElementById('actu-filtres').hidden = false;
     document.getElementById('actu-pied').hidden = false;
     renderActus();
-    // La semaine est dessinée avant que le fichier chiffré ne soit lu : elle est
-    // redessinée ici, quand on sait enfin ce que PRONOTE annonce pour ces
-    // jours-là.
+    // La semaine et la grille sont dessinées avant que le fichier chiffré ne
+    // soit lu : elles le sont de nouveau ici, quand on sait enfin ce que PRONOTE
+    // annonce pour ces jours-là.
     renderSemaine();
+    drawTimetable();
   }
 
   function setActuEnfant(id) {
@@ -3198,6 +3254,18 @@ svg{display:block}
     return texte + (heure ? ' · ' + heure : '');
   }
 
+  // La date d'une nouvelle ne veut pas dire la même chose selon ce qu'elle est :
+  // pour un message, c'est le jour de l'envoi ; pour un cours annulé, celui de la
+  // séance. Les mélanger sans le dire faisait lire « aujourd'hui » sur une
+  // annulation de la semaine prochaine.
+  function dateActuLisible(a) {
+    var quand = libelleDateActu(a.date, a.heure);
+    if (!quand) return '';
+    if (a.type === 'cours' || a.type === 'controle') return 'séance ' + quand;
+    if (a.type === 'devoir') return 'pour ' + quand;
+    return quand;
+  }
+
   function renderActuItem(a, nouveau) {
     var cls = 'actu' + (a.niveau === 'important' ? ' actu--imp' : a.niveau === 'scolaire' ? ' actu--sco' : '')
       + (a.fait ? ' actu--fait' : '');
@@ -3221,7 +3289,8 @@ svg{display:block}
       '<button class="actu__vu" type="button" onclick="marquerVu(' + JSON.stringify(a.id).replace(/"/g, '&quot;') + ')">'
       + (vu ? 'Remettre' : 'Vu') + '</button>';
     return '<li class="' + cls + (vu ? ' actu--vu' : '') + '">'
-      + '<div class="actu__top">' + tags + '<span class="actu__date" style="margin-left:auto">' + echap(libelleDateActu(a.date, a.heure)) + '</span></div>'
+      + '<div class="actu__top">' + tags + '<span class="actu__date" style="margin-left:auto">'
+      + echap(dateActuLisible(a)) + '</span></div>'
       + '<div class="actu__title">' + echap(a.titre) + '</div>'
       + (a.detail ? '<div class="actu__detail">' + echap(a.detail) + '</div>' : '')
       + '<div class="actu__foot">'

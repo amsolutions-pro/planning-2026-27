@@ -55,7 +55,9 @@ HEURE_MIN, HEURE_MAX = 7, 18
 
 # Fenêtres de collecte, en jours.
 DEVOIRS_JOURS = 14
-COURS_JOURS = 7
+# Deux semaines : la grille doit pouvoir montrer la semaine en cours et la
+# suivante. Un relevé en direct a trouvé des perturbations jusqu'à J+13.
+COURS_JOURS = 14
 NOTES_JOURS = 30
 VIE_SCOLAIRE_JOURS = 30
 INFOS_JOURS = 30
@@ -620,10 +622,13 @@ class Collecte:
             plage = f"{heure_fr(lecon.start)} → {heure_fr(lecon.end)}" if lecon.end else heure_fr(lecon.start)
             if lecon.canceled or lecon.status:
                 statut = lecon.status or "Cours annulé"
+                # Une salle qui change ne demande aucune décision : elle se lit
+                # sur la grille, elle n'a rien à faire dans l'important.
+                salle = "salle" in statut.lower()
                 self.ajoute(enfant, {
                     "id": f"cours:{lecon.id}",
                     "type": "cours",
-                    "niveau": "important",
+                    "niveau": "info" if salle else "important",
                     "raison": statut,
                     "titre": f"{statut} — {matiere}, {jour_fr(lecon.start.date())} {plage}",
                     "detail": " · ".join(x for x in (lecon.teacher_name, lecon.classroom, lecon.memo) if x),

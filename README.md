@@ -147,7 +147,32 @@ travail scolaire garde l'enfant dans son identité.
 Les nouvelles apparues depuis la dernière ouverture de l'onglet, sur cet
 appareil, portent « Nouveau ».
 
-### Les cours annulés se posent sur la semaine
+### Les cours annulés se posent sur la grille
+
+**D'où viennent les annulations ?** La question a été tranchée en direct contre le
+serveur (`diagnostic.yml`) : elles viennent de **l'emploi du temps**, pas des
+messages. PRONOTE marque lui-même la séance et la nomme — `Cours annulé`,
+`Prof. absent`, `Prof./pers. absent`, `Changement de salle`. Sur le compte
+éprouvé : cinq séances perturbées sur quinze jours, et **zéro** message ou
+information en parlant. Rien à lire dans du texte libre, donc : la donnée est
+déjà là, datée à la séance près.
+
+Elles s'affichent donc **sur la grille du Collège**, à la case du cours :
+étiquette ambre portant le mot de PRONOTE, matière barrée quand le cours est
+annulé. Seulement pour la **quinzaine en cours** — afficher l'annulation de cette
+semaine sur la grille de la suivante tromperait — et seulement pour l'enfant
+affiché. Si PRONOTE signale une séance que la grille ne connaît pas, elle
+apparaît quand même, en pointillés : la grille est un décalque, PRONOTE fait foi.
+
+Un changement de salle ne demande aucune décision : il se lit sur la grille et
+reste hors de « L'important ».
+
+Dans la liste des actualités, la date de ces cartes est désormais annoncée pour
+ce qu'elle est — « séance jeu. 17 sept. », « pour lun. 21 sept. » — au lieu d'un
+« aujourd'hui » qui se lisait comme une date d'envoi et brouillait celle des
+messages.
+
+### Les cours annulés se posent aussi sur la semaine
 
 Un cours qui saute ne change pas seulement l'onglet Actualités : il change la
 journée. Les perturbations que PRONOTE annonce — cours annulé, professeur
