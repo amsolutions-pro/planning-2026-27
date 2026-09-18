@@ -2817,10 +2817,11 @@ svg{display:block}
     if (!actu.donnees) return;
     var item = (actu.donnees.actualites || []).filter(function (a) { return a.id === id; })[0] || { id: id };
     if (estVu(item)) {
-      clesActu(item).forEach(function (c) { delete actu.vus[c]; });
+      clesActu(item).forEach(function (c) { delete actu.vus[c]; delete actu.envois[c]; });
       // Remettre la nouvelle ne la repasse pas en « non lu » sur PRONOTE : ce
-      // chemin n'existe pas ici. On oublie seulement l'envoi qui n'a pas eu lieu.
-      if (etatEnvoi(id) === 'attente') { delete actu.envois[id]; noteEnvois(); }
+      // chemin n'existe pas ici. On oublie l'envoi, en attente comme échoué :
+      // il n'y a plus rien à réessayer pour une nouvelle qu'on veut revoir.
+      noteEnvois();
     } else {
       actu.vus[id] = new Date().toISOString();
       if (estEnvoyable(item) && relie() && !actu.envois[id]) {
@@ -2998,7 +2999,8 @@ svg{display:block}
   function oublierVusActus() {
     if (!actu.donnees) return;
     actu.vus = {};
-    try { localStorage.removeItem(ACTU_VUS); } catch (e) {}
+    actu.envois = {};
+    try { localStorage.removeItem(ACTU_VUS); localStorage.removeItem(ACTU_ENVOIS); } catch (e) {}
     montrerActus(actu.donnees);
   }
 
@@ -3174,6 +3176,9 @@ svg{display:block}
     var publieLe = Date.parse(d.mis_a_jour_le);
     Object.keys(actu.envois).forEach(function (id) {
       if (!courant[id] || transmises[id]) return;
+      // Un envoi ne survit pas à la vue qui l'a déclenché : sans elle, « Réessayer »
+      // proposerait de remarquer lu ce que l'on vient justement de remettre à voir.
+      if (!Object.prototype.hasOwnProperty.call(vivants, courant[id])) return;
       var dementi = etatEnvoi(id) === 'ok' && !isNaN(publieLe) && !(publieLe < envoiLe(id));
       envois[courant[id]] = dementi ? 'echec' : actu.envois[id];
     });
