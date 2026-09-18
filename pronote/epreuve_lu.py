@@ -13,6 +13,7 @@ Deux questions, séparées :
      que PRONOTE décrit lui-même dans sa propre liste.
 """
 
+import datetime as dt
 import os
 import sys
 import traceback
@@ -135,6 +136,53 @@ def onglets(client) -> None:
                 parcours(x, profondeur)
 
     parcours(liste)
+
+
+# Les numéros que la bibliothèque connaît déjà, pour ne pas les re-sonder.
+ONGLETS_CONNUS = {8: "actualités", 10: "menus", 16: "infos perso / EDT",
+                  37: "équipe pédagogique", 88: "cahier de textes", 131: "discussions"}
+
+
+def agenda(client, enfant) -> None:
+    """L'agenda du collège : réunions, stages, DNB blanc, vacances.
+
+    La bibliothèque ne l'expose pas. PRONOTE le sert sous un numéro d'onglet
+    qu'il déclare lui-même ; on le cherche par son libellé, puis on essaie les
+    noms de fonction que PRONOTE emploie pour ses pages. On n'imprime que des
+    nombres et des noms de champs — jamais le contenu d'un événement.
+    """
+    client.set_child(enfant.name)
+    nom = fetch.prenom(enfant.name)
+    autorises = sorted(getattr(getattr(client, "communication", None), "authorized_onglets", []) or [])
+    candidats = [o for o in autorises if o not in ONGLETS_CONNUS]
+    print(f"  {nom} · agenda : {len(candidats)} onglet(s) à sonder parmi {autorises}")
+    debut = dt.date.today()
+    corps = {
+        "DateDebut": {"_T": 7, "V": debut.strftime("%d/%m/%Y 0:0:0")},
+        "DateFin": {"_T": 7, "V": (debut + dt.timedelta(days=120)).strftime("%d/%m/%Y 0:0:0")},
+        "avecCours": False,
+    }
+    trouve = False
+    for fonction in ("PageAgenda", "PageEvenements", "PageCalendrier"):
+        for onglet in candidats[:12]:
+            try:
+                reponse = client.post(fonction, onglet, corps)
+            except Exception:
+                continue
+            data = ((reponse or {}).get("dataSec") or {}).get("data") or {}
+            if not data:
+                continue
+            trouve = True
+            print(f"      TROUVÉ · {fonction} sur l'onglet {onglet} · champs {sorted(data)[:8]}")
+            for cle in ("listeEvenements", "listeAgendas", "liste"):
+                bloc = data.get(cle)
+                items = (bloc or {}).get("V") if isinstance(bloc, dict) else bloc
+                if isinstance(items, list) and items:
+                    print(f"      « {cle} » : {len(items)} entrée(s) · champs d'une entrée "
+                          f"{sorted(items[0]) if isinstance(items[0], dict) else type(items[0]).__name__}")
+            return
+    if not trouve:
+        print("      aucun couple (fonction, onglet) n'a rendu de données")
 
 
 def discussions(client, enfant) -> None:
@@ -282,6 +330,10 @@ def main() -> int:
     except Exception:
         traceback.print_exc(limit=2)
     for enfant in client.children:
+        try:
+            agenda(client, enfant)
+        except Exception:
+            traceback.print_exc(limit=2)
         try:
             discussions(client, enfant)
         except Exception:
