@@ -416,6 +416,14 @@ svg{display:block}
 .ttl__row--annule .ttl__c b{text-decoration:line-through;text-decoration-color:var(--hold);color:var(--muted)}
 .ttl__row--hors{border-top:1px dashed var(--hold-line)}
 .ttl__row .lesson__flag{margin-bottom:3px}
+/* D'où vient la grille : PRONOTE ce matin, ou le papier de septembre. */
+.tt-source{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:9.5px;font-weight:600;letter-spacing:.04em;
+  padding:1px 6px;border-radius:99px;vertical-align:1px;
+  background:var(--surface-2);color:var(--muted);border:1px solid var(--line);
+}
+.tt-source--vrai{background:var(--go-bg);color:var(--go);border-color:var(--go-line)}
 /* Le message d'où sort le drapeau. Une case de grille est étroite : une seule
    ligne, coupée proprement plutôt que débordante. */
 .lesson__source{
@@ -1724,6 +1732,56 @@ svg{display:block}
     return lundiUTC(new Date()) + (semaineDecalee() ? 7 * MS_JOUR : 0);
   }
 
+  // L'emploi du temps tel que PRONOTE le donne pour la semaine affichée. La
+  // grille de cette page était un décalque du papier de septembre : elle ne
+  // pouvait pas suivre un changement en cours d'année. Quand le robot a la
+  // vraie, c'est elle qui fait foi ; le décalque reste pour les semaines qu'il
+  // ne couvre pas, et quand il n'y a pas de fichier du tout.
+  function creneauDe(heure, debut) {
+    for (var i = 0; i < SLOTS.length; i++) if (SLOTS[i][debut ? 0 : 1] === heure) return i;
+    // Une séance qui ne tombe pas pile sur une sonnerie : on la range dans le
+    // créneau qui la contient plutôt que de la perdre.
+    for (var j = 0; j < SLOTS.length; j++) {
+      if (heure >= SLOTS[j][0] && heure <= SLOTS[j][1]) return j;
+    }
+    return -1;
+  }
+
+  function grilleDePronote() {
+    var d = actu && actu.donnees;
+    if (!d || !d.enfants) return null;
+    var e = d.enfants.filter(function (x) { return x.id === ttState.pupil; })[0];
+    if (!e || !e.seances || !e.seances.length) return null;
+    var lundi = lundiAffiche(), jourDe = {};
+    DAYS.forEach(function (jour, i) { jourDe[cleJour(lundi + i * MS_JOUR)] = jour; });
+    var grid = {}, posees = 0;
+    DAYS.forEach(function (jour) { grid[jour] = new Array(SLOTS.length).fill(null); });
+    e.seances.forEach(function (c) {
+      var jour = jourDe[c.date];
+      if (!jour) return;
+      var i = creneauDe(c.debut, true);
+      if (i === -1 || grid[jour][i]) return;
+      var f = c.fin ? creneauDe(c.fin, false) : -1;
+      var span = Math.max(1, (f === -1 ? i : f) - i + 1);
+      grid[jour][i] = {
+        matiere: c.matiere, prof: c.prof, salle: c.salle, span: span, both: false,
+        pronote: true, statut: c.statut || '', controle: !!c.controle
+      };
+      for (var k = 1; k < span && i + k < SLOTS.length; k++) {
+        if (!grid[jour][i + k]) grid[jour][i + k] = 'occupe';
+      }
+      posees++;
+    });
+    // Une grille réelle ne remplace le décalque que si elle est crédible :
+    // trois jours garnis au moins. Sinon une collecte partielle — une fenêtre
+    // qui ne couvre pas la semaine, une source en panne — remplacerait un
+    // emploi du temps complet par un quasi-vide, ce qui serait pire que faux.
+    var jours = DAYS.filter(function (jour) {
+      return grid[jour].some(function (c) { return c && c !== 'occupe'; });
+    }).length;
+    return posees && jours >= 3 ? grid : null;
+  }
+
   function perturbationsGrille(grid) {
     // La grille est dessinée avant que le bloc des actualités ne soit évalué :
     // `actu` est hissée mais encore vide. On la relit, on ne la suppose pas.
@@ -1861,16 +1919,19 @@ svg{display:block}
     var week = ttState.week;
     var decale = semaineDecalee();
 
-    var grid = {};
+    var reelle = grilleDePronote();
+    var grid = reelle || {};
     var bornes = {};
     DAYS.forEach(function (day) {
-      grid[day] = new Array(SLOTS.length).fill(null);
-      (data.jours[day] || []).forEach(function (e) {
-        if (e[1].indexOf(week) === -1) return;
-        var span = e[5] || 1;
-        grid[day][e[0]] = { matiere: e[2], prof: e[3], salle: e[4], span: span, both: e[1].length === 2 };
-        for (var k = 1; k < span; k++) grid[day][e[0] + k] = 'occupe';
-      });
+      if (!reelle) {
+        grid[day] = new Array(SLOTS.length).fill(null);
+        (data.jours[day] || []).forEach(function (e) {
+          if (e[1].indexOf(week) === -1) return;
+          var span = e[5] || 1;
+          grid[day][e[0]] = { matiere: e[2], prof: e[3], salle: e[4], span: span, both: e[1].length === 2 };
+          for (var k = 1; k < span; k++) grid[day][e[0] + k] = 'occupe';
+        });
+      }
       var occupes = [];
       grid[day].forEach(function (c, i) { if (c) occupes.push(i); });
       bornes[day] = occupes.length
@@ -1997,7 +2058,15 @@ svg{display:block}
     majAujourdhui();
 
     var regime = document.getElementById('tt-regime');
-    if (regime) regime.textContent = data.nom + ' · ' + data.classe + ' — ' + data.regime;
+    // On dit d'où vient ce qu'on montre. Une grille recopiée à la main en
+    // septembre et une grille venue de PRONOTE ce matin ne se valent pas, et
+    // c'est au lecteur de le savoir.
+    if (regime) {
+      regime.innerHTML = echap(data.nom + ' · ' + data.classe + ' — ' + data.regime)
+        + (reelle
+            ? ' <span class="tt-source tt-source--vrai">d’après PRONOTE</span>'
+            : ' <span class="tt-source">emploi du temps de septembre</span>');
+    }
   }
 
   (function initTimetable() {

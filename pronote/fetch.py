@@ -58,6 +58,9 @@ DEVOIRS_JOURS = 14
 # Deux semaines : la grille doit pouvoir montrer la semaine en cours et la
 # suivante. Un relevé en direct a trouvé des perturbations jusqu'à J+13.
 COURS_JOURS = 14
+# La grille montre la semaine en cours et la suivante : trois semaines depuis
+# le lundi couvrent les deux, changement de quinzaine compris.
+SEANCES_JOURS = 21
 NOTES_JOURS = 30
 VIE_SCOLAIRE_JOURS = 30
 INFOS_JOURS = 30
@@ -469,6 +472,7 @@ class Collecte:
                 "nom_complet": info.name,
                 "classe": getattr(info, "class_name", "") or "",
                 "moyennes": [],
+                "seances": [],
                 "moyenne_generale": None,
                 "moyenne_classe": None,
             }
@@ -480,7 +484,8 @@ class Collecte:
             self.enfants.append(enfant)
             self.client.set_child(info.name)
             for nom, collecteur in (
-                ("devoirs", self.devoirs), ("cours", self.cours), ("notes", self.notes),
+                ("devoirs", self.devoirs), ("cours", self.cours), ("séances", self.seances),
+                ("notes", self.notes),
                 ("vie scolaire", self.vie_scolaire), ("informations", self.informations),
                 ("messages", self.messages),
             ):
@@ -607,6 +612,38 @@ class Collecte:
             })
 
     # -- cours annulés, modifiés, contrôles prévus
+
+    def seances(self, enfant: dict) -> None:
+        """L'emploi du temps réel, séance par séance, sur la fenêtre couverte.
+
+        La grille de la page était un décalque du papier de septembre : elle ne
+        pouvait pas suivre un changement d'emploi du temps en cours d'année.
+        Celle-ci vient de PRONOTE, donc elle suit.
+        """
+        # Depuis le LUNDI de la semaine en cours, pas depuis aujourd'hui : la
+        # grille montre la semaine entière, et un vendredi il ne resterait
+        # sinon qu'un jour à dessiner.
+        debut = self.aujourdhui - dt.timedelta(days=self.aujourdhui.weekday())
+        limite = debut + dt.timedelta(days=SEANCES_JOURS)
+        vues, seances = set(), []
+        for lecon in self.client.lessons(debut, limite):
+            matiere = lecon.subject.name if lecon.subject else "Cours"
+            cle = (iso_date(lecon.start), heure_fr(lecon.start), matiere)
+            if cle in vues:
+                continue
+            vues.add(cle)
+            seances.append({
+                "date": iso_date(lecon.start),
+                "debut": heure_fr(lecon.start),
+                "fin": heure_fr(lecon.end) if lecon.end else "",
+                "matiere": matiere,
+                "prof": lecon.teacher_name or "",
+                "salle": lecon.classroom or "",
+                "statut": (lecon.status or ("Cours annulé" if lecon.canceled else "")) or "",
+                "controle": bool(lecon.test),
+            })
+        seances.sort(key=lambda c: (c["date"], c["debut"]))
+        enfant["seances"] = seances
 
     def cours(self, enfant: dict) -> None:
         limite = self.aujourdhui + dt.timedelta(days=COURS_JOURS)
