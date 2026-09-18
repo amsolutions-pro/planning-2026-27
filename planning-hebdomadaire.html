@@ -290,6 +290,18 @@ svg{display:block}
 }
 .ev--relay .ev__who{color:var(--accent)}
 
+/* Ce que PRONOTE annonce pour ce jour-là : un cours qui saute change la
+   journée, il doit se voir dans la semaine et pas seulement dans l'onglet. */
+.ev--ecole{
+  --c:var(--hold);--c-bg:var(--hold-bg);--c-line:var(--hold-line);
+  border-left:3px solid var(--hold);
+}
+.ev--ecole.ev--n{--c:var(--narek)}
+.ev--ecole.ev--a{--c:var(--annie)}
+.ev--ecole .ev__title{text-decoration:line-through;text-decoration-thickness:1px;
+  text-decoration-color:var(--hold);color:var(--ink-soft)}
+.ev--ecole.ev--change .ev__title{text-decoration:none;color:var(--ink)}
+
 /* ---------- callout ---------- */
 .callout{
   background:var(--surface);border:1px solid var(--hold-line);border-radius:var(--radius);
@@ -2139,10 +2151,47 @@ svg{display:block}
     try { localStorage.setItem('planning.child', who); } catch (e) {}
   }
 
+  // Les cours annulés ou modifiés que PRONOTE annonce pour la semaine en cours,
+  // rangés par jour. Hors de cette semaine, rien : une annulation de la semaine
+  // prochaine n'a pas à s'afficher sur le lundi d'aujourd'hui.
+  function perturbationsParJour() {
+    var par = {}, d = actu.donnees;
+    if (!d || !d.actualites) return par;
+    var lundi = lundiUTC(new Date()), jourDe = {};
+    JOURS_SEMAINE.forEach(function (jour, i) { jourDe[cleJour(lundi + i * MS_JOUR)] = jour; });
+    d.actualites.forEach(function (a) {
+      var jour = a.type === 'cours' && jourDe[a.date];
+      if (!jour) return;
+      (par[jour] = par[jour] || []).push(a);
+    });
+    Object.keys(par).forEach(function (jour) {
+      par[jour].sort(function (x, y) { return String(x.heure).localeCompare(String(y.heure)); });
+    });
+    return par;
+  }
+
+  function renderPerturbation(a) {
+    var seul = (a.enfants || []).length === 1 ? a.enfants[0] : null;
+    var qui = seul === 'narek' ? 'Narek' : seul === 'annie' ? 'Annie' : 'Les deux';
+    // « Cours annulé » se barre ; « Prof. absent » ou un déplacement, non : le
+    // cours a lieu, autrement.
+    var annule = /annul/i.test(a.raison || '');
+    return '<article class="ev ev--ecole' + (annule ? '' : ' ev--change')
+      + (seul === 'narek' ? ' ev--n' : seul === 'annie' ? ' ev--a' : '') + '">'
+      + '<div class="ev__top"><span class="ev__who">' + echap(qui) + '</span>'
+      + '<span class="tag">' + echap(a.raison || 'Cours modifié') + '</span></div>'
+      + '<h4 class="ev__title"><svg class="icon"><use href="#i-alert"></use></svg> '
+      + echap(a.matiere || 'Cours') + '</h4>'
+      + (a.heure ? '<p class="ev__time">' + echap(a.heure) + '</p>' : '')
+      + (a.detail ? '<p class="ev__meta">' + echap(a.detail) + '</p>' : '')
+      + '</article>';
+  }
+
   function renderSemaine() {
     var zone = document.getElementById('week-grid');
     if (!zone) return;
     var dispo = activitesRetenues();
+    var perturbations = perturbationsParJour();
     var html = '';
 
     JOURS_SEMAINE.forEach(function (jour) {
@@ -2151,19 +2200,28 @@ svg{display:block}
           && (filtreEnfant === 'tous' || a.enfant === filtreEnfant || a.enfant === 'tous');
       }).sort(function (x, y) { return enMinutes(x.debut) - enMinutes(y.debut); });
 
+      var ecole = (perturbations[jour] || []).filter(function (a) {
+        return filtreEnfant === 'tous' || (a.enfants || []).indexOf(filtreEnfant) !== -1;
+      });
+
       var note = duJour.length
         ? (duJour.every(function (a) { return a.jalon; })
             ? 'relais'
             : duJour.length + (duJour.length > 1 ? ' créneaux' : ' créneau'))
         : 'libre';
+      // « 1 au collège · libre » passait à la ligne pour ne rien dire de plus :
+      // une journée sans activité n'a que le collège à annoncer.
+      if (ecole.length) note = ecole.length + ' au collège' + (duJour.length ? ' · ' + note : '');
 
-      html += '<div class="day' + (duJour.length ? '' : ' day--rest') + classeJour(jour) + '"'
+      html += '<div class="day' + (duJour.length || ecole.length ? '' : ' day--rest') + classeJour(jour) + '"'
         + attrJour(jour) + '>'
         + '<div class="day__head"><span class="day__name"' + libelleJour(jour) + '>' + jour + '</span>'
         + '<span class="day__note">' + note + '</span></div><div class="day__body">';
 
+      html += ecole.map(renderPerturbation).join('');
+
       if (!duJour.length) {
-        html += '<p class="day__empty">Aucune activité</p>';
+        if (!ecole.length) html += '<p class="day__empty">Aucune activité</p>';
       } else {
         duJour.forEach(function (a) {
           var choisie = estChoisie(a);
@@ -3061,6 +3119,10 @@ svg{display:block}
     document.getElementById('actu-filtres').hidden = false;
     document.getElementById('actu-pied').hidden = false;
     renderActus();
+    // La semaine est dessinée avant que le fichier chiffré ne soit lu : elle est
+    // redessinée ici, quand on sait enfin ce que PRONOTE annonce pour ces
+    // jours-là.
+    renderSemaine();
   }
 
   function setActuEnfant(id) {
