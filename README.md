@@ -147,6 +147,26 @@ travail scolaire garde l'enfant dans son identité.
 Les nouvelles apparues depuis la dernière ouverture de l'onglet, sur cet
 appareil, portent « Nouveau ».
 
+### Les cours annulés se posent sur la semaine
+
+Un cours qui saute ne change pas seulement l'onglet Actualités : il change la
+journée. Les perturbations que PRONOTE annonce — cours annulé, professeur
+absent, cours déplacé — s'affichent donc **sur le jour concerné de la Semaine
+type**, en ambre, la matière barrée quand le cours est annulé, avec l'heure, le
+professeur et la salle.
+
+Deux bornes, voulues :
+
+- **la semaine en cours seulement**, du lundi au samedi. Une annulation de la
+  semaine prochaine reste dans l'onglet Actualités : l'annoncer sur le mardi
+  d'aujourd'hui tromperait ;
+- **le filtre par enfant s'applique**, comme au reste de la semaine.
+
+La mention du jour le dit aussi (« 1 au collège · 3 créneaux »), et une journée
+sans activité cesse d'être grisée quand elle porte une perturbation. La semaine
+est dessinée avant que le fichier chiffré ne soit lu : elle est redessinée quand
+il arrive.
+
 ### Le bouton « Vu », et le « lu » sur PRONOTE
 
 Chaque nouvelle importante ou scolaire porte un bouton **Vu** : elle sort alors
