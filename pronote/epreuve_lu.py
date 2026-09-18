@@ -69,11 +69,18 @@ def descripteurs(entree: dict) -> list:
     return trouves
 
 
-def essai(client, nom: str, corps: dict) -> str:
+def essai(client, nom: str, corps: dict, fonction: str = "SaisieActualites") -> str:
     try:
-        return f"    {nom} → {rapport(client.post('SaisieActualites', 8, corps))}"
+        reponse = client.post(fonction, 8, corps)
     except Exception as e:
         return f"    {nom} → exception {type(e).__name__}"
+    if fonction == "PageActualites":
+        # Ici PRONOTE ne rend pas de rapport de saisie : il rend la page. Ce
+        # qui compte est qu'il l'ait rendue, et surtout ce que devient le
+        # compteur juste après.
+        recu = ((reponse or {}).get("dataSec") or {}).get("data") or {}
+        return f"    {nom} → page rendue, clés {sorted(recu)[:4]}"
+    return f"    {nom} → {rapport(reponse)}"
 
 
 def discussions(client, enfant) -> None:
@@ -158,6 +165,30 @@ def informations(client, enfant) -> None:
     routes.append(("N et lue seuls",
                    {"listeActualites": [{"N": cible.id, "lue": True}],
                     "saisieActualite": False}))
+    # L'autre chemin, celui du clic : dans l'espace du collège, OUVRIR une
+    # information la passe en lu. pronotepy sait l'ouvrir — mais il code en dur
+    # genrePublic 4 et le parent en G=4, alors que l'entrée d'ici s'annonce
+    # autrement. On l'ouvre donc avec SON adressage à elle.
+    ouverture = {"genreRequeteActualite": 1, "modeAffActu": 0}
+    if brut:
+        acte = {"N": brut.get("N")}
+        if "genrePublic" in brut:
+            acte["genrePublic"] = brut["genrePublic"]
+        if "public" in brut:
+            acte["public"] = brut["public"]
+        routes.append(("OUVRIR l'information avec son propre adressage",
+                       dict(ouverture, actualite=acte), "PageActualites"))
+    if enfant_res is not None:
+        routes.append(("OUVRIR l'information au nom de l'enfant (G=4)",
+                       dict(ouverture, actualite={"N": cible.id, "genrePublic": 4,
+                                                  "public": {"N": enfant_res.id, "G": 4}}),
+                       "PageActualites"))
+    parent_res = getattr(client, "info", None)
+    if parent_res is not None:
+        routes.append(("OUVRIR l'information comme pronotepy (parent G=4)",
+                       dict(ouverture, actualite={"N": cible.id, "genrePublic": 4,
+                                                  "public": {"N": parent_res.id, "G": 4}}),
+                       "PageActualites"))
     if enfant_res is not None:
         routes.append(("l'ancienne route (enfant G=4), pour mémoire",
                        {"listeActualites": [{"N": cible.id, "validationDirecte": True,
@@ -166,15 +197,24 @@ def informations(client, enfant) -> None:
                                              "lue": True}],
                         "saisieActualite": False}))
 
-    for nom_route, corps in routes:
-        print(essai(client, nom_route, corps))
+    for route in routes:
+        nom_route, corps = route[0], route[1]
+        fonction = route[2] if len(route) > 2 else "SaisieActualites"
+        print(essai(client, nom_route, corps, fonction))
         maintenant = compte(client)
         if maintenant != avant:
             print(f"      LE COMPTEUR A BOUGÉ : {avant} → {maintenant}")
             try:
-                client.post("SaisieActualites", 8, {
-                    "listeActualites": [dict(corps["listeActualites"][0], lue=False)],
-                    "saisieActualite": False})
+                if "listeActualites" in corps:
+                    client.post("SaisieActualites", 8, {
+                        "listeActualites": [dict(corps["listeActualites"][0], lue=False)],
+                        "saisieActualite": False})
+                else:
+                    # L'ouverture a marqué : on repasse en non lu par la saisie,
+                    # avec l'adressage de l'entrée.
+                    client.post("SaisieActualites", 8, {
+                        "listeActualites": [dict(corps["actualite"], lue=False)],
+                        "saisieActualite": False})
                 print(f"      remis non lu : {compte(client)}")
             except Exception as e:
                 print(f"      ATTENTION, remise en non-lu échouée ({type(e).__name__})")
