@@ -83,6 +83,39 @@ def essai(client, nom: str, corps: dict, fonction: str = "SaisieActualites") -> 
     return f"    {nom} → {rapport(reponse)}"
 
 
+def onglets(client) -> None:
+    """La carte des sous-sections que PRONOTE ouvre à ce compte.
+
+    « Communication » en abrite plusieurs — informations & sondages, discussions,
+    agenda, casier… — chacune avec son numéro d'onglet. C'est ce numéro qu'il faut
+    pour aller lire une section que la bibliothèque n'expose pas. Rien de personnel
+    ici : des numéros et des noms de rubriques.
+    """
+    donnees = (client.parametres_utilisateur or {}).get("dataSec", {}).get("data", {})
+    liste = donnees.get("listeOnglets")
+    if not liste:
+        print("  onglets : rien dans ParametresUtilisateur")
+        return
+    print(f"  onglets autorisés (numéros) : {sorted(client.communication.authorized_onglets)}")
+
+    def parcours(noeud, profondeur=0):
+        if isinstance(noeud, dict):
+            g, libelle = noeud.get("G"), noeud.get("L") or noeud.get("Libelle")
+            if g is not None:
+                print(f"      {'  ' * profondeur}onglet {g}"
+                      + (f" · « {libelle} »" if libelle else "")
+                      + (f" · {len(noeud.get('Onglet', {}).get('V', []) or [])} sous-section(s)"
+                         if noeud.get("Onglet") else ""))
+            for cle in ("Onglet", "listeOnglets", "V"):
+                if cle in noeud:
+                    parcours(noeud[cle], profondeur + (1 if g is not None else 0))
+        elif isinstance(noeud, list):
+            for x in noeud:
+                parcours(x, profondeur)
+
+    parcours(liste)
+
+
 def discussions(client, enfant) -> None:
     client.set_child(enfant.name)
     nom = fetch.prenom(enfant.name)
@@ -230,6 +263,10 @@ def main() -> int:
         return 2
     print(f"Connexion : {mode} · {len(client.children)} enfant(s)")
     print(f"Non-lus au départ : {compte(client)}")
+    try:
+        onglets(client)
+    except Exception:
+        traceback.print_exc(limit=2)
     for enfant in client.children:
         try:
             discussions(client, enfant)

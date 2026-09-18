@@ -139,6 +139,28 @@ Sous 720 px la grille devient une liste : **elle porte les mêmes marques**.
 C'est le manque qui rendait tout ceci invisible là où on regarde le planning
 en partant — sur le téléphone.
 
+## Les coches
+
+Chaque nouvelle porte une case à cocher plutôt qu'un bouton : l'état se lit d'un
+coup d'œil, et le geste inverse est le même geste. L'en-tête de chaque carte
+porte la **coche maîtresse** — « Tout vu » —, qui parle le même langage et
+connaît trois états :
+
+| | |
+|---|---|
+| vide | rien n'est vu |
+| pleine (verte) | tout est vu — le mot devient « Tout remettre » |
+| barrée (ambre) | une partie seulement |
+
+Elle n'embrasse **que ce que la vue courante montre** : « Tout vu » depuis
+« L'important » ne range pas en douce les devoirs qu'on n'a pas sous les yeux.
+Un lot de vingt coches ne déclenche qu'un seul rendu et qu'un seul envoi groupé
+(`poserVu` / `retirerVu` ne redessinent rien, `enregistrerVus` conclut).
+
+Sur téléphone elle se resserre mais garde son mot : c'est l'action la plus utile
+de la carte, et une pastille muette ne s'explique pas au doigt. Les coches
+disparaissent à l'impression.
+
 ## Deux familles, et ce qui a un « lu » de l'autre côté
 
 Tout n'a pas à être signalé, et confondre les deux fait promettre des
