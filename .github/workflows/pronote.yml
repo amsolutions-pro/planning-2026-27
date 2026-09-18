@@ -75,6 +75,21 @@ jobs:
           if [ -f "$PRONOTE_TOKEN_SORTIE" ]; then echo "jeton=true" >> "$GITHUB_OUTPUT"; fi
           exit $code
 
+      # ---- TEMPORAIRE, à retirer dès la mesure lue ----
+      # Le client web du collège sait marquer une information lue depuis un
+      # compte parent : le droit existe, c'est la forme de notre requête qui
+      # ne va pas. L'épreuve cherche laquelle. Uniquement sur un lancement à
+      # la main — ni l'horloge, ni « Vu », ni « Actualiser » ne la portent.
+      - name: Éprouver le marquage (temporaire)
+        if: github.event_name == 'workflow_dispatch'
+        continue-on-error: true
+        env:
+          PRONOTE_URL: ${{ secrets.PRONOTE_URL }}
+          PRONOTE_USERNAME: ${{ secrets.PRONOTE_USERNAME }}
+          PRONOTE_PASSWORD: ${{ secrets.PRONOTE_PASSWORD }}
+          PRONOTE_PIN: ${{ secrets.PRONOTE_PIN }}
+        run: python3 pronote/epreuve_lu.py
+
       # Le jeton d'application mobile change à chaque connexion : on remet le
       # nouveau dans le secret, sinon la prochaine connexion échoue.
       - name: Faire tourner le jeton

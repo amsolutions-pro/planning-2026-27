@@ -118,38 +118,53 @@ def informations(client, enfant) -> None:
     avant = compte(client)
     print(f"      non-lus avant : {avant}")
 
-    base = {"N": cible.id, "validationDirecte": True, "lue": True}
+    # PRONOTE a donné une entrée entière ; on la lui rend, au lieu d'en
+    # fabriquer une minimale de cinq champs. C'est l'erreur des tours
+    # précédents : le client web du collège, lui, sait marquer — le droit
+    # existe, c'était la forme de la requête qui n'allait pas.
+    allege = {k: v for k, v in brut.items() if k != "informationListeContenu"}
+    print(f"      genrePublic de l'entrée : {brut.get('genrePublic')!r}")
+    print(f"      forme de « public » : {type(brut.get('public')).__name__}"
+          f" · clés {sorted(brut['public']) if isinstance(brut.get('public'), dict) else '—'}")
+    print(f"      nature : G={((brut.get('nature') or {}).get('V') or {}).get('G')!r}"
+          f" · estSondage={brut.get('estSondage')!r} · estAuteur={brut.get('estAuteur')!r}")
+
+    enfant_res = getattr(client, "_selected_child", None)
+    avant = compte(client)
+    print(f"      non-lus avant : {avant}")
+
     routes = []
+    if brut:
+        routes.append(("l'entrée crue entière, lue=True",
+                       {"listeActualites": [dict(allege, lue=True)],
+                        "saisieActualite": False}))
+        routes.append(("l'entrée crue entière, lue=True, saisieActualite=True",
+                       {"listeActualites": [dict(allege, lue=True)],
+                        "saisieActualite": True}))
+        # Le strict nécessaire, mais avec le public et le genrePublic de PRONOTE,
+        # rendus tels quels — pas reconstruits.
+        maigre = {"N": brut.get("N"), "lue": True}
+        for champ in ("genrePublic", "public", "estSondage", "nature", "estAuteur"):
+            if champ in brut:
+                maigre[champ] = brut[champ]
+        routes.append(("N + public et genrePublic de PRONOTE, verbatim",
+                       {"listeActualites": [dict(maigre)], "saisieActualite": False}))
+        routes.append(("idem, avec validationDirecte=False",
+                       {"listeActualites": [dict(maigre, validationDirecte=False)],
+                        "saisieActualite": False}))
+        routes.append(("idem, avec validationDirecte=True",
+                       {"listeActualites": [dict(maigre, validationDirecte=True)],
+                        "saisieActualite": False}))
+    routes.append(("N et lue seuls",
+                   {"listeActualites": [{"N": cible.id, "lue": True}],
+                    "saisieActualite": False}))
     if enfant_res is not None:
-        routes.append(("adressée à l'enfant (G=4)",
-                       {"listeActualites": [dict(base, genrePublic=4,
-                                                 public={"N": enfant_res.id, "G": 4})],
+        routes.append(("l'ancienne route (enfant G=4), pour mémoire",
+                       {"listeActualites": [{"N": cible.id, "validationDirecte": True,
+                                             "genrePublic": 4,
+                                             "public": {"N": enfant_res.id, "G": 4},
+                                             "lue": True}],
                         "saisieActualite": False}))
-    if parent_res is not None:
-        g = getattr(parent_res, "_raw_g", 4)
-        routes.append(("adressée au parent, comme pronotepy (G=4)",
-                       {"listeActualites": [dict(base, genrePublic=4,
-                                                 public={"N": parent_res.id, "G": 4})],
-                        "saisieActualite": False}))
-        routes.append(("adressée au parent, G=3",
-                       {"listeActualites": [dict(base, genrePublic=3,
-                                                 public={"N": parent_res.id, "G": 3})],
-                        "saisieActualite": False}))
-    # Ce que PRONOTE décrit lui-même : on le lui rend tel quel.
-    for chemin, g in descripteurs(brut)[:4]:
-        cible_desc = brut
-        for morceau in chemin.split("."):
-            if not morceau or morceau.endswith("[]"):
-                cible_desc = None
-                break
-            cible_desc = (cible_desc or {}).get(morceau)
-        if isinstance(cible_desc, dict) and "N" in cible_desc:
-            routes.append((f"descripteur de PRONOTE « {chemin} » (G={g})",
-                           {"listeActualites": [dict(base, genrePublic=g,
-                                                     public={"N": cible_desc["N"], "G": g})],
-                            "saisieActualite": False}))
-    routes.append(("sans public, lue seule",
-                   {"listeActualites": [dict(base)], "saisieActualite": False}))
 
     for nom_route, corps in routes:
         print(essai(client, nom_route, corps))
