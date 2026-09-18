@@ -6,6 +6,8 @@ name: PRONOTE — épreuve du marquage
 # Elle écrit sur un vrai compte : elle ne part plus qu'à la demande, maintenant
 # que l'enquête est close.
 on:
+  push:
+    paths: [pronote/diagnostic.py]
   workflow_dispatch:
 
 permissions:

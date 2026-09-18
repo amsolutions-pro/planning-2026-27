@@ -62,6 +62,11 @@ INFOS_JOURS = 30
 MESSAGES_JOURS = 21
 # Requêtes supplémentaires (contenu d'une information, messages d'une discussion).
 MAX_DETAILS = 15
+# Lire la date d'une discussion oblige à l'ouvrir : une requête chacune, d'où un
+# plafond. Mais il ne doit jamais décider *lesquelles* on voit — un message
+# arrivé aujourd'hui passait à la trappe quand la boîte en comptait plus de
+# quinze. Les non lues d'abord, et de la marge.
+MAX_DISCUSSIONS = 60
 
 ITERATIONS_KDF = 200_000
 # Numéro du format publié, lisible sans le mot de passe : une page restée
@@ -821,14 +826,19 @@ class Collecte:
     def messages(self, enfant: dict) -> None:
         depuis = (self.maintenant - dt.timedelta(days=MESSAGES_JOURS)).replace(tzinfo=None)
         details = 0
-        for d in self.client.discussions():
+        # PRONOTE ne garantit pas l'ordre de sa liste : on ouvre les non lues en
+        # premier, pour qu'un message du jour ne dépende jamais du plafond.
+        discussions = sorted(self.client.discussions(), key=lambda d: not (d.unread or 0))
+        for d in discussions:
             if "Trash" in (d.labels or []) or "Drafts" in (d.labels or []):
                 continue
             ident = f"message:{id_discussion(d)}"
             if ident in self.connus:
                 self.rattache(enfant, self.connus[ident], ident)
                 continue
-            if details >= MAX_DETAILS:
+            if details >= MAX_DISCUSSIONS:
+                self.erreurs.append(
+                    f"{enfant['nom']} · messages : plus de {MAX_DISCUSSIONS} discussions, les plus anciennes n'ont pas été lues")
                 break
             details += 1
             base = contenu_discussion(d)
