@@ -164,6 +164,10 @@ semaine sur la grille de la suivante tromperait — et seulement pour l'enfant
 affiché. Si PRONOTE signale une séance que la grille ne connaît pas, elle
 apparaît quand même, en pointillés : la grille est un décalque, PRONOTE fait foi.
 
+Les **contrôles annoncés** s'y posent aussi, à leur case, en violet comme le
+travail scolaire : la séance a bien lieu, rien n'est barré. Ils restent hors de la
+Semaine type, qui n'a à montrer que ce qui dérange la journée.
+
 Un changement de salle ne demande aucune décision : il se lit sur la grille et
 reste hors de « L'important ».
 

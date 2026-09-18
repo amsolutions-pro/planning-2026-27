@@ -424,6 +424,10 @@ svg{display:block}
 }
 :root[data-theme="dark"] .lesson__flag,
 :root:not([data-theme="light"]) .lesson__flag{color:var(--ground)}
+/* Un contrôle annoncé n'est pas une perturbation : la séance a bien lieu. Même
+   place sur la grille, autre couleur, et jamais barré. */
+.lesson--controle{background:var(--accent-soft);border-color:var(--accent);border-left:3px solid var(--accent)}
+.lesson--controle .lesson__flag{background:var(--accent)}
 /* Une séance que l'emploi du temps ne connaît pas — la grille est un décalque,
    PRONOTE fait foi : on la montre quand même, à sa place. */
 .lesson--hors{background:var(--hold-bg);border:1px dashed var(--hold-line);--m:var(--hold)}
@@ -1643,7 +1647,9 @@ svg{display:block}
     var lundi = lundiUTC(new Date()), jourDe = {};
     DAYS.forEach(function (jour, i) { jourDe[cleJour(lundi + i * MS_JOUR)] = jour; });
     d.actualites.forEach(function (a) {
-      if (a.type !== 'cours') return;
+      // Ce que PRONOTE annonce pour une séance : ce qui la dérange, et ce qui
+      // s'y passera. Les deux se lisent mieux sur la case que dans une liste.
+      if (a.type !== 'cours' && a.type !== 'controle') return;
       var jour = jourDe[a.date];
       if (!jour || (a.enfants || []).indexOf(ttState.pupil) === -1) return;
       var creneau = -1;
@@ -1706,14 +1712,17 @@ svg{display:block}
         var cell = grid[day][i];
         var jourJ = classeJour(day) ? ' class="col-today"' : '';
         var vu = (perturbations[day] || {})[i];
-        var drapeau = vu ? '<span class="lesson__flag">' + echap(vu.raison) + '</span>' : '';
-        var annule = vu && /annul/i.test(vu.raison || '');
+        var controle = vu && vu.type === 'controle';
+        var drapeau = vu ? '<span class="lesson__flag">'
+          + echap(controle ? 'Contrôle' : vu.raison) + '</span>' : '';
+        var annule = vu && !controle && /annul/i.test(vu.raison || '');
+        var marque = vu ? (controle ? ' lesson--controle' : ' lesson--perturbe') : '';
         if (cell === 'occupe') return;
         if (!cell) {
           // PRONOTE signale une séance que la grille ne connaît pas : on la
           // montre plutôt que de la perdre.
           html += '<td' + jourJ + '>' + (vu
-            ? '<div class="lesson lesson--hors lesson--perturbe' + (annule ? ' lesson--annule' : '') + '">'
+            ? '<div class="lesson lesson--hors' + marque + (annule ? ' lesson--annule' : '') + '">'
               + drapeau + '<b>' + echap(vu.matiere || 'Cours') + '</b>'
               + (vu.detail ? '<span>' + echap(vu.detail) + '</span>' : '') + '</div>'
             : '') + '</td>';
@@ -1722,7 +1731,7 @@ svg{display:block}
         var famille = FAMILLES[cell.matiere] || 'lettres';
         var plage = cell.span > 1 ? SLOTS[i][0] + ' – ' + SLOTS[i + cell.span - 1][1] : '';
         html += '<td' + jourJ + (cell.span > 1 ? ' rowspan="' + cell.span + '"' : '') + '>'
-          + '<div class="lesson m-' + famille + (vu ? ' lesson--perturbe' : '') + (annule ? ' lesson--annule' : '') + '">'
+          + '<div class="lesson m-' + famille + marque + (annule ? ' lesson--annule' : '') + '">'
           + drapeau
           + '<b>' + cell.matiere + '</b>'
           + '<span>' + cell.prof + '</span>'
