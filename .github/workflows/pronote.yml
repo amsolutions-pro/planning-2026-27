@@ -75,23 +75,6 @@ jobs:
           if [ -f "$PRONOTE_TOKEN_SORTIE" ]; then echo "jeton=true" >> "$GITHUB_OUTPUT"; fi
           exit $code
 
-      # ---- TEMPORAIRE, à retirer dès la mesure lue ----
-      # La question « PRONOTE accepte-t-il le lu d'un compte parent ? » ne se
-      # tranche que sur le vrai serveur, et je n'ai pas le droit de lancer un
-      # workflow à la demande. Elle voyage donc sur un passage de l'horloge ou
-      # sur un lancement à la main — le premier des deux qui vient — et remet
-      # tout comme elle l'a trouvé. Jamais sur un passage demandé depuis la
-      # page : « Vu » et « Actualiser » n'ont rien à y voir.
-      - name: Éprouver le marquage (temporaire)
-        if: github.event_name != 'repository_dispatch'
-        continue-on-error: true
-        env:
-          PRONOTE_URL: ${{ secrets.PRONOTE_URL }}
-          PRONOTE_USERNAME: ${{ secrets.PRONOTE_USERNAME }}
-          PRONOTE_PASSWORD: ${{ secrets.PRONOTE_PASSWORD }}
-          PRONOTE_PIN: ${{ secrets.PRONOTE_PIN }}
-        run: python3 pronote/epreuve_lu.py
-
       # Le jeton d'application mobile change à chaque connexion : on remet le
       # nouveau dans le secret, sinon la prochaine connexion échoue.
       - name: Faire tourner le jeton

@@ -139,6 +139,35 @@ Sous 720 px la grille devient une liste : **elle porte les mêmes marques**.
 C'est le manque qui rendait tout ceci invisible là où on regarde le planning
 en partant — sur le téléphone.
 
+## Ce que PRONOTE laisse écrire à un parent
+
+Éprouvé en direct, deux fois, contre le vrai serveur :
+
+| | |
+|---|---|
+| **Messages** (messagerie) | le robot les passe en lu — le compteur descend |
+| **Informations & sondages** | PRONOTE écarte la saisie, quoi qu'on tente |
+
+Le refus n'est pas une erreur : le serveur répond `RapportSaisie:
+{_erreurSaisie_: true}`, un « saisie refusée » silencieux que pronotepy ne
+regarde pas — le robot croyait donc avoir marqué à chaque fois. `saisie_refusee()`
+lit ce rapport, et le produit ne prétend plus.
+
+Quinze adressages ont été essayés en tout, dont six lors de la dernière épreuve
+(`pronote/epreuve_lu.py`, réversible, à lancer depuis l'onglet Actions) :
+au nom de l'enfant (`G=4`), au nom du parent comme le fait pronotepy (`G=4`),
+au nom du parent en `G=3`, sans destinataire du tout, et — la piste la plus
+sérieuse — en renvoyant à PRONOTE **les descripteurs qu'il donne lui-même**
+dans sa liste crue : `elmauteur.V` (`G=3`) et `public.V` (`G=5`). Les six
+écartés, le compteur des non-lus immobile.
+
+Ce `public.V` en `G=5` dit sans doute pourquoi : l'information est adressée à
+**une classe**, pas à une personne. Le « lu » se pose par destinataire, et un
+parent n'en est pas un. Rien, du côté de la page, ne peut contourner cela.
+
+Le « Vu » d'une information reste donc local à l'appareil, et la page le dit
+au lieu de laisser croire à un marquage.
+
 ## Actualités PRONOTE
 
 L'onglet « Actualités » montre, enfant par enfant, ce que PRONOTE a de nouveau
