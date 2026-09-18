@@ -22,8 +22,28 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fetch  # noqa: E402
 
 
-def compte(client) -> str:
-    return fetch.non_lus(client)
+def compte(client):
+    """Le compte des non-lus, ou None si la session n'a pas répondu.
+
+    Distinction capitale : la dernière épreuve a pris une session expirée pour
+    un compteur qui bouge, et s'est arrêtée sur une fausse victoire.
+    """
+    texte = fetch.non_lus(client)
+    return None if "(" in texte else texte
+
+
+def rejoindre(client, enfant):
+    """Rouvre une session quand PRONOTE fait « la page a expiré »."""
+    try:
+        if compte(client) is not None:
+            client.set_child(enfant.name)
+            return client
+    except Exception:
+        pass
+    neuf, _ = fetch.connexion()
+    neuf.set_child(enfant.name)
+    print("      (session rouverte)")
+    return neuf
 
 
 def rapport(reponse) -> str:
@@ -91,12 +111,13 @@ def onglets(client) -> None:
     pour aller lire une section que la bibliothèque n'expose pas. Rien de personnel
     ici : des numéros et des noms de rubriques.
     """
-    donnees = (client.parametres_utilisateur or {}).get("dataSec", {}).get("data", {})
+    donnees = (getattr(client, "parametres_utilisateur", None) or {}).get("dataSec", {}).get("data", {})
     liste = donnees.get("listeOnglets")
     if not liste:
         print("  onglets : rien dans ParametresUtilisateur")
         return
-    print(f"  onglets autorisés (numéros) : {sorted(client.communication.authorized_onglets)}")
+    autorises = getattr(getattr(client, "communication", None), "authorized_onglets", []) or []
+    print(f"  onglets autorisés (numéros) : {sorted(autorises)}")
 
     def parcours(noeud, profondeur=0):
         if isinstance(noeud, dict):
@@ -153,11 +174,6 @@ def informations(client, enfant) -> None:
     print(f"      champs : {sorted(brut)}")
     print(f"      destinataires décrits par PRONOTE : {descripteurs(brut) or '—'}")
 
-    enfant_res = getattr(client, "_selected_child", None)
-    parent_res = getattr(client, "info", None)
-    avant = compte(client)
-    print(f"      non-lus avant : {avant}")
-
     # PRONOTE a donné une entrée entière ; on la lui rend, au lieu d'en
     # fabriquer une minimale de cinq champs. C'est l'erreur des tours
     # précédents : le client web du collège, lui, sait marquer — le droit
@@ -173,69 +189,67 @@ def informations(client, enfant) -> None:
     avant = compte(client)
     print(f"      non-lus avant : {avant}")
 
-    routes = []
-    if brut:
-        routes.append(("l'entrée crue entière, lue=True",
-                       {"listeActualites": [dict(allege, lue=True)],
-                        "saisieActualite": False}))
-        routes.append(("l'entrée crue entière, lue=True, saisieActualite=True",
-                       {"listeActualites": [dict(allege, lue=True)],
-                        "saisieActualite": True}))
-        # Le strict nécessaire, mais avec le public et le genrePublic de PRONOTE,
-        # rendus tels quels — pas reconstruits.
-        maigre = {"N": brut.get("N"), "lue": True}
-        for champ in ("genrePublic", "public", "estSondage", "nature", "estAuteur"):
-            if champ in brut:
-                maigre[champ] = brut[champ]
-        routes.append(("N + public et genrePublic de PRONOTE, verbatim",
-                       {"listeActualites": [dict(maigre)], "saisieActualite": False}))
-        routes.append(("idem, avec validationDirecte=False",
-                       {"listeActualites": [dict(maigre, validationDirecte=False)],
-                        "saisieActualite": False}))
-        routes.append(("idem, avec validationDirecte=True",
-                       {"listeActualites": [dict(maigre, validationDirecte=True)],
-                        "saisieActualite": False}))
-    routes.append(("N et lue seuls",
-                   {"listeActualites": [{"N": cible.id, "lue": True}],
-                    "saisieActualite": False}))
-    # L'autre chemin, celui du clic : dans l'espace du collège, OUVRIR une
-    # information la passe en lu. pronotepy sait l'ouvrir — mais il code en dur
-    # genrePublic 4 et le parent en G=4, alors que l'entrée d'ici s'annonce
-    # autrement. On l'ouvre donc avec SON adressage à elle.
+    # Ce que le dernier tour a appris, et qui commande l'ordre d'ici :
+    #   * l'entrée s'annonce en genrePublic 2, jamais 4 — pronotepy code 4 en dur ;
+    #   * son « public » est la classe (G=5), pas une personne ;
+    #   * OUVRIR l'information adressée à L'ENFANT (G=4) est la seule requête qui
+    #     ait rendu la page de détail. Dans l'espace du collège, ouvrir marque lu.
+    # On commence donc par elle, et on mesure aussitôt.
     ouverture = {"genreRequeteActualite": 1, "modeAffActu": 0}
-    if brut:
-        acte = {"N": brut.get("N")}
-        if "genrePublic" in brut:
-            acte["genrePublic"] = brut["genrePublic"]
-        if "public" in brut:
-            acte["public"] = brut["public"]
-        routes.append(("OUVRIR l'information avec son propre adressage",
-                       dict(ouverture, actualite=acte), "PageActualites"))
+    routes = []
     if enfant_res is not None:
-        routes.append(("OUVRIR l'information au nom de l'enfant (G=4)",
+        routes.append(("OUVRIR au nom de l'enfant (G=4) — la seule qui rendait la page",
                        dict(ouverture, actualite={"N": cible.id, "genrePublic": 4,
                                                   "public": {"N": enfant_res.id, "G": 4}}),
                        "PageActualites"))
-    parent_res = getattr(client, "info", None)
-    if parent_res is not None:
-        routes.append(("OUVRIR l'information comme pronotepy (parent G=4)",
-                       dict(ouverture, actualite={"N": cible.id, "genrePublic": 4,
-                                                  "public": {"N": parent_res.id, "G": 4}}),
-                       "PageActualites"))
+    # Puis la matrice : le genrePublic annoncé par l'entrée croisé avec chaque
+    # destinataire plausible. Deux cases n'avaient jamais été essayées ensemble.
+    pub_entree = brut.get("public")
+    pub_v = pub_entree.get("V") if isinstance(pub_entree, dict) else None
+    destinataires = []
     if enfant_res is not None:
-        routes.append(("l'ancienne route (enfant G=4), pour mémoire",
-                       {"listeActualites": [{"N": cible.id, "validationDirecte": True,
-                                             "genrePublic": 4,
-                                             "public": {"N": enfant_res.id, "G": 4},
-                                             "lue": True}],
+        destinataires.append(("l'enfant G=4", {"N": enfant_res.id, "G": 4}))
+    if isinstance(pub_v, dict):
+        destinataires.append(("la classe G=%s" % pub_v.get("G"), pub_v))
+    if isinstance(pub_entree, dict):
+        destinataires.append(("le « public » entier de PRONOTE", pub_entree))
+    genres = [g for g in (brut.get("genrePublic"), 4, 2) if g is not None]
+    vus_genres = []
+    for g in genres:
+        if g in vus_genres:
+            continue
+        vus_genres.append(g)
+        for nom_dest, dest in destinataires:
+            routes.append((f"SAISIE · genrePublic={g} · {nom_dest}",
+                           {"listeActualites": [{"N": cible.id, "lue": True,
+                                                 "validationDirecte": True,
+                                                 "genrePublic": g, "public": dest}],
+                            "saisieActualite": False}))
+    if brut:
+        routes.append(("SAISIE · l'entrée crue entière",
+                       {"listeActualites": [dict(allege, lue=True)],
                         "saisieActualite": False}))
+    routes.append(("SAISIE · N et lue seuls",
+                   {"listeActualites": [{"N": cible.id, "lue": True}],
+                    "saisieActualite": False}))
+    if enfant_res is not None:
+        routes.append(("OUVRIR avec le genrePublic de l'entrée",
+                       dict(ouverture, actualite={"N": cible.id,
+                                                  "genrePublic": brut.get("genrePublic", 2),
+                                                  "public": {"N": enfant_res.id, "G": 4}}),
+                       "PageActualites"))
 
     for route in routes:
         nom_route, corps = route[0], route[1]
         fonction = route[2] if len(route) > 2 else "SaisieActualites"
         print(essai(client, nom_route, corps, fonction))
         maintenant = compte(client)
-        if maintenant != avant:
+        if maintenant is None:
+            # Session tombée : on la rouvre et on passe à la suivante, sans
+            # rien conclure. Une session morte n'est pas une preuve.
+            client = rejoindre(client, enfant)
+            maintenant = compte(client)
+        if maintenant is not None and avant is not None and maintenant != avant:
             print(f"      LE COMPTEUR A BOUGÉ : {avant} → {maintenant}")
             try:
                 if "listeActualites" in corps:
