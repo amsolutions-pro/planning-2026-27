@@ -92,6 +92,53 @@ une seule à ce jour : celle du 14 septembre 2026, deuxième semaine d'affilée 
 Papa pendant le déplacement de la mère. La ligne rappelle alors que l'emploi du
 temps du collège, lui, suit toujours la quinzaine.
 
+## Ce que la semaine annonce, sur la grille
+
+La grille du collège est la vérité de la semaine : un cours annulé doit s'y
+lire, barré, à sa case — pas dans une liste à côté. Elle porte donc trois
+marques, sur la semaine affichée (celle où l'on est, ou la suivante quand on
+change de quinzaine — le robot lit quatorze jours) :
+
+| | |
+|---|---|
+| **COURS ANNULÉ** / **PROFESSEUR ABSENT** | ambre, matière barrée |
+| **CHANGEMENT DE SALLE** / **COURS DÉPLACÉ** | ambre, matière intacte |
+| **CONTRÔLE** | violet, matière intacte |
+
+Ces marques viennent de **deux sources**. L'emploi du temps de PRONOTE, quand
+il signale lui-même la séance ; et, bien plus souvent, **les messages** : le
+collège annonce l'absence d'un professeur par un message et laisse la séance
+en place dans l'emploi du temps. Sans lire les messages, la grille montrait
+un cours qui n'aurait pas lieu.
+
+Rapprocher un message d'une case demande trois accords, et les trois sont
+exigés — mieux vaut ne rien dire que salir la grille :
+
+1. **Un mot qui dérange la séance.** Les mots francs suffisent seuls (annulé,
+   déplacé, reporté, pas de cours, ne sera pas assuré, libérés). Les mots
+   faibles — absent, absence, remplacé, indisponible — ne comptent qu'avec un
+   professeur nommé à côté (« M. », « Mme », « le professeur de… »), et jamais
+   si le message parle de l'élève. Sans quoi « Absence en espagnol — Annie
+   était chez le médecin » barrait le cours d'espagnol : l'absence de l'élève,
+   pas du professeur.
+2. **Une matière reconnue**, et seulement parmi celles que la semaine affichée
+   contient réellement (`ALIAS_MATIERE` rapproche « maths » de
+   « Mathématiques », « histoire » de « Histoire-géo »…). Une réunion
+   parents-professeurs annulée ne nomme aucune matière : rien ne bouge.
+3. **Un jour.** Ce que le message dit — un jour de la semaine, une date en
+   chiffres ou en toutes lettres, « aujourd'hui », « demain » — sinon le jour
+   où il a été écrit. « Aujourd'hui » se compte **depuis le message**, jamais
+   depuis maintenant : un message de lundi qui dit « aujourd'hui » parle de
+   lundi.
+
+L'emploi du temps garde le dernier mot : là où PRONOTE a déjà parlé d'une
+séance, son libellé reste, le message ne comble que son silence. La case
+nomme le message d'où sort la marque, pour savoir où aller vérifier.
+
+Sous 720 px la grille devient une liste : **elle porte les mêmes marques**.
+C'est le manque qui rendait tout ceci invisible là où on regarde le planning
+en partant — sur le téléphone.
+
 ## Actualités PRONOTE
 
 L'onglet « Actualités » montre, enfant par enfant, ce que PRONOTE a de nouveau
