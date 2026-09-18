@@ -305,6 +305,13 @@ après l'envoi et que la communication est toujours non lue chez PRONOTE, elle
 affiche « Vu · pas pris par PRONOTE » et rend la main au bouton **Réessayer
 l'envoi**, au lieu d'un « lu sur PRONOTE » qui n'est pas vrai.
 
+Un envoi ne survit jamais à la vue qui l'a déclenché. Reprendre un « Vu », ou
+tout **Remettre les vues**, emporte l'envoi avec lui — en attente comme échoué.
+Sans quoi le pied de page proposait de réessayer le marquage d'une nouvelle
+qu'on venait justement de remettre à voir : un « Réessayer l'envoi » seul, sans
+une seule vue à l'écran. La page répare aussi au chargement les envois orphelins
+qu'un navigateur garderait d'avant.
+
 Le chemin est indirect, faute de mieux : la page est un fichier statique, elle
 n'a ni les identifiants PRONOTE ni le droit de l'appeler depuis un autre site.
 Elle demande donc à GitHub de réveiller le robot (`repository_dispatch`, type
