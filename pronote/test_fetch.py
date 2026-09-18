@@ -13,6 +13,7 @@ from types import SimpleNamespace
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import fetch  # noqa: E402
+import exemple  # noqa: E402
 from exemple import FauxClient  # noqa: E402
 
 MAINTENANT = dt.datetime(2026, 9, 16, 10, 0, tzinfo=fetch.PARIS)  # un mercredi
@@ -167,6 +168,33 @@ class Classement(unittest.TestCase):
         self.assertEqual(self.par_id[id_message("m1")]["enfants"], ["narek", "annie"])
         self.assertEqual(self.par_id[id_message("m1")]["niveau"], "important")
         self.assertEqual(self.par_id[id_message("m2")]["niveau"], "info")
+
+    def test_un_message_du_jour_ne_depend_pas_du_plafond(self):
+        """Le plafond borne le coût, jamais ce qu'on voit.
+
+        Un message arrivé aujourd'hui passait à la trappe quand la boîte en
+        comptait plus que le plafond : PRONOTE ne garantit pas l'ordre de sa
+        liste, et la nouvelle discussion s'y trouvait en queue.
+        """
+        client = FauxClient(MAINTENANT)
+        # Un fil bien à Narek : la copie d'Annie ne doit pas sauver le test.
+        neuve = exemple._discussion("toute-neuve", subject="Sortie de demain", creator="Direction",
+                                    unread=1, closed=False, labels=[],
+                                    messages=[exemple._o(author="Direction",
+                                                         created=MAINTENANT.replace(tzinfo=None) - dt.timedelta(minutes=5),
+                                                         content="Bonjour.")])
+        client._donnees["E2"]["discussions"] = []
+        vieilles = []
+        for i in range(fetch.MAX_DISCUSSIONS + 5):
+            d = exemple._discussion(f"vieille-{i}", subject=f"Fil {i}", creator="Secrétariat",
+                                    unread=0, closed=False, labels=[],
+                                    messages=[exemple._o(author="Secrétariat",
+                                                         created=MAINTENANT.replace(tzinfo=None) - dt.timedelta(hours=2),
+                                                         content="Bonjour.")])
+            vieilles.append(d)
+        client._donnees["E1"]["discussions"] = vieilles + [neuve]   # la neuve en queue
+        donnees, par_id = collecte_indexee(client)
+        self.assertIn(f"message:{fetch.id_discussion(neuve)}", par_id)
 
     def test_meme_message_sous_deux_identifiants(self):
         """Le collège écrit aux deux enfants : une seule nouvelle, un seul clic."""

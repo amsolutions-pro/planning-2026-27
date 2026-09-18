@@ -1,21 +1,19 @@
-"""Épreuve en direct du marquage « lu », contre le vrai PRONOTE.
+"""D'où viennent les annulations de cours, chez vous ?
 
-Lancée par le workflow `diagnostic.yml`. Réversible — ce qu'elle change, elle le
-remet — et muette : elle n'imprime que des nombres et des empreintes, le journal
-d'une action GitHub étant public.
+Deux sources possibles, et le traitement n'est pas le même :
+  * l'emploi du temps — PRONOTE marque la séance `canceled` ou lui donne un
+    `status` (« Cours annulé », « Prof. absent »…). C'est net, daté, exploitable
+    tel quel : on peut barrer la case sur la grille de la semaine ;
+  * un message ou une information du collège — il faut alors lire le texte pour
+    savoir quel cours, et quel jour. C'est un tout autre travail.
 
-Neuf tours d'enquête ont établi ceci, mesuré dans des sessions neuves :
-  * la messagerie s'écrit (une discussion passe de lue à non lue et revient) ;
-  * le « lu » d'une information est écarté par le serveur, quel que soit le
-    destinataire envoyé et jusque dans l'autre sens — `_erreurSaisie_` —, sans
-    la moindre erreur HTTP. pronotepy ne regarde pas ce rapport : c'est ce
-    silence qui faisait croire au robot qu'il avait marqué.
-
-Ce dernier tour n'éprouve plus des requêtes, mais le code livré : `marquer_lu`
-doit marquer le message et ranger l'information parmi les écartés.
+Cette épreuve ne fait que **lire**. Elle n'imprime que des nombres, le vocabulaire
+de PRONOTE lui-même et des écarts en jours : le journal d'une action est public.
 """
 
+import datetime as dt
 import os
+import re
 import sys
 import traceback
 
@@ -23,54 +21,79 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import fetch  # noqa: E402
 
+MOTS = re.compile(r"annul|déplac|deplac|report|absent|remplac|libér|liber|modifi", re.I)
+# « le 22 septembre », « mardi 22 », « 22/09 » : de quoi dater un texte.
+DATES = re.compile(r"\b\d{1,2}[/-]\d{1,2}|\b\d{1,2}\s+(?:janv|févr|fevr|mars|avr|mai|juin|juil|août|aout|sept|oct|nov|déc|dec)", re.I)
+JOURS = re.compile(r"\b(lundi|mardi|mercredi|jeudi|vendredi|samedi)\b", re.I)
 
-def non_lus(enfant) -> tuple[int, int]:
-    """Recompte dans une session neuve : la session qui écrit peut être aveugle."""
-    client, _ = fetch.connexion()
+
+def emploi_du_temps(client, enfant) -> None:
     client.set_child(enfant.name)
-    return (len(list(client.discussions(only_unread=True))),
-            len(list(client.information_and_surveys(only_unread=True))))
+    debut = dt.date.today()
+    fin = debut + dt.timedelta(days=14)
+    seances = list(client.lessons(debut, fin))
+    perturbees = [l for l in seances if l.canceled or l.status]
+    statuts = sorted({(l.status or "canceled") for l in perturbees})
+    print(f"  {fetch.prenom(enfant.name)} : {len(seances)} séance(s) sur 14 jours, "
+          f"{len(perturbees)} perturbée(s)")
+    for l in perturbees:
+        ecart = (l.start.date() - debut).days
+        print(f"      « {l.status or 'annulé'} » · J{ecart:+d} · {l.start.strftime('%H:%M')}")
+    if not perturbees:
+        print(f"      aucun statut posé par le collège sur l'emploi du temps")
+    print(f"      vocabulaire rencontré : {statuts or '—'}")
+
+
+def communications(client, enfant) -> None:
+    client.set_child(enfant.name)
+    nom = fetch.prenom(enfant.name)
+    aujourdhui = dt.date.today()
+
+    parlantes = 0
+    for d in list(client.discussions())[:fetch.MAX_DISCUSSIONS]:
+        msgs = list(d.messages)
+        if not msgs:
+            continue
+        texte = f"{d.subject or ''} {msgs[-1].content or ''}"
+        if not MOTS.search(texte):
+            continue
+        parlantes += 1
+        ecart = (msgs[-1].created.date() - aujourdhui).days
+        print(f"      message J{ecart:+d} · mot d'annulation : oui · date dans le texte : "
+              f"{'oui' if DATES.search(texte) else 'non'} · jour nommé : "
+              f"{'oui' if JOURS.search(texte) else 'non'}")
+    print(f"  {nom} · messagerie : {parlantes} discussion(s) parlant d'annulation")
+
+    parlantes = 0
+    lues = 0
+    for i in client.information_and_surveys():
+        texte = i.title or ""
+        if lues < 12:
+            lues += 1
+            try:
+                texte += " " + (i.content() or "")
+            except Exception:
+                pass
+        if not MOTS.search(texte):
+            continue
+        parlantes += 1
+        quand = (i.start_date or i.creation_date)
+        ecart = (quand.date() - aujourdhui).days if quand else 0
+        print(f"      information J{ecart:+d} · date dans le texte : "
+              f"{'oui' if DATES.search(texte) else 'non'} · jour nommé : "
+              f"{'oui' if JOURS.search(texte) else 'non'}")
+    print(f"  {nom} · informations : {parlantes} parlant d'annulation")
 
 
 def main() -> int:
     client, mode = fetch.connexion()
-    enfant = client.children[0]
-    client.set_child(enfant.name)
-    nom = fetch.prenom(enfant.name)
-    print(f"Connexion : {mode} · épreuve sur {nom}")
-
-    discussions = list(client.discussions())
-    informations = client.information_and_surveys(only_unread=True)
-    if not discussions:
-        print("aucune discussion : rien à éprouver")
-        return 0
-
-    # On se donne un non-lu à marquer, puisqu'il n'en reste plus.
-    d = discussions[0]
-    d.mark_as(False)
-    depart = non_lus(enfant)
-    print(f"départ (session neuve) : {depart[0]} msg / {depart[1]} info")
-
-    demandes = [fetch.identite(fetch.contenu_discussion(d), None)]
-    attendu_ecarte = []
-    if informations:
-        i = informations[0]
-        attendu_ecarte = [fetch.identite(fetch.contenu_information(i), None)]
-        demandes += attendu_ecarte
-
-    client, _ = fetch.connexion()          # comme le robot : une session à lui
-    faits, introuvables, ecartes = fetch.marquer_lu(client, demandes)
-    apres = non_lus(enfant)
-    print(f"marquer_lu : {len(faits)} fait(s) · {len(ecartes)} écarté(s) · {len(introuvables)} introuvable(s)")
-    print(f"après (session neuve) : {apres[0]} msg / {apres[1]} info")
-
-    msg_ok = (faits == demandes[:1]) and apres[0] == depart[0] - 1
-    info_ok = (ecartes == attendu_ecarte) and apres[1] == depart[1]
-    print(f"  message marqué et compté comme fait : {'✔' if msg_ok else '✗'}")
-    print(f"  information écartée, et dite écartée : {'✔' if info_ok else '✗'}"
-          + ("" if attendu_ecarte else "  (aucune information non lue à éprouver)"))
-    print("RÉSULTAT : " + ("le code livré dit vrai ✔" if msg_ok and info_ok
-                           else "à revoir ✗"))
+    print(f"Connexion : {mode} · {len(client.children)} enfant(s) · {dt.date.today()}")
+    print("Emploi du temps (ce que PRONOTE marque lui-même) :")
+    for enfant in client.children:
+        emploi_du_temps(client, enfant)
+    print("Communications (ce qu'il faudrait lire dans le texte) :")
+    for enfant in client.children:
+        communications(client, enfant)
     return 0
 
 
