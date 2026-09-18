@@ -1153,9 +1153,12 @@ svg{display:block}
         <p>Une information ou un sondage ne s’y marque pas : PRONOTE écarte la
         saisie depuis un compte parent, éprouvé contre le serveur. Leur « Vu »
         reste sur cet appareil.</p>
-        <p>Le jeton vit dans ce navigateur, sur cet appareil : il est à coller une
-        fois par téléphone et par ordinateur. Sans lui, « Actualiser » relit le
-        fichier mais ne lance pas le robot.</p>
+        <p>Le jeton collé ici vit dans ce navigateur seulement : il est à remettre
+        sur chaque téléphone et chaque ordinateur. Pour n'avoir à le faire nulle
+        part, mettez-le plutôt dans le secret <b>PRONOTE_PAGE_PAT</b> du dépôt : le
+        robot le glisse alors dans le fichier chiffré, et tout appareil qui en a le
+        mot de passe peut lancer le robot. Le mot de passe protège alors aussi un
+        jeton qui écrit sur le dépôt — qu'il soit à la hauteur.</p>
         <p>Créez un jeton sur
         <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer noopener">github.com/settings/personal-access-tokens</a>
         limité à ce seul dépôt, avec la permission <b>Contents : Read and write</b>,
@@ -2733,7 +2736,7 @@ svg{display:block}
       if (etatEnvoi(id) === 'attente') { delete actu.envois[id]; noteEnvois(); }
     } else {
       actu.vus[id] = new Date().toISOString();
-      if (estEnvoyable(item) && actu.jeton && actu.donnees.depot && !actu.envois[id]) {
+      if (estEnvoyable(item) && relie() && !actu.envois[id]) {
         actu.envois[id] = 'attente';
         noteEnvois();
         programmerEnvoi();
@@ -2759,15 +2762,27 @@ svg{display:block}
       method: 'POST',
       headers: {
         'Accept': 'application/vnd.github+json',
-        'Authorization': 'Bearer ' + actu.jeton,
+        'Authorization': 'Bearer ' + jetonCourant(),
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ event_type: 'pronote-lu', client_payload: { ids: ids.join(',') } })
     }).then(function (r) { return r.ok; }, function () { return false; });
   }
 
+  // Le jeton de cet appareil, sinon celui que porte le fichier chiffré : il suit
+  // le mot de passe, donc tout appareil qui sait lire les nouvelles sait aussi
+  // réveiller le robot. Celui collé ici l'emporte — c'est le recours quand celui
+  // du fichier a été révoqué.
+  function jetonCourant() {
+    return actu.jeton || (actu.donnees && actu.donnees.jeton_page) || '';
+  }
+
+  function jetonDuFichier() {
+    return !actu.jeton && !!(actu.donnees && actu.donnees.jeton_page);
+  }
+
   function relie() {
-    return !!(actu.jeton && actu.donnees && actu.donnees.depot);
+    return !!(jetonCourant() && actu.donnees && actu.donnees.depot);
   }
 
   function envoyerLus() {
@@ -2807,7 +2822,8 @@ svg{display:block}
         var quand = actu.donnees && actu.donnees.mis_a_jour_le;
         etatActualisation(!ok ? 'Le fichier des actualités n’a pas pu être relu.'
           : 'Fichier relu' + (quand ? ' — données PRONOTE du ' + dateHeureFr(quand) : '')
-            + '. Pour lancer le robot depuis cet appareil, reliez-le à GitHub ci-dessous.');
+            + '. Pour lancer le robot depuis cet appareil, reliez-le à GitHub ci-dessous — '
+            + 'ou faites porter le jeton par le fichier, et tous vos appareils l’auront (voir le README).');
         if (ok) { var lien = document.getElementById('actu-lien'); if (lien) lien.open = true; }
       });
       return;
@@ -3082,11 +3098,12 @@ svg{display:block}
     var echecs = Object.keys(envois).filter(function (id) { return String(envois[id]).indexOf('echec') === 0; }).length;
     document.getElementById('actu-lien-etat').innerHTML = !d.depot
       ? 'Le « Vu » reste sur cet appareil'
-      : !actu.jeton
+      : !relie()
         ? 'Le « Vu » reste sur cet appareil — <b>relier à PRONOTE</b>'
         : echecs
           ? '<b>' + echecs + ' « Vu » que PRONOTE n’a pas pris</b> — « Réessayer l’envoi », ou revoir le jeton ici'
-          : 'Relié : « Vu » passe <b>un message</b> en lu sur PRONOTE, « Actualiser » lance le robot. '
+          : 'Relié' + (jetonDuFichier() ? ' par le fichier — donc sur tout appareil qui en a le mot de passe' : ' par le jeton de cet appareil')
+            + ' : « Vu » passe <b>un message</b> en lu sur PRONOTE, « Actualiser » lance le robot. '
             + 'Les informations et sondages ne s’y marquent pas — PRONOTE écarte la saisie depuis un compte parent —, leur « Vu » reste ici.';
     document.getElementById('actu-reessayer').hidden = !echecs;
 

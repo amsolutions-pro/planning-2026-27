@@ -2,10 +2,12 @@
 
 import datetime as dt
 import json
+import os
 import pathlib
 import sys
 import tempfile
 import unittest
+import unittest.mock
 from types import SimpleNamespace
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -315,6 +317,30 @@ class Marquage(unittest.TestCase):
         bon = "message~0123456789abcdef"
         self.assertEqual(fetch.ids_a_marquer(f"{bon}, message:d1, devoir~0123456789abcdef, "
                                              "message~PAS_HEXA, ../../etc"), [bon])
+
+
+class JetonDePage(unittest.TestCase):
+    """Le jeton que la page utilisera voyage dans le fichier — jamais en clair."""
+
+    def test_absent_sans_secret(self):
+        with unittest.mock.patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(fetch.jeton_de_page("secret"), {})
+
+    def test_porte_par_le_fichier_chiffre(self):
+        with unittest.mock.patch.dict(os.environ, {"PRONOTE_PAGE_PAT": "github_pat_xyz"}, clear=True):
+            self.assertEqual(fetch.jeton_de_page("secret"), {"jeton_page": "github_pat_xyz"})
+
+    def test_jamais_sans_mot_de_passe(self):
+        """Le dépôt est public : un jeton en clair y serait un jeton donné."""
+        with unittest.mock.patch.dict(os.environ, {"PRONOTE_PAGE_PAT": "github_pat_xyz"}, clear=True):
+            self.assertEqual(fetch.jeton_de_page(None), {})
+            self.assertEqual(fetch.jeton_de_page(""), {})
+
+    def test_absent_du_fichier_publie(self):
+        donnees = {**collecte(), "jeton_page": "github_pat_xyz"}
+        env = fetch.enveloppe(donnees, "secret")
+        self.assertNotIn("github_pat_xyz", json.dumps(env))
+        self.assertEqual(fetch.dechiffrer(env, "secret")["jeton_page"], "github_pat_xyz")
 
 
 class Sortie(unittest.TestCase):
