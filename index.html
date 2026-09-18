@@ -431,6 +431,20 @@ svg{display:block}
 /* Une séance que l'emploi du temps ne connaît pas — la grille est un décalque,
    PRONOTE fait foi : on la montre quand même, à sa place. */
 .lesson--hors{background:var(--hold-bg);border:1px dashed var(--hold-line);--m:var(--hold)}
+/* La liste du téléphone dit la même chose que la grille : elle est la grille,
+   sous 720 px. Un cours annulé doit s'y barrer pareillement. */
+.ttl__row--perturbe{background:var(--hold-bg);box-shadow:inset 3px 0 0 var(--hold)}
+.ttl__row--controle{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.ttl__row--controle .lesson__flag{background:var(--accent)}
+.ttl__row--annule .ttl__c b{text-decoration:line-through;text-decoration-color:var(--hold);color:var(--muted)}
+.ttl__row--hors{border-top:1px dashed var(--hold-line)}
+.ttl__row .lesson__flag{margin-bottom:3px}
+/* Le message d'où sort le drapeau. Une case de grille est étroite : une seule
+   ligne, coupée proprement plutôt que débordante. */
+.lesson__source{
+  display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-style:normal;color:var(--hold);
+}
 
 .lesson .both{
   align-self:flex-start;margin-top:3px;
@@ -1480,6 +1494,47 @@ svg{display:block}
   ];
   var DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
 
+  // Un cours annulé n'arrive pas toujours par l'emploi du temps : bien souvent
+  // le collège l'annonce par un message, et PRONOTE laisse la séance en place.
+  // La grille est la vérité de la semaine — elle doit donc lire les deux.
+  // Deux forces, parce qu'« absence » ne dit pas de qui. « Absence en espagnol —
+  // Annie était chez le médecin » parle de l'élève : barrer le cours serait faux.
+  // Les mots francs suffisent seuls ; les autres réclament un professeur nommé.
+  var MOTS_PERTURBATION = [
+    'annul', 'ne sera pas assur', 'pas assure', 'non assure', 'sans professeur',
+    'pas de cours', 'pas cours', 'cours suppr', 'suppression de cours',
+    'report', 'deplac', 'liber'
+  ];
+  var MOTS_PERTURBATION_FAIBLES = ['absent', 'absence', 'remplac', 'indisponib'];
+  var MOTS_PROFESSEUR = [
+    /\bprofesseur/, /\bprofs?\b/, /\benseignant/, /\bmme\b/, /\bm\.\s/,
+    /\bmadame\b/, /\bmonsieur\b/, /\bremplacant/, /\btitulaire\b/
+  ];
+  // Ce qui trahit un mot sur l'élève lui-même, et non sur la séance.
+  var MOTS_ELEVE = [
+    /\bvotre (enfant|fils|fille)\b/, /\bmon fils\b/, /\bma fille\b/,
+    /\bmedecin\b/, /\bjustificatif\b/, /\bcertificat\b/, /\brendez vous\b/
+  ];
+  // Le message dit « maths », la grille dit « Mathématiques » : on les rapproche.
+  // Seules les matières réellement présentes dans la semaine affichée sont
+  // cherchées, pour qu'un mot isolé n'aille pas marquer n'importe quelle case.
+  var ALIAS_MATIERE = {
+    'Mathématiques': ['math', 'maths', 'mathematiques'],
+    'Français': ['francais'],
+    'Anglais LV1': ['anglais', 'lv1'],
+    'Espagnol LV2': ['espagnol'],
+    'Allemand LV2': ['allemand'],
+    'SVT': ['svt', 'sciences de la vie'],
+    'Physique-chimie': ['physique', 'chimie', 'physique-chimie'],
+    'Technologie': ['techno', 'technologie'],
+    'Histoire-géo': ['histoire', 'geo', 'geographie', 'histoire-geo'],
+    'Éd. musicale': ['musique', 'education musicale', 'ed musicale', 'chorale'],
+    'Arts plastiques': ['arts plastiques', 'arts pla', 'arts'],
+    'EPS': ['eps', 'sport', 'education physique', 'natation'],
+    'LCA latin': ['latin'],
+    'HVC': ['hvc', 'vie de classe']
+  };
+
   var FAMILLES = {
     'Français': 'lettres', 'LCA latin': 'lettres', 'HVC': 'lettres',
     'Anglais LV1': 'langues', 'Espagnol LV2': 'langues', 'Allemand LV2': 'langues',
@@ -1639,12 +1694,25 @@ svg{display:block}
   // Ce que PRONOTE annonce pour la semaine affichée, rangé par jour et par
   // créneau. Rien si la grille montre une autre quinzaine que celle en cours :
   // poser l'annulation de cette semaine sur la semaine d'après tromperait.
-  function perturbationsGrille() {
+  function sansAccents(s) {
+    return String(s == null ? '' : s).toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[\u2019']/g, ' ');
+  }
+
+  // Le lundi de la semaine que la grille montre — pas forcément celle où l'on
+  // est : changer de quinzaine fait regarder la semaine suivante, que PRONOTE
+  // couvre aussi (le robot lit quatorze jours).
+  function lundiAffiche() {
+    return lundiUTC(new Date()) + (semaineDecalee() ? 7 * MS_JOUR : 0);
+  }
+
+  function perturbationsGrille(grid) {
     // La grille est dessinée avant que le bloc des actualités ne soit évalué :
     // `actu` est hissée mais encore vide. On la relit, on ne la suppose pas.
     var par = {}, d = actu && actu.donnees;
-    if (!d || !d.actualites || semaineDecalee()) return par;
-    var lundi = lundiUTC(new Date()), jourDe = {};
+    if (!d || !d.actualites) return par;
+    var lundi = lundiAffiche(), jourDe = {};
     DAYS.forEach(function (jour, i) { jourDe[cleJour(lundi + i * MS_JOUR)] = jour; });
     d.actualites.forEach(function (a) {
       // Ce que PRONOTE annonce pour une séance : ce qui la dérange, et ce qui
@@ -1657,7 +1725,116 @@ svg{display:block}
       if (creneau === -1) return;              // hors des créneaux du collège
       (par[jour] = par[jour] || {})[creneau] = a;
     });
+    perturbationsDesMessages(par, grid, lundi, jourDe);
     return par;
+  }
+
+  // Les matières que la semaine affichée contient réellement, avec les mots
+  // sous lesquels un message peut les nommer.
+  function matieresDeLaSemaine(grid) {
+    var vues = {};
+    DAYS.forEach(function (jour) {
+      (grid[jour] || []).forEach(function (cell) {
+        if (cell && cell !== 'occupe') vues[cell.matiere] = true;
+      });
+    });
+    return Object.keys(vues).map(function (m) {
+      return { matiere: m, mots: [sansAccents(m)].concat((ALIAS_MATIERE[m] || []).map(sansAccents)) };
+    });
+  }
+
+  // Le jour visé par un message : ce qu'il dit, sinon le jour où il a été
+  // écrit. « Aujourd'hui » se compte depuis le message, jamais depuis
+  // maintenant — un message de lundi qui dit « aujourd'hui » parle de lundi.
+  function joursVisesParMessage(texte, dateMessage, lundi) {
+    var jours = {}, i;
+    for (i = 0; i < DAYS.length; i++) {
+      if (new RegExp('\\b' + sansAccents(DAYS[i]) + '\\b').test(texte)) jours[DAYS[i]] = true;
+    }
+    var base = dateMessage ? Date.parse(dateMessage + 'T00:00:00Z') : NaN;
+    if (!isNaN(base)) {
+      if (/\baujourd hui\b|\bce jour\b/.test(texte)) jours[cleJour(base)] = 'iso';
+      if (/\bdemain\b/.test(texte)) jours[cleJour(base + MS_JOUR)] = 'iso';
+    }
+    // Une date écrite en toutes lettres ou en chiffres l'emporte sur le reste.
+    var MOIS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet',
+                'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
+    var m = texte.match(/\b(\d{1,2})\s+(janvier|fevrier|mars|avril|mai|juin|juillet|aout|septembre|octobre|novembre|decembre)\b/);
+    if (m) {
+      for (i = 0; i < DAYS.length; i++) {
+        var d = new Date(lundi + i * MS_JOUR);
+        if (d.getUTCDate() === +m[1] && d.getUTCMonth() === MOIS.indexOf(m[2])) jours[DAYS[i]] = true;
+      }
+    }
+    var c = texte.match(/\b(\d{1,2})[\/.](\d{1,2})\b/);
+    if (c) {
+      for (i = 0; i < DAYS.length; i++) {
+        var e = new Date(lundi + i * MS_JOUR);
+        if (e.getUTCDate() === +c[1] && e.getUTCMonth() + 1 === +c[2]) jours[DAYS[i]] = true;
+      }
+    }
+    // Rien de dit : le message vaut pour le jour où il a été écrit.
+    if (!Object.keys(jours).length && dateMessage) jours[dateMessage] = 'iso';
+    return jours;
+  }
+
+  // Un message qui annonce un cours annulé, un professeur absent, une séance
+  // déplacée : on le pose sur la case concernée. Sans matière reconnue ni mot
+  // de perturbation, on ne marque rien — mieux vaut ne rien dire que salir la
+  // grille avec une réunion parents-professeurs annulée.
+  function perturbationsDesMessages(par, grid, lundi, jourDe) {
+    var d = actu && actu.donnees;
+    if (!d || !grid) return;
+    var matieres = matieresDeLaSemaine(grid);
+    if (!matieres.length) return;
+    (d.actualites || []).forEach(function (a) {
+      if (a.type !== 'message' && a.type !== 'info' && a.type !== 'sondage') return;
+      if ((a.enfants || []).indexOf(ttState.pupil) === -1) return;
+      var texte = sansAccents((a.titre || '') + ' ' + (a.detail || ''));
+      var franc = null, faible = null;
+      MOTS_PERTURBATION.forEach(function (x) { if (!franc && texte.indexOf(x) !== -1) franc = x; });
+      MOTS_PERTURBATION_FAIBLES.forEach(function (x) { if (!faible && texte.indexOf(x) !== -1) faible = x; });
+      var prof = MOTS_PROFESSEUR.some(function (r) { return r.test(texte); });
+      var eleve = MOTS_ELEVE.some(function (r) { return r.test(texte); });
+      // Un mot franc emporte la décision. Un mot faible n'y suffit qu'avec un
+      // professeur nommé — et jamais si le message parle de l'élève.
+      if (!franc && !(faible && prof)) return;
+      if (!franc && eleve) return;
+      var mot = (faible && prof) ? faible : franc;
+      var visees = matieres.filter(function (m) {
+        return m.mots.some(function (w) { return new RegExp('\\b' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(texte); });
+      });
+      if (!visees.length) return;
+      var jours = joursVisesParMessage(texte, a.date, lundi);
+      Object.keys(jours).forEach(function (cle) {
+        var jour = jours[cle] === 'iso' ? jourDe[cle] : cle;
+        if (!jour || DAYS.indexOf(jour) === -1) return;
+        (grid[jour] || []).forEach(function (cell, i) {
+          if (!cell || cell === 'occupe') return;
+          if (!visees.some(function (m) { return m.matiere === cell.matiere; })) return;
+          // L'emploi du temps de PRONOTE fait foi : s'il a déjà parlé de cette
+          // séance, son mot reste — le message ne fait que combler son silence.
+          if ((par[jour] || {})[i]) return;
+          (par[jour] = par[jour] || {})[i] = {
+            type: 'cours',
+            source: 'message',
+            raison: libellePerturbation(mot),
+            // Déplacé ou remplacé, la séance a lieu ailleurs ou avec un autre :
+            // on ne la barre pas. Annulée ou professeur absent, elle saute.
+            annule: !/^(remplac|deplac|report)/.test(mot),
+            matiere: cell.matiere,
+            detail: a.titre || ''
+          };
+        });
+      });
+    });
+  }
+
+  function libellePerturbation(mot) {
+    if (mot.indexOf('absen') === 0 || mot === 'indisponib') return 'Professeur absent';
+    if (mot.indexOf('report') === 0 || mot.indexOf('deplac') === 0) return 'Cours déplacé';
+    if (mot.indexOf('remplac') === 0) return 'Professeur remplacé';
+    return 'Cours annulé';
   }
 
   function drawTimetable() {
@@ -1667,7 +1844,6 @@ svg{display:block}
     var week = ttState.week;
     var decale = semaineDecalee();
 
-    var perturbations = perturbationsGrille();
     var grid = {};
     var bornes = {};
     DAYS.forEach(function (day) {
@@ -1684,6 +1860,10 @@ svg{display:block}
         ? SLOTS[occupes[0]][0] + ' → ' + SLOTS[occupes[occupes.length - 1]][1]
         : 'pas de cours';
     });
+
+    // Les messages ne nomment pas un créneau, ils nomment une matière : il faut
+    // donc la grille sous les yeux pour savoir quelle case marquer.
+    var perturbations = perturbationsGrille(grid);
 
     var premier = SLOTS.length, dernier = 0;
     DAYS.forEach(function (day) {
@@ -1715,7 +1895,7 @@ svg{display:block}
         var controle = vu && vu.type === 'controle';
         var drapeau = vu ? '<span class="lesson__flag">'
           + echap(controle ? 'Contrôle' : vu.raison) + '</span>' : '';
-        var annule = vu && !controle && /annul/i.test(vu.raison || '');
+        var annule = vu && !controle && (vu.annule || /annul/i.test(vu.raison || ''));
         var marque = vu ? (controle ? ' lesson--controle' : ' lesson--perturbe') : '';
         if (cell === 'occupe') return;
         if (!cell) {
@@ -1735,6 +1915,10 @@ svg{display:block}
           + drapeau
           + '<b>' + cell.matiere + '</b>'
           + '<span>' + cell.prof + '</span>'
+          // Quand c'est un message qui l'annonce, on dit lequel : sans cela le
+          // drapeau tombe du ciel et l'on ne sait pas où aller vérifier.
+          + (vu && vu.source === 'message' && vu.detail
+              ? '<em class="lesson__source">' + echap(vu.detail) + '</em>' : '')
           + (cell.salle ? '<em>' + cell.salle + '</em>' : '')
           + (plage ? '<em>' + plage + '</em>' : '')
           + (cell.both ? '<span class="both">2 sem.</span>' : '')
@@ -1750,16 +1934,39 @@ svg{display:block}
     if (liste) {
       var lhtml = '';
       DAYS.forEach(function (day) {
-        var cours = '';
+        var cours = '', vus = perturbations[day] || {};
         grid[day].forEach(function (cell, i) {
           if (!cell || cell === 'occupe') return;
           var famille = FAMILLES[cell.matiere] || 'lettres';
           var fin = SLOTS[i + (cell.span || 1) - 1][1];
-          cours += '<li class="ttl__row m-' + famille + '">'
+          // Sous 720 px la grille devient cette liste : elle doit dire la même
+          // chose qu'elle. Sans cela, un cours annulé était invisible sur
+          // téléphone — c'est-à-dire là où on regarde le planning en partant.
+          var vu = vus[i];
+          var ctrl = vu && vu.type === 'controle';
+          var off = vu && !ctrl && (vu.annule || /annul/i.test(vu.raison || ''));
+          cours += '<li class="ttl__row m-' + famille
+            + (vu ? (ctrl ? ' ttl__row--controle' : ' ttl__row--perturbe') : '')
+            + (off ? ' ttl__row--annule' : '') + '">'
             + '<span class="ttl__h">' + SLOTS[i][0] + '<i>' + fin + '</i></span>'
-            + '<span class="ttl__c"><b>' + cell.matiere + '</b>'
+            + '<span class="ttl__c">'
+            + (vu ? '<span class="lesson__flag">' + echap(ctrl ? 'Contrôle' : vu.raison) + '</span>' : '')
+            + '<b>' + cell.matiere + '</b>'
             + '<span>' + cell.prof + (cell.salle ? ' · ' + cell.salle : '') + '</span>'
+            + (vu && vu.detail ? '<span>' + echap(vu.detail) + '</span>' : '')
             + (cell.both ? '<span class="both">2 sem.</span>' : '') + '</span></li>';
+        });
+        // Une séance annoncée par PRONOTE que la grille papier ne connaît pas.
+        Object.keys(vus).forEach(function (i) {
+          if (grid[day][i]) return;
+          var vu = vus[i], ctrl = vu.type === 'controle';
+          cours += '<li class="ttl__row ttl__row--hors'
+            + (ctrl ? ' ttl__row--controle' : ' ttl__row--perturbe') + '">'
+            + '<span class="ttl__h">' + SLOTS[i][0] + '<i>' + SLOTS[i][1] + '</i></span>'
+            + '<span class="ttl__c"><span class="lesson__flag">'
+            + echap(ctrl ? 'Contrôle' : vu.raison) + '</span><b>'
+            + echap(vu.matiere || 'Cours') + '</b>'
+            + (vu.detail ? '<span>' + echap(vu.detail) + '</span>' : '') + '</span></li>';
         });
         lhtml += '<div class="ttl__day' + classeJour(day) + '"' + attrJour(day, decale) + '>'
           + '<div class="ttl__head"><b' + libelleJour(day, decale) + '>' + day + '</b>'
