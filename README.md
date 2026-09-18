@@ -139,6 +139,31 @@ Sous 720 px la grille devient une liste : **elle porte les mêmes marques**.
 C'est le manque qui rendait tout ceci invisible là où on regarde le planning
 en partant — sur le téléphone.
 
+## La grille vient de PRONOTE, plus du papier
+
+L'onglet « Collège » affichait un **décalque à la main** de l'emploi du temps
+papier du semestre 1 (constante `PUPILS`). Un décalque ne suit pas un
+changement : qu'un élève change de groupe en octobre, et la grille ment sans
+prévenir.
+
+Le robot publie donc l'emploi du temps réel, séance par séance
+(`enfant.seances` : date, début, fin, matière, professeur, salle, statut,
+contrôle), **depuis le lundi de la semaine en cours** et sur trois semaines —
+partir d'aujourd'hui ne laisserait qu'un jour à dessiner un vendredi.
+
+La page dessine cette grille-là quand elle l'a, et le dit : une pastille verte
+**« d'après PRONOTE »**, ou grise **« emploi du temps de septembre »** quand
+c'est le décalque. Le décalque n'est pas retiré — il sert aux semaines que la
+fenêtre ne couvre pas, et quand il n'y a pas de fichier du tout.
+
+Un garde-fou : la grille réelle ne remplace le décalque que si **trois jours au
+moins** sont garnis. Sinon une collecte partielle — fenêtre mal placée, source
+en panne — remplacerait un emploi du temps complet par un quasi-vide, ce qui
+serait pire que faux.
+
+Les séances qui ne tombent pas pile sur une sonnerie sont rangées dans le
+créneau qui les contient, plutôt que perdues.
+
 ## Les coches
 
 Chaque nouvelle porte une case à cocher plutôt qu'un bouton : l'état se lit d'un

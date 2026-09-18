@@ -347,6 +347,38 @@ class Marquage(unittest.TestCase):
                                              "message~PAS_HEXA, ../../etc"), [bon])
 
 
+class EmploiDuTemps(unittest.TestCase):
+    """La grille de la page doit pouvoir venir de PRONOTE, donc être publiée."""
+
+    def collecte(self):
+        m = dt.datetime.now(fetch.PARIS)
+        return fetch.Collecte(FauxClient(m), m).tout(), m
+
+    def test_les_seances_sont_publiees_par_enfant(self):
+        d, _ = self.collecte()
+        for e in d["enfants"]:
+            self.assertIn("seances", e)
+        champs = {"date", "debut", "fin", "matiere", "prof", "salle", "statut", "controle"}
+        for e in d["enfants"]:
+            for c in e["seances"]:
+                self.assertEqual(champs, set(c))
+
+    def test_la_fenetre_part_du_lundi_pas_d_aujourd_hui(self):
+        """Un vendredi, partir d'aujourd'hui ne laisserait qu'un jour à dessiner."""
+        vu = {}
+
+        class Tracee(FauxClient):
+            def lessons(self, debut, fin=None):
+                vu["debut"], vu["fin"] = debut, fin
+                return super().lessons(debut, fin)
+
+        m = dt.datetime.now(fetch.PARIS)
+        fetch.Collecte(Tracee(m), m).tout()
+        self.assertEqual(vu["debut"].weekday(), 0, "la collecte doit partir d'un lundi")
+        self.assertGreaterEqual((vu["fin"] - vu["debut"]).days, 14,
+                                "deux semaines au moins, pour la suivante aussi")
+
+
 class JetonDePage(unittest.TestCase):
     """Le jeton que la page utilisera voyage dans le fichier — jamais en clair."""
 
