@@ -139,34 +139,42 @@ Sous 720 px la grille devient une liste : **elle porte les mêmes marques**.
 C'est le manque qui rendait tout ceci invisible là où on regarde le planning
 en partant — sur le téléphone.
 
-## Ce que PRONOTE laisse écrire à un parent
+## Deux familles, et ce qui a un « lu » de l'autre côté
 
-Éprouvé en direct, deux fois, contre le vrai serveur :
+Tout n'a pas à être signalé, et confondre les deux fait promettre des
+aller-retours qui n'existent pas.
 
 | | |
 |---|---|
-| **Messages** (messagerie) | le robot les passe en lu — le compteur descend |
-| **Informations & sondages** | PRONOTE écarte la saisie, quoi qu'on tente |
+| **Communications** — message, information, sondage | ont un état « lu » chez PRONOTE : le marquer ici a un sens là-bas |
+| **Le reste** — cours, contrôle, devoir, note, absence, retard, punition | vient de l'agenda et du dossier : **aucun « lu » n'existe** |
 
-Le refus n'est pas une erreur : le serveur répond `RapportSaisie:
-{_erreurSaisie_: true}`, un « saisie refusée » silencieux que pronotepy ne
-regarde pas — le robot croyait donc avoir marqué à chaque fois. `saisie_refusee()`
-lit ce rapport, et le produit ne prétend plus.
+Pour la seconde famille, « Vu » range la nouvelle ici et n'envoie rien. Son
+étiquette dit **« Rangé »** — pas « Vu ici », qui sous-entendrait un ailleurs —
+et aucun envoi n'est jamais tenté ni affiché. La distinction se lit à l'écran,
+pas seulement dans le code : `ACTU_COMMUNICATIONS` d'un côté, tout le reste de
+l'autre.
 
-Quinze adressages ont été essayés en tout, dont six lors de la dernière épreuve
-(`pronote/epreuve_lu.py`, réversible, à lancer depuis l'onglet Actions) :
-au nom de l'enfant (`G=4`), au nom du parent comme le fait pronotepy (`G=4`),
-au nom du parent en `G=3`, sans destinataire du tout, et — la piste la plus
-sérieuse — en renvoyant à PRONOTE **les descripteurs qu'il donne lui-même**
-dans sa liste crue : `elmauteur.V` (`G=3`) et `public.V` (`G=5`). Les six
-écartés, le compteur des non-lus immobile.
+Parmi les communications, `ACTU_ENVOYABLES` dit ce que le robot sait
+effectivement marquer aujourd'hui : **les messages**.
 
-Ce `public.V` en `G=5` dit sans doute pourquoi : l'information est adressée à
-**une classe**, pas à une personne. Le « lu » se pose par destinataire, et un
-parent n'en est pas un. Rien, du côté de la page, ne peut contourner cela.
+### Les informations et sondages : le droit existe, la requête reste à trouver
 
-Le « Vu » d'une information reste donc local à l'appareil, et la page le dit
-au lieu de laisser croire à un marquage.
+J'ai d'abord conclu que PRONOTE refusait la saisie d'un compte parent, sur la
+foi de `RapportSaisie: {_erreurSaisie_: true}` obtenu par toutes les requêtes
+essayées. **C'était faux**, et l'espace Parents du collège le démontre : le
+menu d'une information y propose « Marquer comme non lu », et le badge des
+non-lus descend.
+
+L'erreur était de fabriquer un objet minimal de cinq champs, alors que PRONOTE
+en donne dix-neuf dans sa propre liste. `pronote/epreuve_lu.py` (réversible, à
+lancer depuis l'onglet Actions) lui rend maintenant son entrée telle quelle —
+entière, puis allégée, avec son `public` et son `genrePublic` verbatim.
+
+Le refus silencieux reste réel et vaut d'être lu : `saisie_refusee()` regarde
+ce rapport, que pronotepy ignore — sans quoi le robot croit avoir marqué à
+chaque fois.
+
 
 ## Actualités PRONOTE
 
@@ -330,18 +338,25 @@ empreintes). Deux résultats, mesurés dans des sessions neuves :
 - **La messagerie s'écrit.** Une discussion lue est repassée non lue, puis
   relue : le compte des non-lus fait `0 → 1 → 0`. Le « Vu » d'un message tient
   donc sa promesse.
-- **Le « lu » d'une information ne s'écrit pas.** Toutes les formes ont été
-  essayées — destinataire enfant, parent, groupe, le descripteur exact que
-  PRONOTE annonce lui-même (`genrePublic 2`, `public G=5`), aucun destinataire du
-  tout, les quatre genres, l'ouverture du détail comme le fait un clic, et
-  jusqu'au sens inverse (repasser une information lue en non lue). PRONOTE
-  répond à chaque fois `RapportSaisie: {_erreurSaisie_: true}` : **la saisie est
-  écartée**, sans la moindre erreur HTTP.
+- **Le « lu » d'une information ne s'est pas écrit** — par aucune des formes
+  essayées : destinataire enfant, parent, groupe, le descripteur que PRONOTE
+  annonce lui-même (`genrePublic 2`, `public G=5`), aucun destinataire du tout,
+  les quatre genres, l'ouverture du détail comme le fait un clic, et jusqu'au
+  sens inverse. PRONOTE répond à chaque fois `RapportSaisie:
+  {_erreurSaisie_: true}`, sans la moindre erreur HTTP.
 
-Le code livré a été éprouvé tel quel contre le vrai serveur, en dernier tour :
-`marquer_lu` rend `1 fait · 1 écarté · 0 introuvable`, le message passe de non lu
-à lu (`1 → 0`) et l'information ne bouge pas (`8 → 8`) — dite écartée, jamais
-donnée pour marquée.
+  > **Correction.** J'en avais conclu que PRONOTE refusait la saisie d'un
+  > compte parent. C'est faux : l'espace Parents du collège marque une
+  > information lue sans difficulté, menu « Marquer comme non lu » à l'appui et
+  > badge qui descend. Le droit existe ; ce sont mes requêtes qui étaient
+  > mauvaises. Le point commun de tous ces essais : un objet **fabriqué**, de
+  > cinq champs, quand PRONOTE en donne dix-neuf. Voir plus haut.
+
+Le code livré a été éprouvé tel quel contre le vrai serveur : `marquer_lu` rend
+`1 fait · 1 écarté · 0 introuvable`, le message passe de non lu à lu (`1 → 0`) et
+l'information ne bouge pas (`8 → 8`) — dite écartée, jamais donnée pour marquée.
+Cette honnêteté-là reste bonne : tant que la requête n'est pas trouvée, le
+produit ne doit pas prétendre avoir marqué.
 
 Ce silence est ce qui a fait tourner en rond : pronotepy ne regarde pas ce
 rapport, et le robot croyait donc avoir marqué à chaque fois. `saisie_refusee`

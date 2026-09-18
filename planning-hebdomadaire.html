@@ -1187,9 +1187,16 @@ svg{display:block}
         lu sur PRONOTE, et « Actualiser » va chercher les nouvelles du moment sans
         attendre le passage suivant. Sans cela, « Vu » ne range la nouvelle qu’ici
         et « Actualiser » relit seulement le fichier publié.</p>
-        <p>Une information ou un sondage ne s’y marque pas : PRONOTE écarte la
-        saisie depuis un compte parent, éprouvé contre le serveur. Leur « Vu »
-        reste sur cet appareil.</p>
+        <p><b>Tout n’a pas à être signalé.</b> Seules les communications —
+        messages, informations, sondages — ont un « lu » chez PRONOTE. Un cours
+        annulé, un devoir, une note, une absence viennent de l’agenda et du
+        dossier de l’enfant : ils n’en ont pas. Leur « Vu » les range ici,
+        sans rien envoyer à personne, et c’est la seule chose sensée à faire.</p>
+        <p>Parmi les communications, le robot sait aujourd’hui marquer
+        <b>les messages</b>. Les informations et sondages se marquent bien
+        depuis un compte parent — le collège le fait dans son propre site —,
+        mais la requête qui les marque reste à trouver ; d’ici là leur « Vu »
+        ne quitte pas cet appareil.</p>
         <p>Le jeton collé ici vit dans ce navigateur seulement : il est à remettre
         sur chaque téléphone et chaque ordinateur. Pour n'avoir à le faire nulle
         part, mettez-le plutôt dans le secret <b>PRONOTE_PAGE_PAT</b> du dépôt : le
@@ -2949,6 +2956,19 @@ svg{display:block}
   // écartée par le serveur — quel que soit le destinataire, et jusque dans
   // l'autre sens. Envoyer une information ne ferait qu'un aller-retour pour
   // rien, et une promesse de plus à ne pas tenir.
+  // Deux familles, et il ne faut pas les confondre.
+  //
+  // Une COMMUNICATION a un état « lu » chez PRONOTE : la marquer ici a un sens
+  // là-bas, et le compteur du collège doit descendre.
+  //
+  // Le reste — cours annulé, contrôle, devoir, note, absence, retard, punition —
+  // vient de l'agenda et du dossier de l'enfant. Ces objets n'ont pas de « lu » :
+  // il n'y a rien à signaler, et prétendre le contraire serait inventer un
+  // aller-retour qui n'existe pas. « Vu » les range ici, un point c'est tout.
+  var ACTU_COMMUNICATIONS = ['message', 'info', 'sondage'];
+  // Parmi les communications, celles que le robot sait effectivement marquer
+  // aujourd'hui. Les informations et sondages en sont absents tant que la
+  // requête qui les marque n'est pas trouvée — le collège, lui, sait le faire.
   var ACTU_ENVOYABLES = ['message'];
   // Un clic en amène souvent d'autres : on laisse passer le temps d'en grouper
   // quelques-uns plutôt que de réveiller le robot à chaque pression.
@@ -2985,6 +3005,9 @@ svg{display:block}
   function clesActu(a) { return [a.id].concat(a.ids_pronote || []); }
 
   function estEnvoyable(a) { return ACTU_ENVOYABLES.indexOf(a.type) !== -1; }
+
+  // A-t-elle seulement un « lu » de l'autre côté ? Un cours annulé, non.
+  function estCommunication(a) { return ACTU_COMMUNICATIONS.indexOf(a.type) !== -1; }
 
   // « ok » veut dire « GitHub a pris la demande », pas « PRONOTE a marqué » :
   // l'horodatage permet de démentir le premier avec le second, quand le robot
@@ -3380,7 +3403,8 @@ svg{display:block}
           ? '<b>' + echecs + ' « Vu » que PRONOTE n’a pas pris</b> — « Réessayer l’envoi », ou revoir le jeton ici'
           : 'Relié' + (jetonDuFichier() ? ' par le fichier — donc sur tout appareil qui en a le mot de passe' : ' par le jeton de cet appareil')
             + ' : « Vu » passe <b>un message</b> en lu sur PRONOTE, « Actualiser » lance le robot. '
-            + 'Les informations et sondages ne s’y marquent pas — PRONOTE écarte la saisie depuis un compte parent —, leur « Vu » reste ici.';
+            + 'Les informations et sondages ne partent pas encore. Le reste — cours, devoirs, notes, absences — '
+            + 'n’a pas de « lu » chez PRONOTE : « Vu » le range ici, sans rien signaler.';
     document.getElementById('actu-reessayer').hidden = !echecs;
 
     // Le badge ne compte que l'important encore à voir : un devoir de plus ne
@@ -3480,9 +3504,13 @@ svg{display:block}
       ok: ['Vu · lu sur PRONOTE', 'actu__tag--vu'],
       echec: ['Vu · pas pris par PRONOTE', 'actu__tag--echec']
     };
-    var etat = ETATS[etatEnvoi(a.id)];
+    // Un cours annulé, un devoir, une note n'ont pas de « lu » chez PRONOTE :
+    // leur étiquette ne parle donc pas de PRONOTE. « Rangé », et rien d'autre —
+    // pas de « Vu ici » qui sous-entendrait un ailleurs, pas d'envoi à
+    // réessayer. La distinction se lit à l'écran, pas seulement dans le code.
+    var etat = estCommunication(a) ? ETATS[etatEnvoi(a.id)] : null;
     if (vu) tags += '<span class="actu__tag ' + (etat ? etat[1] : 'actu__tag--vu') + '">'
-      + (etat ? etat[0] : 'Vu ici') + '</span>';
+      + (etat ? etat[0] : estCommunication(a) ? 'Vu ici' : 'Rangé') + '</span>';
     var bouton = a.niveau === 'info' && !vu ? '' :
       '<button class="actu__vu" type="button" onclick="marquerVu(' + JSON.stringify(a.id).replace(/"/g, '&quot;') + ')">'
       + (vu ? 'Remettre' : 'Vu') + '</button>';
