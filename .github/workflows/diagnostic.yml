@@ -7,6 +7,12 @@ name: PRONOTE — épreuve du marquage
 # que l'enquête est close.
 on:
   workflow_dispatch:
+    inputs:
+      epreuve:
+        description: "Laquelle lancer"
+        type: choice
+        default: marquage
+        options: [marquage, sources]
 
 permissions:
   contents: read
@@ -30,4 +36,9 @@ jobs:
           PRONOTE_USERNAME: ${{ secrets.PRONOTE_USERNAME }}
           PRONOTE_PASSWORD: ${{ secrets.PRONOTE_PASSWORD }}
           PRONOTE_PIN: ${{ secrets.PRONOTE_PIN }}
-        run: python3 pronote/diagnostic.py
+        run: |
+          if [ "${{ inputs.epreuve }}" = sources ]; then
+            python3 pronote/diagnostic.py
+          else
+            python3 pronote/epreuve_lu.py
+          fi
