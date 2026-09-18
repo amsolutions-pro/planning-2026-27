@@ -981,13 +981,46 @@ svg{display:block}
 .actu__detail{font-size:12.5px;color:var(--ink-soft);overflow-wrap:anywhere}
 .actu__why{font-size:11.5px;color:var(--muted);font-style:italic}
 .actu__foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:1px}
-.actu__vu{
-  font:inherit;font-size:11px;font-weight:600;cursor:pointer;flex:none;
-  padding:3px 9px;border-radius:99px;
-  border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
-  transition:background .15s ease,color .15s ease;
+/* La coche : même objet du haut en bas de la page — une nouvelle, ou toute une
+   carte d'un coup. Assez grande pour le pouce (44 px de haut avec sa marge),
+   et jamais un simple carré nu : le mot dit ce que la case fait. */
+.coche{
+  display:inline-flex;align-items:center;gap:6px;flex:none;cursor:pointer;
+  font-size:11px;font-weight:600;color:var(--muted);
+  padding:5px 10px 5px 8px;border-radius:99px;
+  border:1px solid var(--line);background:var(--surface-2);
+  transition:background .15s ease,color .15s ease,border-color .15s ease;
+  -webkit-tap-highlight-color:transparent;
 }
-.actu__vu:hover{background:var(--accent-soft);color:var(--ink)}
+.coche:hover{background:var(--accent-soft);color:var(--ink);border-color:var(--accent)}
+.coche input{
+  appearance:none;-webkit-appearance:none;margin:0;flex:none;
+  width:14px;height:14px;border-radius:4px;cursor:pointer;
+  border:1.5px solid var(--muted);background:var(--surface);
+  display:grid;place-content:center;transition:background .15s ease,border-color .15s ease;
+}
+.coche input::before{
+  content:"";width:8px;height:8px;transform:scale(0);transition:transform .12s ease;
+  background:var(--surface);
+  clip-path:polygon(14% 45%,0 60%,39% 100%,100% 22%,86% 8%,39% 71%);
+}
+.coche input:checked{background:var(--go);border-color:var(--go)}
+.coche input:checked::before{transform:scale(1)}
+.coche input:indeterminate{background:var(--hold);border-color:var(--hold)}
+.coche input:indeterminate::before{transform:scale(1);clip-path:inset(42% 12% 42% 12%)}
+.coche input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.coche:has(input:checked){color:var(--go);border-color:var(--go-line);background:var(--go-bg)}
+/* La maîtresse, à droite du nom de l'enfant : une seule par carte, donc un peu
+   plus affirmée que les autres. */
+.card__actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.coche--tout{font-size:11.5px}
+.coche--tout:has(input:indeterminate){color:var(--hold);border-color:var(--hold-line);background:var(--hold-bg)}
+/* Sur téléphone elle se resserre, mais garde son mot : c'est l'action la plus
+   utile de la carte, et une pastille muette ne s'explique pas au doigt. */
+@media (max-width:520px){
+  .coche--tout{font-size:10.5px;padding:5px 8px 5px 6px;gap:4px}
+  .card__actions{gap:6px}
+}
 .actu--vu{opacity:.62}
 .actu--vu .actu__title{font-weight:500}
 .actu .actu__tag--vu{background:var(--go-bg);color:var(--go);border-color:var(--go-line)}
@@ -1020,7 +1053,7 @@ svg{display:block}
     --muted:#555;--line:#bbb;--accent:#222;--accent-soft:#f2f2f2;--shadow:none;
   }
   .masthead{position:static;border-bottom:1px solid #bbb}
-  .tabs,.filters,.tt-bar,.today-fab,.actu__vu,.actu-pied .act__foot span:last-child{display:none !important}
+  .tabs,.filters,.tt-bar,.today-fab,.coche,.actu-pied .act__foot span:last-child{display:none !important}
   .tt thead th{position:static}
   .panel[hidden]{display:flex !important}
   .page{padding:12px 0;gap:26px}
@@ -3020,25 +3053,63 @@ svg{display:block}
     try { localStorage.setItem(ACTU_ENVOIS, JSON.stringify(actu.envois)); } catch (e) {}
   }
 
+  function itemDe(id) {
+    return ((actu.donnees || {}).actualites || []).filter(function (a) { return a.id === id; })[0] || { id: id };
+  }
+
+  // Poser et retirer, sans rien redessiner : un lot de vingt cases cochées ne
+  // doit déclencher qu'un seul rendu et qu'un seul envoi groupé.
+  function poserVu(item) {
+    if (estVu(item)) return;
+    actu.vus[item.id] = new Date().toISOString();
+    if (estEnvoyable(item) && relie() && !actu.envois[item.id]) actu.envois[item.id] = 'attente';
+  }
+
+  // Remettre la nouvelle ne la repasse pas en « non lu » sur PRONOTE : ce
+  // chemin n'existe pas ici. On oublie l'envoi, en attente comme échoué : il
+  // n'y a plus rien à réessayer pour une nouvelle qu'on veut revoir.
+  function retirerVu(item) {
+    clesActu(item).forEach(function (c) { delete actu.vus[c]; delete actu.envois[c]; });
+  }
+
+  function enregistrerVus() {
+    try { localStorage.setItem(ACTU_VUS, JSON.stringify(actu.vus)); } catch (e) {}
+    noteEnvois();
+    if (enAttente().length) programmerEnvoi();
+    montrerActus(actu.donnees);
+  }
+
   function marquerVu(id) {
     if (!actu.donnees) return;
-    var item = (actu.donnees.actualites || []).filter(function (a) { return a.id === id; })[0] || { id: id };
-    if (estVu(item)) {
-      clesActu(item).forEach(function (c) { delete actu.vus[c]; delete actu.envois[c]; });
-      // Remettre la nouvelle ne la repasse pas en « non lu » sur PRONOTE : ce
-      // chemin n'existe pas ici. On oublie l'envoi, en attente comme échoué :
-      // il n'y a plus rien à réessayer pour une nouvelle qu'on veut revoir.
-      noteEnvois();
-    } else {
-      actu.vus[id] = new Date().toISOString();
-      if (estEnvoyable(item) && relie() && !actu.envois[id]) {
-        actu.envois[id] = 'attente';
-        noteEnvois();
-        programmerEnvoi();
-      }
+    var item = itemDe(id);
+    if (estVu(item)) retirerVu(item); else poserVu(item);
+    enregistrerVus();
+  }
+
+  // Les nouvelles d'une carte, au sens où elles y sont rangées à l'écran.
+  function itemsDeLaCarte(cle) {
+    var liste = (actu.donnees || {}).actualites || [];
+    if (actu.enfant !== 'tous') {
+      return liste.filter(function (a) { return a.enfants.indexOf(actu.enfant) !== -1; });
     }
-    try { localStorage.setItem(ACTU_VUS, JSON.stringify(actu.vus)); } catch (e) {}
-    montrerActus(actu.donnees);
+    if (cle === 'tous') return liste.filter(function (a) { return a.enfants.length > 1; });
+    return liste.filter(function (a) { return a.enfants.length === 1 && a.enfants[0] === cle; });
+  }
+
+  // Ce que la coche maîtresse embrasse : ce que la vue courante montre, pas
+  // plus. « Tout vu » depuis « L'important » ne doit pas ranger en douce les
+  // devoirs qu'on n'a pas sous les yeux.
+  function lotDeLaCarte(cle) {
+    var niveaux = ACTU_NIVEAUX[actu.vue];
+    return itemsDeLaCarte(cle).filter(function (a) { return !niveaux || niveaux.indexOf(a.niveau) !== -1; });
+  }
+
+  function marquerToutVu(cle) {
+    if (!actu.donnees) return;
+    var lot = lotDeLaCarte(cle);
+    var restent = lot.filter(function (a) { return !estVu(a); });
+    if (restent.length) restent.forEach(poserVu); else lot.forEach(retirerVu);
+    enregistrerVus();
   }
 
   function programmerEnvoi() {
@@ -3511,9 +3582,15 @@ svg{display:block}
     var etat = estCommunication(a) ? ETATS[etatEnvoi(a.id)] : null;
     if (vu) tags += '<span class="actu__tag ' + (etat ? etat[1] : 'actu__tag--vu') + '">'
       + (etat ? etat[0] : estCommunication(a) ? 'Vu ici' : 'Rangé') + '</span>';
-    var bouton = a.niveau === 'info' && !vu ? '' :
-      '<button class="actu__vu" type="button" onclick="marquerVu(' + JSON.stringify(a.id).replace(/"/g, '&quot;') + ')">'
-      + (vu ? 'Remettre' : 'Vu') + '</button>';
+    // Une case à cocher plutôt qu'un bouton : l'état se lit d'un coup d'œil,
+    // le geste inverse est le même geste, et la coche maîtresse de la carte
+    // parle le même langage. Toutes les nouvelles en ont une — sans quoi
+    // « Tout vu » laisserait des restes qu'on ne pourrait pas décocher.
+    var eid = 'coche-' + encodeURIComponent(a.id).replace(/%/g, '_');
+    var bouton = '<label class="coche" for="' + eid + '">'
+      + '<input type="checkbox" id="' + eid + '"' + (vu ? ' checked' : '')
+      + ' onchange="marquerVu(' + JSON.stringify(a.id).replace(/"/g, '&quot;') + ')">'
+      + '<span>Vu</span></label>';
     return '<li class="' + cls + (vu ? ' actu--vu' : '') + '">'
       + '<div class="actu__top">' + tags + '<span class="actu__date" style="margin-left:auto">'
       + echap(dateActuLisible(a)) + '</span></div>'
@@ -3570,10 +3647,25 @@ svg{display:block}
         }).join('') + '</table></details>';
     }
 
+    // « Tout vu » n'embrasse que ce que la vue montre : depuis « L'important »,
+    // elle ne range pas en douce les devoirs qu'on n'a pas sous les yeux.
+    var lot = lotDeLaCarte(cle);
+    var restent = lot.filter(function (a) { return !estVu(a); }).length;
+    var maitresse = lot.length
+      ? '<label class="coche coche--tout" title="' + (restent
+            ? 'Marquer vu tout ce qui est affiché' : 'Tout remettre à voir') + '">'
+        + '<input type="checkbox" aria-label="' + (restent
+            ? 'Marquer vu les ' + restent + ' nouvelles affichées' : 'Tout remettre à voir')
+        + '" data-lot="' + echap(cle) + '"'
+        + (restent ? '' : ' checked') + ' onchange="marquerToutVu(' + JSON.stringify(cle).replace(/"/g, '&quot;') + ')">'
+        + '<span>' + (restent ? 'Tout vu' : 'Tout remettre') + '</span></label>'
+      : '';
+
     return '<div class="card' + (s ? ' card--' + s : '') + '">'
       + '<div class="card__head"><div class="card__id">'
       + (enfant ? '<span class="initial">' + echap(enfant.nom.charAt(0)) + '</span>' : '<span class="initial">·</span>')
-      + '<div><h3>' + echap(titre) + '</h3><p>' + echap(sousTitre) + '</p></div></div>' + moyenne + '</div>'
+      + '<div><h3>' + echap(titre) + '</h3><p>' + echap(sousTitre) + '</p></div></div>'
+      + '<span class="card__actions">' + maitresse + moyenne + '</span></div>'
       + '<div class="card__body">' + corps + moyennes + '</div></div>';
   }
 
@@ -3607,6 +3699,13 @@ svg{display:block}
     grille.className = 'two-col' + (cartes.length === 1 ? ' two-col--seul' : '');
     grille.innerHTML = cartes.join('');
     grille.hidden = false;
+    // Ni cochée ni vide : quand une partie seulement est vue, la coche
+    // maîtresse le montre. Cet état-là n'existe pas en HTML, seulement ici.
+    grille.querySelectorAll('.coche--tout input[data-lot]').forEach(function (c) {
+      var lot = lotDeLaCarte(c.getAttribute('data-lot'));
+      var vus = lot.filter(estVu).length;
+      c.indeterminate = vus > 0 && vus < lot.length;
+    });
 
     var concernes = actu.enfant === 'tous' ? liste : liste.filter(function (a) { return a.enfants.indexOf(actu.enfant) !== -1; });
     var nImp = concernes.filter(function (a) { return a.niveau === 'important' && !estVu(a); }).length;
