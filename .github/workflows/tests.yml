@@ -55,3 +55,6 @@ jobs:
 
       - name: Éprouver la page
         run: NODE_PATH="$PWD/node_modules" node tests/smoke.mjs
+
+      - name: Éprouver la page avec des données PRONOTE
+        run: NODE_PATH="$PWD/node_modules" node tests/pronote.mjs

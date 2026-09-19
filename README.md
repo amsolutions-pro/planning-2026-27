@@ -12,6 +12,52 @@ navigateur, donc propres à chaque appareil. Les créneaux de musique sont
 arrêtés : solfège mercredi 16h30, flûte mercredi 18h00 → 18h20, piano jeudi
 18h20 → 18h40, puis théâtre jeudi 19h15 → 21h30.
 
+## « Aujourd'hui », en tête de la semaine
+
+Six onglets rangés par sujet, et la question qu'on se pose à 7 h 20 les traverse
+tous : qui a les enfants, à quelle heure chacun sort, ce qui a sauté, ce qui
+attend une signature. Le bloc de tête y répond d'un coup (`renderAujourdhui`),
+avec les seules données déjà là — rien de neuf n'est demandé à PRONOTE.
+
+Il porte le jour et sa date, le repère de garde (carré Papa, cercle Mama) et la
+date du relais, puis une ligne par enfant : les cours de PRONOTE, les créneaux
+retenus, et **le battement entre les deux** — le calcul qu'on faisait de tête sur
+le pas de la porte. En pied, ce qui dérange la journée et le compte des nouvelles
+importantes encore à voir.
+
+Deux précautions :
+
+- il montre **le jour du repère** (aujourd'hui, ou lundi le dimanche) ; si ce
+  jour-là ne porte rien — un samedi, par exemple —, il passe au prochain qui
+  porte quelque chose et le nomme. Un bloc vide n'apprend rien ;
+- l'heure de sortie vient de PRONOTE **quand il couvre la semaine** — trois jours
+  garnis au moins, le même garde-fou que la grille. Sinon c'est le décalque de
+  septembre, et le bloc le dit en toutes lettres plutôt que de laisser croire à
+  du direct.
+
+## Les journées superposées lisent enfin PRONOTE
+
+`segmentsCours` lisait encore le décalque de septembre pendant que la grille d'à
+côté affichait l'emploi du temps réel : le même onglet pouvait annoncer deux
+heures de sortie, sans que rien ne le signale. Or c'est cette vue-là qui sert à
+savoir quand aller chercher qui.
+
+Elles lisent maintenant la même source. Et **une séance annulée ne compte plus
+dans l'occupation** : si c'est la dernière de la journée, la sortie avance — ce
+qu'on vient précisément vérifier.
+
+## Un contrôle et une annulation au même créneau
+
+Une case ne gardait qu'une annonce : la dernière lue effaçait l'autre en silence.
+Un contrôle annoncé sur une séance que PRONOTE annule laissait donc la question
+entière — « c'est l'évaluation qui saute, ou seulement le cours ? ».
+
+Les deux se lisent maintenant sur la case, et la page ajoute ce qu'elle ne peut
+pas trancher : *« Contrôle annoncé sur une séance annulée — à vérifier auprès du
+collège »*. PRONOTE annonce l'un et l'autre sans les rapprocher ; personne ne
+peut deviner si l'évaluation est reportée ou tombe avec la séance, et la page
+n'a pas à choisir à votre place.
+
 ## Le samedi est sorti de la semaine
 
 Annie a arrêté la danse arménienne, et le créneau de ping-pong du samedi est
@@ -557,18 +603,51 @@ jour en toute saison — 7 h à 17 h l'été, 8 h à 18 h l'hiver — et aucun l
 dimanche. Un lancement à la main (**Run workflow**) passe outre et s'exécute
 toujours.
 
+### Ce que le texte de PRONOTE n'a pas le droit de faire
+
+Matière, professeur et salle sont du texte libre, écrit au collège, et ils
+partaient bruts dans `innerHTML` depuis que la grille vient de PRONOTE — les cinq
+seuls trous d'une page qui échappe partout ailleurs. Une salle nommée `<annexe>`
+aurait disparu de l'écran ; pire, du script glissé là aurait lu, dans l'origine
+de la page, le mot de passe de la famille et le jeton GitHub. Ils passent
+maintenant tous par `echap()`, et `tests/pronote.mjs` le vérifie avec un champ
+piégé.
+
 ### Confidentialité
 
 Le dépôt est **public**. Le fichier est donc chiffré (AES-256-GCM, clé dérivée
-par PBKDF2 du secret `PRONOTE_SITE_PASSPHRASE`) ; la page demande ce mot de
+par PBKDF2-SHA256, **600 000 itérations**, du secret `PRONOTE_SITE_PASSPHRASE`) ; la page demande ce mot de
 passe une fois et le garde dans le `localStorage` de l'appareil (bouton
 « Oublier le mot de passe » pour l'effacer). Le déchiffrement se fait dans le
 navigateur avec WebCrypto, donc en https (GitHub Pages l'est). Sans mot de
 passe, seuls l'horodatage et une empreinte du contenu sont lisibles.
 
+Le fichier étant téléchargeable par n'importe qui, la phrase de passe se cherche
+hors ligne et sans limite de débit : d'où les 600 000 itérations plutôt que
+200 000 (recommandation courante ; mesuré dans Chromium, la clé se dérive en
+95 ms au lieu de 32 — sur une page déjà dessinée, cela ne se voit pas). Le
+changement ne casse rien : chaque fichier porte son propre compte d'itérations,
+et la page le lit.
+
+**Publier en clair ne peut plus être un accident.** Sans phrase de passe, le
+robot s'arrêtait sur un simple avertissement… après avoir publié tout le dossier
+scolaire des deux enfants sur un dépôt public. Une faute de frappe en changeant
+le secret suffisait. Il refuse maintenant de partir : il faut demander `--clair`,
+ou travailler sur des données fictives (`--exemple`).
+
 Les identifiants PRONOTE ne sont jamais dans le dépôt : ils vivent dans les
 secrets du dépôt (Settings → Secrets and variables → Actions), lus par l'action.
-Les journaux de l'action n'affichent aucun identifiant.
+Les journaux de l'action n'affichent aucun identifiant — pronotepy écrivait
+pourtant « successfully logged in as … » en INFO, et GitHub ne masque un secret
+qu'en entier, jamais une sous-chaîne : en mode jeton, l'identifiant vit *dans*
+`PRONOTE_TOKEN_JSON` et s'écrivait donc en clair. Son journal est passé en
+WARNING.
+
+L'épreuve du marquage (`epreuve_lu.py`) écrit sur le vrai compte : elle ne part
+plus depuis `pronote.yml`, où chaque « Run workflow » la déclenchait — y compris
+celui que la mise en place demande de faire. Elle reste dans `diagnostic.yml`,
+qu'on lance exprès, et dont le choix par défaut est désormais `sources`, qui ne
+fait que lire.
 
 ### Mise en place (une fois)
 
@@ -615,6 +694,7 @@ Deux épreuves, à lancer avant toute livraison :
 ```
 python3 -m unittest discover pronote        # la collecte PRONOTE
 node tests/smoke.mjs                        # la page, dans un vrai navigateur
+node tests/pronote.mjs                      # la page, avec des données PRONOTE
 ```
 
 La seconde sert le dossier tel qu'il sera publié, ouvre `index.html` dans
@@ -625,7 +705,15 @@ montrés à l'heure, que le budget tombe juste (la somme des postes, les parts, 
 barres), que tout ce qui se clique porte un nom, et qu'à 390 px de large rien ne
 déborde sur le côté.
 
-Elle a besoin de [playwright](https://playwright.dev) et d'un Chromium :
+La troisième va plus loin : le fichier des actualités étant chiffré en
+production, aucune épreuve ne peut le lire. Elle en **fabrique un faux, en
+clair** — le format le permet — et le sert à la place, pour éprouver tout ce qui
+ne se voit qu'avec des données : la grille qui vient de PRONOTE, les marques
+posées sur les cases (dont un contrôle et une annulation au même créneau), la
+sortie qui avance quand la dernière heure saute, le bloc « Aujourd'hui », et le
+fait qu'une salle nommée `<img onerror=…>` reste du texte.
+
+Toutes deux ont besoin de [playwright](https://playwright.dev) et d'un Chromium :
 
 ```
 npm install playwright
@@ -649,7 +737,8 @@ zéro dépendance JavaScript.
 - `pronote/` — collecte PRONOTE : `fetch.py` (script), `configurer.py`
   (préparation des secrets, en local), `exemple.py` (données fictives),
   `test_fetch.py`, et `actualites.json` produit par l'action.
-- `tests/smoke.mjs` — épreuve de la page dans un vrai navigateur (voir « Tests »).
+- `tests/smoke.mjs`, `tests/pronote.mjs` — épreuves de la page dans un vrai
+  navigateur, à vide et avec des données PRONOTE fabriquées (voir « Tests »).
 
 ## Déploiement GitHub Pages
 
@@ -691,6 +780,30 @@ python3 build.py
 
 Le workflow échoue si `index.html` n'a pas été régénéré après un changement de
 la source.
+
+## Ce qui se voit au soleil, et au clavier
+
+Mesuré dans Chromium, contrastes calculés en composant les fonds, en thème clair
+et sombre :
+
+- **Le focus ne se cache plus sous l'en-tête.** L'en-tête est collante : en
+  remontant au clavier, le bouton sélectionné se retrouvait recouvert à 98 % —
+  plus rien n'avait l'air choisi, et la touche Entrée agissait sur un bouton
+  invisible. `scroll-padding-top` s'accroche à `--entete`, que le script tient
+  déjà à jour (WCAG 2.2, 2.4.11).
+- **Les six onglets tiennent sur l'écran du téléphone.** À 390 px, 53 % de la
+  barre sortait du cadre, sans barre de défilement ni ombre pour le dire ; au
+  rechargement sur « Budget », l'onglet actif était hors champ et aucun n'avait
+  l'air choisi. Ils passent à la ligne.
+- **Le contour de ce qui se clique** — puces, boutons, segments, cases de
+  créneau, champ date — était à 1,3:1 : une séparation, pas une invitation à
+  toucher. Il prend `--edge` (5,2:1 dans les deux thèmes). `--line` reste ce qui
+  sépare des blocs.
+- Trois textes gris sur fond violet clair passent en `--ink-soft` (4,16:1 →
+  8,35:1), et l'onglet Budget reçoit le titre de section qui lui manquait.
+
+Les épreuves gardent tout cela : `tests/smoke.mjs` vérifie le `scroll-padding`,
+le titre de chaque section, et qu'aucun onglet ne sort du cadre à 390 px.
 
 ## Contraintes respectées
 

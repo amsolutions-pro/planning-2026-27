@@ -56,6 +56,10 @@ img{max-width:100%}
   --m5:#6055B8;
   --m6:#9E3F7C;
   --m7:#1E7A6C;
+  /* Contour des commandes. `--line` sépare des blocs (1,3:1 : très bien pour
+     une séparation, insuffisant pour dire « ceci se touche »). Ce qui se clique
+     prend `--edge`, mesuré à 5,2:1 dans les deux thèmes. */
+  --edge:var(--muted);
   --shadow:0 1px 1px rgba(31,29,51,.05), 0 10px 26px -18px rgba(31,29,51,.45);
   --radius:10px;
 }
@@ -140,6 +144,11 @@ ul{margin:0;padding:0;list-style:none}
 svg{display:block}
 .icon{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+/* L'en-tête est collante : sans cela, remonter au clavier amène le focus juste
+   dessous, recouvert à 98 %. On ne voit plus ce qui est sélectionné, et la
+   touche Entrée agit sur un bouton invisible. `--entete` est déjà tenue à jour
+   par `majEntete`. */
+html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
 
 /* ---------- masthead ---------- */
 .masthead{
@@ -153,6 +162,11 @@ svg{display:block}
 @media (max-width:720px){
   .masthead.is-compact .masthead__inner{display:none}
   .masthead.is-compact .tabs{padding-top:8px}
+  /* Six onglets pour 390 px : la moitié sortait de l'écran, sans barre de
+     défilement ni ombre pour le dire — et au rechargement sur « Budget »,
+     l'onglet actif était invisible, donc aucun n'avait l'air choisi. Ils
+     passent à la ligne : tout est là, tout le temps. */
+  .tabs{flex-wrap:wrap;overflow-x:visible;gap:2px 4px}
 }
 .masthead__inner{
   max-width:1180px;margin:0 auto;padding:16px 20px 0;
@@ -177,7 +191,7 @@ svg{display:block}
   display:inline-flex;align-items:center;gap:7px;
   padding:7px 12px;border-radius:8px;cursor:pointer;
   background:var(--surface-2);color:var(--ink-soft);
-  border:1px solid var(--line);
+  border:1px solid var(--edge);
   transition:background .15s ease,color .15s ease;
 }
 .btn:hover{background:var(--accent-soft);color:var(--ink)}
@@ -234,7 +248,7 @@ svg{display:block}
   font:inherit;font-size:13px;font-weight:500;cursor:pointer;
   display:inline-flex;align-items:center;gap:7px;
   padding:6px 12px;border-radius:99px;
-  border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);
+  border:1px solid var(--edge);background:var(--surface-2);color:var(--ink-soft);
   transition:all .15s ease;
 }
 .chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--dot,var(--muted))}
@@ -351,7 +365,7 @@ svg{display:block}
   font:inherit;font-size:13px;font-weight:600;cursor:pointer;
   display:inline-flex;align-items:center;gap:8px;
   padding:6px 12px;border-radius:8px;
-  border:1px solid var(--line);background:var(--surface-2);color:var(--ink-soft);
+  border:1px solid var(--edge);background:var(--surface-2);color:var(--ink-soft);
   transition:all .15s ease;
 }
 .wk::before{
@@ -556,7 +570,7 @@ svg{display:block}
 .ins--a{--c:var(--annie)}
 
 /* ---------- superposition des journées ---------- */
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg{display:inline-flex;border:1px solid var(--edge);border-radius:8px;overflow:hidden}
 .seg button{
   font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
   padding:6px 12px;border:0;background:var(--surface-2);color:var(--muted);
@@ -652,7 +666,7 @@ svg{display:block}
 }
 .opt-btn::before{
   content:"";width:15px;height:15px;border-radius:4px;flex:none;margin-top:1px;
-  border:2px solid var(--line);background:var(--surface);
+  border:2px solid var(--edge);background:var(--surface);
   display:grid;place-items:center;font-size:10px;line-height:1;
 }
 .opt-btn:hover{border-color:color-mix(in srgb,var(--c) 45%,var(--line))}
@@ -777,6 +791,48 @@ svg{display:block}
 .chip--mama::before{width:11px;height:11px;border-radius:50%;background:transparent;border:2px solid currentColor}
 
 .gd{margin-top:-4px}
+/* « Aujourd'hui » : le bloc de tête de la semaine type. */
+.jour{
+  background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:var(--radius);box-shadow:var(--shadow);padding:13px 16px;margin-bottom:14px;
+}
+.jour__tete{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;
+  padding-bottom:9px;border-bottom:1px solid var(--line);
+}
+.jour__quand{font-family:"Bricolage Grotesque",sans-serif;font-size:16px;font-weight:700}
+.jour__quand b{color:var(--accent)}
+.jour__garde{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-soft)}
+.jour__garde small{color:var(--muted);font-variant-numeric:tabular-nums}
+.jour__garde .gm{margin:0}
+.jour__lignes{display:flex;flex-direction:column;gap:5px;padding-top:9px}
+.jour__ligne{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 9px;font-size:13px}
+.jour__qui{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;font-weight:600;flex:none;min-width:52px;
+}
+.jour__ligne--n .jour__qui{color:var(--narek)}
+.jour__ligne--a .jour__qui{color:var(--annie)}
+.jour__dit{color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.jour__dit b{color:var(--ink);font-weight:600}
+.jour__dit .sep{color:var(--line);padding:0 1px}
+.jour__rien{color:var(--muted)}
+.jour__pied{
+  margin:9px 0 0;padding-top:9px;border-top:1px solid var(--line);
+  display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12.5px;
+}
+.jour__note{display:inline-flex;align-items:center;gap:5px;color:var(--muted)}
+.jour__note--alerte{color:var(--hold);font-weight:600}
+.jour__note--imp{color:var(--accent);font-weight:600}
+.jour__note .icon{width:14px;height:14px}
+.jour__source{display:block;margin-top:7px;font-size:11.5px;color:var(--muted)}
+@media (max-width:720px){
+  .jour{padding:11px 13px}
+  .jour__quand{font-size:15px}
+  .jour__ligne{font-size:12.5px}
+}
+@media print{ .jour{break-inside:avoid} }
+
 .gd-now{
   display:flex;flex-wrap:wrap;gap:10px;
 }
@@ -789,15 +845,15 @@ svg{display:block}
 .gd-now__txt{display:flex;flex-direction:column;gap:1px;min-width:0}
 .gd-now__when{
   font-family:"IBM Plex Mono",ui-monospace,monospace;
-  font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);
 }
 .gd-now__who{font-family:"Bricolage Grotesque",sans-serif;font-size:17px;font-weight:700}
-.gd-now__dates{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.gd-now__dates{font-size:12px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
 .gd-find{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .gd-find input{
   font:inherit;font-size:13px;font-variant-numeric:tabular-nums;
   padding:6px 10px;border-radius:8px;
-  border:1px solid var(--line);background:var(--surface-2);color:var(--ink);
+  border:1px solid var(--edge);background:var(--surface-2);color:var(--ink);
 }
 .gd-answer{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600}
 .gd-answer em{font-style:normal;font-weight:400;color:var(--muted)}
@@ -822,7 +878,7 @@ svg{display:block}
 .gd-week__no{
   flex:none;width:34px;
   font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
-  font-size:10.5px;color:var(--muted);
+  font-size:10.5px;color:var(--ink-soft);
 }
 .gd-week__dates{flex:1;min-width:0;font-size:13px;font-variant-numeric:tabular-nums}
 .gd-week__dates i{font-style:normal;color:var(--muted)}
@@ -1168,6 +1224,11 @@ svg{display:block}
       </div>
     </div>
 
+    <!-- La question de 7 h 20, à laquelle six onglets rangés par sujet ne
+         répondaient pas d'un coup. Dessiné par `renderAujourdhui`, et redessiné
+         quand le fichier PRONOTE arrive. -->
+    <div class="jour" id="jour-carte" aria-live="polite" hidden></div>
+
     <div class="filters">
       <span class="filters__label">Afficher</span>
       <button class="chip" type="button" id="chip-tous" aria-pressed="true" onclick="filterChild('tous')">Les deux</button>
@@ -1459,7 +1520,9 @@ svg{display:block}
   <section class="panel" id="panel-budget" role="tabpanel" aria-labelledby="tab-budget" hidden>
     <div class="budget-top">
       <div class="budget-top__fig">
-        <span class="eyebrow">Budget annuel estimé</span>
+        <!-- Seul onglet qui n'avait pas de titre de section : on arrivait sur le
+             budget sans rien qui le nomme, et le plan des titres sautait de h1 à h3. -->
+        <h2 class="eyebrow">Budget annuel estimé</h2>
         <strong>~ 1 335 €</strong>
         <p>4 activités pour les deux enfants — année scolaire 2026-2027</p>
       </div>
@@ -1771,10 +1834,11 @@ svg{display:block}
     return -1;
   }
 
-  function grilleDePronote() {
+  function grilleDePronote(pupil) {
     var d = actu && actu.donnees;
     if (!d || !d.enfants) return null;
-    var e = d.enfants.filter(function (x) { return x.id === ttState.pupil; })[0];
+    var qui = pupil || ttState.pupil;
+    var e = d.enfants.filter(function (x) { return x.id === qui; })[0];
     if (!e || !e.seances || !e.seances.length) return null;
     var lundi = lundiAffiche(), jourDe = {};
     DAYS.forEach(function (jour, i) { jourDe[cleJour(lundi + i * MS_JOUR)] = jour; });
@@ -1822,7 +1886,8 @@ svg{display:block}
       var creneau = -1;
       for (var i = 0; i < SLOTS.length; i++) if (SLOTS[i][0] === a.heure) creneau = i;
       if (creneau === -1) return;              // hors des créneaux du collège
-      (par[jour] = par[jour] || {})[creneau] = a;
+      var cases = (par[jour] = par[jour] || {});
+      (cases[creneau] = cases[creneau] || []).push(a);
     });
     perturbationsDesMessages(par, grid, lundi, jourDe);
     return par;
@@ -1913,8 +1978,11 @@ svg{display:block}
           if (!visees.some(function (m) { return m.matiere === cell.matiere; })) return;
           // L'emploi du temps de PRONOTE fait foi : s'il a déjà parlé de cette
           // séance, son mot reste — le message ne fait que combler son silence.
-          if ((par[jour] || {})[i]) return;
-          (par[jour] = par[jour] || {})[i] = {
+          // Un contrôle annoncé ne compte pas comme un mot sur la séance : il
+          // dit ce qui s'y passera, pas si elle a lieu.
+          if (((par[jour] || {})[i] || []).some(function (x) { return x.type !== 'controle'; })) return;
+          var cases = (par[jour] = par[jour] || {});
+          (cases[i] = cases[i] || []).push({
             type: 'cours',
             source: 'message',
             raison: libellePerturbation(mot),
@@ -1923,10 +1991,43 @@ svg{display:block}
             annule: !/^(remplac|deplac|report)/.test(mot),
             matiere: cell.matiere,
             detail: a.titre || ''
-          };
+          });
         });
       });
     });
+  }
+
+  // Une case peut porter deux annonces au même créneau : un contrôle prévu, et
+  // le cours annulé. La dernière lue effaçait l'autre en silence — et c'est
+  // justement la question qu'on se pose devant la grille : « c'est l'évaluation
+  // qui saute, ou seulement le cours ? » Les deux se lisent maintenant.
+  function marquesDuCreneau(liste) {
+    liste = liste || [];
+    var controle = liste.filter(function (a) { return a.type === 'controle'; })[0] || null;
+    var gene = liste.filter(function (a) { return a.type !== 'controle'; })[0] || null;
+    return {
+      controle: controle, gene: gene, vide: !liste.length,
+      annule: !!(gene && (gene.annule || /annul/i.test(gene.raison || ''))),
+      drapeaux: (controle ? ['Contrôle'] : []).concat(gene ? [gene.raison || 'Cours modifié'] : []),
+      detail: (gene && gene.detail) || (controle && controle.detail) || '',
+      source: gene && gene.source,
+      matiere: (gene && gene.matiere) || (controle && controle.matiere) || ''
+    };
+  }
+
+  function drapeauxDe(m) {
+    return m.drapeaux.map(function (f) {
+      return '<span class="lesson__flag">' + echap(f) + '</span>';
+    }).join('');
+  }
+
+  // Le mot qui manquait : PRONOTE annonce l'un et l'autre sans les rapprocher,
+  // et personne ne peut deviner si l'évaluation est reportée ou tombe avec la
+  // séance. On le dit, plutôt que de trancher à sa place.
+  function noteConflit(m) {
+    return m.controle && m.annule
+      ? '<em class="lesson__source">Contrôle annoncé sur une séance annulée — à vérifier auprès du collège</em>'
+      : '';
   }
 
   function libellePerturbation(mot) {
@@ -1993,20 +2094,19 @@ svg{display:block}
       DAYS.forEach(function (day) {
         var cell = grid[day][i];
         var jourJ = classeJour(day) ? ' class="col-today"' : '';
-        var vu = (perturbations[day] || {})[i];
-        var controle = vu && vu.type === 'controle';
-        var drapeau = vu ? '<span class="lesson__flag">'
-          + echap(controle ? 'Contrôle' : vu.raison) + '</span>' : '';
-        var annule = vu && !controle && (vu.annule || /annul/i.test(vu.raison || ''));
-        var marque = vu ? (controle ? ' lesson--controle' : ' lesson--perturbe') : '';
+        var m = marquesDuCreneau((perturbations[day] || {})[i]);
+        var drapeau = drapeauxDe(m);
+        var annule = m.annule;
+        var marque = m.gene ? ' lesson--perturbe' : m.controle ? ' lesson--controle' : '';
         if (cell === 'occupe') return;
         if (!cell) {
           // PRONOTE signale une séance que la grille ne connaît pas : on la
           // montre plutôt que de la perdre.
-          html += '<td' + jourJ + '>' + (vu
+          html += '<td' + jourJ + '>' + (!m.vide
             ? '<div class="lesson lesson--hors' + marque + (annule ? ' lesson--annule' : '') + '">'
-              + drapeau + '<b>' + echap(vu.matiere || 'Cours') + '</b>'
-              + (vu.detail ? '<span>' + echap(vu.detail) + '</span>' : '') + '</div>'
+              + drapeau + '<b>' + echap(m.matiere || 'Cours') + '</b>'
+              + (m.detail ? '<span>' + echap(m.detail) + '</span>' : '')
+              + noteConflit(m) + '</div>'
             : '') + '</td>';
           return;
         }
@@ -2015,13 +2115,16 @@ svg{display:block}
         html += '<td' + jourJ + (cell.span > 1 ? ' rowspan="' + cell.span + '"' : '') + '>'
           + '<div class="lesson m-' + famille + marque + (annule ? ' lesson--annule' : '') + '">'
           + drapeau
-          + '<b>' + cell.matiere + '</b>'
-          + '<span>' + cell.prof + '</span>'
+          // Matière, professeur et salle viennent de PRONOTE : du texte écrit
+          // ailleurs, qui n'a rien à faire dans le HTML sans être échappé.
+          + '<b>' + echap(cell.matiere) + '</b>'
+          + '<span>' + echap(cell.prof) + '</span>'
           // Quand c'est un message qui l'annonce, on dit lequel : sans cela le
           // drapeau tombe du ciel et l'on ne sait pas où aller vérifier.
-          + (vu && vu.source === 'message' && vu.detail
-              ? '<em class="lesson__source">' + echap(vu.detail) + '</em>' : '')
-          + (cell.salle ? '<em>' + cell.salle + '</em>' : '')
+          + (m.source === 'message' && m.detail
+              ? '<em class="lesson__source">' + echap(m.detail) + '</em>' : '')
+          + noteConflit(m)
+          + (cell.salle ? '<em>' + echap(cell.salle) + '</em>' : '')
           + (plage ? '<em>' + plage + '</em>' : '')
           + (cell.both ? '<span class="both">2 sem.</span>' : '')
           + '</div></td>';
@@ -2044,31 +2147,31 @@ svg{display:block}
           // Sous 720 px la grille devient cette liste : elle doit dire la même
           // chose qu'elle. Sans cela, un cours annulé était invisible sur
           // téléphone — c'est-à-dire là où on regarde le planning en partant.
-          var vu = vus[i];
-          var ctrl = vu && vu.type === 'controle';
-          var off = vu && !ctrl && (vu.annule || /annul/i.test(vu.raison || ''));
+          var m = marquesDuCreneau(vus[i]);
           cours += '<li class="ttl__row m-' + famille
-            + (vu ? (ctrl ? ' ttl__row--controle' : ' ttl__row--perturbe') : '')
-            + (off ? ' ttl__row--annule' : '') + '">'
+            + (m.gene ? ' ttl__row--perturbe' : m.controle ? ' ttl__row--controle' : '')
+            + (m.annule ? ' ttl__row--annule' : '') + '">'
             + '<span class="ttl__h">' + SLOTS[i][0] + '<i>' + fin + '</i></span>'
             + '<span class="ttl__c">'
-            + (vu ? '<span class="lesson__flag">' + echap(ctrl ? 'Contrôle' : vu.raison) + '</span>' : '')
-            + '<b>' + cell.matiere + '</b>'
-            + '<span>' + cell.prof + (cell.salle ? ' · ' + cell.salle : '') + '</span>'
-            + (vu && vu.detail ? '<span>' + echap(vu.detail) + '</span>' : '')
+            + drapeauxDe(m)
+            + '<b>' + echap(cell.matiere) + '</b>'
+            + '<span>' + echap(cell.prof + (cell.salle ? ' · ' + cell.salle : '')) + '</span>'
+            + (m.detail ? '<span>' + echap(m.detail) + '</span>' : '')
+            + noteConflit(m)
             + (cell.both ? '<span class="both">2 sem.</span>' : '') + '</span></li>';
         });
         // Une séance annoncée par PRONOTE que la grille papier ne connaît pas.
         Object.keys(vus).forEach(function (i) {
           if (grid[day][i]) return;
-          var vu = vus[i], ctrl = vu.type === 'controle';
+          var m = marquesDuCreneau(vus[i]);
           cours += '<li class="ttl__row ttl__row--hors'
-            + (ctrl ? ' ttl__row--controle' : ' ttl__row--perturbe') + '">'
+            + (m.gene ? ' ttl__row--perturbe' : ' ttl__row--controle')
+            + (m.annule ? ' ttl__row--annule' : '') + '">'
             + '<span class="ttl__h">' + SLOTS[i][0] + '<i>' + SLOTS[i][1] + '</i></span>'
-            + '<span class="ttl__c"><span class="lesson__flag">'
-            + echap(ctrl ? 'Contrôle' : vu.raison) + '</span><b>'
-            + echap(vu.matiere || 'Cours') + '</b>'
-            + (vu.detail ? '<span>' + echap(vu.detail) + '</span>' : '') + '</span></li>';
+            + '<span class="ttl__c">' + drapeauxDe(m)
+            + '<b>' + echap(m.matiere || 'Cours') + '</b>'
+            + (m.detail ? '<span>' + echap(m.detail) + '</span>' : '')
+            + noteConflit(m) + '</span></li>';
         });
         lhtml += '<div class="ttl__day' + classeJour(day) + '"' + attrJour(day, decale) + '>'
           + '<div class="ttl__head"><b' + libelleJour(day, decale) + '>' + day + '</b>'
@@ -2622,6 +2725,180 @@ svg{display:block}
       + '</article>';
   }
 
+  // ---------- « Aujourd'hui » ----------
+  // Six onglets rangés par sujet, et la question qu'on se pose à 7 h 20 les
+  // traverse tous : qui a les enfants, à quelle heure chacun sort, ce qui a
+  // sauté, ce qui attend une signature. Ce bloc y répond d'un coup, avec les
+  // seules données déjà présentes — rien de neuf n'est demandé à PRONOTE.
+
+  var JOURS_INDEX = { Lundi: 0, Mardi: 1, Mercredi: 2, Jeudi: 3, Vendredi: 4, Samedi: 5 };
+
+  // PRONOTE ne fait autorité sur une semaine que s'il l'a vraiment garnie —
+  // même garde-fou que la grille : trois jours au moins. Sans lui, un mercredi
+  // sans séance voudrait dire « pas cours » alors qu'il veut dire « rien reçu ».
+  function pronoteCouvre(id, lundi) {
+    var d = actu && actu.donnees;
+    var e = d && (d.enfants || []).filter(function (x) { return x.id === id; })[0];
+    var vus = {};
+    ((e && e.seances) || []).forEach(function (c) {
+      var ms = msDeCle(c.date);
+      if (ms >= lundi && ms <= lundi + 4 * MS_JOUR) vus[c.date] = 1;
+    });
+    return Object.keys(vus).length >= 3;
+  }
+
+  // L'école d'un enfant pour une date : ce que PRONOTE annonce quand il couvre
+  // la semaine, le décalque de septembre sinon — et il le dit.
+  function ecoleDuJour(id, ms, jour) {
+    var lundi = lundiUTC(new Date(ms + 12 * 3600000));
+    if (pronoteCouvre(id, lundi)) {
+      var d = actu.donnees;
+      var e = (d.enfants || []).filter(function (x) { return x.id === id; })[0];
+      var s = (e.seances || []).filter(function (c) {
+        return c.date === cleJour(ms) && !/annul/i.test(c.statut || '');
+      }).sort(function (a, b) { return String(a.debut).localeCompare(String(b.debut)); });
+      return s.length ? { source: 'pronote', debut: s[0].debut, fin: s[s.length - 1].fin } : null;
+    }
+    var seg = segmentsCours(id, quinzaineDe(lundi), jour, null);
+    if (!seg.length) return null;
+    return { source: 'septembre', debut: enHeures(seg[0].debut), fin: enHeures(seg[seg.length - 1].fin) };
+  }
+
+  function perturbationsDeLaDate(cle) {
+    var d = actu && actu.donnees;
+    return ((d && d.actualites) || []).filter(function (a) {
+      return a.type === 'cours' && a.date === cle;
+    });
+  }
+
+  function importantsEnAttente() {
+    var d = actu && actu.donnees;
+    return ((d && d.actualites) || []).filter(function (a) {
+      return a.niveau === 'important' && !estVu(a);
+    }).length;
+  }
+
+  // Ce qu'une date porte, pour les enfants affichés. `null` le dimanche : il n'y
+  // a rien à annoncer, et le repère pointe déjà le lundi.
+  function contenuDuJour(ms) {
+    var i = (new Date(ms).getUTCDay() + 6) % 7;
+    if (i > 5) return null;
+    var jour = JOURS_SEMAINE[i];
+    var actes = activitesRetenues().filter(function (a) {
+      return a.jour === jour && !a.jalon
+        && (filtreEnfant === 'tous' || a.enfant === filtreEnfant || a.enfant === 'tous');
+    }).sort(function (x, y) { return enMinutes(x.debut) - enMinutes(y.debut); });
+    var derange = perturbationsDeLaDate(cleJour(ms)).filter(function (a) {
+      return filtreEnfant === 'tous' || (a.enfants || []).indexOf(filtreEnfant) !== -1;
+    });
+    var qui = filtreEnfant === 'tous' ? ['narek', 'annie'] : [filtreEnfant];
+    var lignes = qui.map(function (id) {
+      return { id: id, nom: ENFANTS[id].nom, ecole: ecoleDuJour(id, ms, jour),
+               actes: actes.filter(function (a) { return a.enfant === id || a.enfant === 'tous'; }) };
+    });
+    var porte = lignes.some(function (l) { return l.ecole || l.actes.length; }) || derange.length > 0;
+    return { ms: ms, jour: jour, lignes: lignes, derange: derange, porte: porte,
+             vacances: vacancesDuJour(ms) };
+  }
+
+  // Le jour du repère s'il porte quelque chose ; sinon le prochain qui en porte,
+  // dans la semaine qui vient. Un samedi vide n'a rien à dire : autant annoncer
+  // le lundi tout de suite.
+  function jourDeLaCarte() {
+    var base = jourUTC(new Date()) + (estDimanche() ? MS_JOUR : 0);
+    var repli = null;
+    for (var k = 0; k < 8; k++) {
+      var c = contenuDuJour(base + k * MS_JOUR);
+      if (!c) continue;
+      if (!repli) repli = c;
+      if (c.porte) return c;
+    }
+    return repli;
+  }
+
+  function quandDit(ms) {
+    var ecart = Math.round((ms - jourUTC(new Date())) / MS_JOUR);
+    var mot = ecart === 0 ? 'Aujourd’hui' : ecart === 1 ? 'Demain' : enJour(ms);
+    return '<b>' + echap(mot) + '</b> · ' + echap(enLong(ms));
+  }
+
+  function ligneEcole(l) {
+    var bouts = [];
+    if (l.ecole) {
+      bouts.push('collège <b>' + echap(l.ecole.debut) + ' → ' + echap(l.ecole.fin) + '</b>');
+    }
+    l.actes.forEach(function (a) {
+      bouts.push(echap(a.court || a.titre) + ' <b>' + echap(horaireDe(a)) + '</b>');
+    });
+    if (!bouts.length) return '<span class="jour__rien">rien de prévu</span>';
+    var texte = bouts.join('<span class="sep">·</span> ');
+    // Le battement : le temps entre la sortie des cours et le premier créneau.
+    // C'est lui qu'on calcule de tête sur le pas de la porte.
+    if (l.ecole && l.actes.length) {
+      var creux = enMinutes(l.actes[0].debut) - enMinutes(l.ecole.fin);
+      if (creux > 0) texte += '<span class="sep">·</span> ' + echap(duree(creux)) + ' entre les deux';
+    }
+    return texte;
+  }
+
+  function renderAujourdhui() {
+    var carte = document.getElementById('jour-carte');
+    if (!carte) return;
+    var c = jourDeLaCarte();
+    if (!c) { carte.hidden = true; return; }
+
+    var g = gardeDeLaSemaine(lundiDuBloc(c.ms));
+    var b = bornesDuBloc(lundiDuBloc(c.ms));
+
+    var html = '<div class="jour__tete">'
+      + '<span class="jour__quand">' + quandDit(c.ms) + '</span>'
+      + '<span class="jour__garde">' + repereGarde(g.classe)
+      + 'semaine <b>' + echap(g.nom) + '</b> <small>jusqu’au ' + echap(enJourMois(b.fin))
+      + ' au soir</small></span></div>';
+
+    if (c.vacances) {
+      html += '<div class="jour__lignes"><div class="jour__ligne">'
+        + '<span class="jour__qui">Vacances</span><span class="jour__dit">'
+        + echap(c.vacances.nom) + '<span class="sep">·</span> reprise le <b>'
+        + echap(enLong(msDeCle(c.vacances.fin) + MS_JOUR)) + '</b></span></div></div>';
+    }
+
+    html += '<div class="jour__lignes">';
+    c.lignes.forEach(function (l) {
+      html += '<div class="jour__ligne jour__ligne--' + suffixeEnfant(l.id) + '">'
+        + '<span class="jour__qui">' + echap(l.nom) + '</span>'
+        + '<span class="jour__dit">' + ligneEcole(l) + '</span></div>';
+    });
+    html += '</div>';
+
+    var notes = [];
+    c.derange.forEach(function (a) {
+      notes.push('<span class="jour__note jour__note--alerte">'
+        + '<svg class="icon"><use href="#i-alert"></use></svg> '
+        + echap(a.raison || 'Cours modifié') + ' — ' + echap(a.matiere || 'cours')
+        + (a.heure ? ' ' + echap(a.heure) : '') + '</span>');
+    });
+    var imp = importantsEnAttente();
+    if (imp) {
+      notes.push('<span class="jour__note jour__note--imp">'
+        + '<svg class="icon"><use href="#i-bell"></use></svg> ' + imp
+        + (imp > 1 ? ' nouvelles importantes' : ' nouvelle importante') + ' à voir</span>');
+    }
+    if (notes.length) html += '<p class="jour__pied">' + notes.join('') + '</p>';
+
+    // D'où sort l'heure de sortie : on ne laisse pas croire à du direct quand
+    // c'est le décalque de septembre qui parle.
+    var sources = c.lignes.filter(function (l) { return l.ecole; })
+      .map(function (l) { return l.ecole.source; });
+    if (sources.length && sources.indexOf('pronote') === -1) {
+      html += '<small class="jour__source">Horaires de cours d’après l’emploi du temps de septembre —'
+        + ' PRONOTE n’a rien donné pour cette semaine.</small>';
+    }
+
+    carte.innerHTML = html;
+    carte.hidden = false;
+  }
+
   function renderSemaine() {
     var zone = document.getElementById('week-grid');
     if (!zone) return;
@@ -2685,6 +2962,7 @@ svg{display:block}
     });
 
     zone.innerHTML = html;
+    renderAujourdhui();
     majAujourdhui();
 
     var ouverts = dispo.filter(function (a) { return a.groupe && !retenus(a.groupe).length; });
@@ -2816,13 +3094,29 @@ svg{display:block}
   }
 
   // ---------- Vue « journées superposées » ----------
-  function segmentsCours(pupil, week, jour) {
+  // La grille du collège vient de PRONOTE dès qu'il l'a donnée ; les journées
+  // superposées, elles, lisaient encore le décalque de septembre. Le même onglet
+  // pouvait donc annoncer deux heures de sortie — et c'est cette vue-là qui sert
+  // à savoir quand aller chercher qui. Elles lisent maintenant la même source.
+  //
+  // Une séance annulée ne compte pas dans l'occupation : si c'est la dernière de
+  // la journée, l'enfant sort plus tôt, et c'est justement ce qu'on vient
+  // vérifier ici.
+  function segmentsCours(pupil, week, jour, reelle) {
     var occupes = [];
-    (PUPILS[pupil].jours[jour] || []).forEach(function (e) {
-      if (e[1].indexOf(week) === -1) return;
-      var span = e[5] || 1;
-      for (var k = 0; k < span; k++) occupes.push(e[0] + k);
-    });
+    if (reelle) {
+      (reelle[jour] || []).forEach(function (c, i) {
+        if (!c) return;
+        if (c !== 'occupe' && /annul/i.test(c.statut || '')) return;
+        occupes.push(i);
+      });
+    } else {
+      (PUPILS[pupil].jours[jour] || []).forEach(function (e) {
+        if (e[1].indexOf(week) === -1) return;
+        var span = e[5] || 1;
+        for (var k = 0; k < span; k++) occupes.push(e[0] + k);
+      });
+    }
     var segments = [];
     [[0, 3], [4, 7]].forEach(function (bornes) {
       var dedans = occupes.filter(function (i) { return i >= bornes[0] && i <= bornes[1]; });
@@ -2867,10 +3161,13 @@ svg{display:block}
     // La vue ne montre que la fin de journée : l'échelle démarre une heure avant
     // la première sortie de cours ou activité, pas au début des cours.
     var jours = joursAffiches(perturbationsParJour());
+    // Une grille par enfant, calculée une fois : `grilleDePronote` relit toutes
+    // les séances, on ne la rappelle pas pour chacune des douze cases.
+    var grilles = { narek: grilleDePronote('narek'), annie: grilleDePronote('annie') };
     var bas = [], haut = [];
     jours.forEach(function (jour) {
       ['narek', 'annie'].forEach(function (cle) {
-        var cours = jour === 'Samedi' ? [] : segmentsCours(cle, week, jour);
+        var cours = jour === 'Samedi' ? [] : segmentsCours(cle, week, jour, grilles[cle]);
         if (cours.length) {
           var f = cours[cours.length - 1].fin;
           bas.push(f - 60); haut.push(f);
@@ -2907,7 +3204,7 @@ svg{display:block}
 
       [['narek', 'n'], ['annie', 'a']].forEach(function (p) {
         var cle = p[0], court = p[1];
-        var cours = jour === 'Samedi' ? [] : segmentsCours(cle, week, jour);
+        var cours = jour === 'Samedi' ? [] : segmentsCours(cle, week, jour, grilles[cle]);
         var dernier = cours.length ? cours[cours.length - 1] : null;
         var duJour = actes.filter(function (a) { return a.jour === jour && a.enfant === cle; })
           .sort(function (x, y2) { return enMinutes(x.debut) - enMinutes(y2.debut); });
