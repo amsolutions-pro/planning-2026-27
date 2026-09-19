@@ -550,7 +550,7 @@ svg{display:block}
   box-shadow:var(--shadow);padding:14px;overflow-x:auto;
 }
 .ovv{
-  display:grid;grid-template-columns:50px repeat(6,minmax(112px,1fr));
+  display:grid;grid-template-columns:50px repeat(var(--cols,6),minmax(112px,1fr));
   gap:0 8px;align-items:stretch;min-width:800px;
 }
 .ovv__title{
@@ -1087,7 +1087,6 @@ svg{display:block}
     <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 17.5V5.2l10-1.7v12.3"/><circle cx="6.6" cy="17.8" r="2.4"/><circle cx="16.6" cy="15.8" r="2.4"/></symbol>
     <symbol id="i-keys" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M9 5v9M15 5v9M3 14h18"/></symbol>
     <symbol id="i-stage" viewBox="0 0 24 24"><path d="M4 4h16v7a8 8 0 0 1-16 0z"/><path d="M9 8.5h.01M15 8.5h.01M9.5 13c1.6 1.2 3.4 1.2 5 0"/></symbol>
-    <symbol id="i-dance" viewBox="0 0 24 24"><circle cx="13" cy="4.6" r="2.1"/><path d="M13 7v5.5M13 12.5 9.5 20M13 12.5 17 20M8 9.5l5 1 4.5-2.5"/></symbol>
     <symbol id="i-solfege" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/><circle cx="9" cy="14" r="2"/><path d="M11 14V7"/></symbol>
     <symbol id="i-relay" viewBox="0 0 24 24"><path d="M3 12h7l-2.5-2.5M21 12h-7l2.5 2.5"/><circle cx="12" cy="12" r="1.6"/></symbol>
     <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></symbol>
@@ -1136,12 +1135,13 @@ svg{display:block}
     <div class="section-head">
       <div>
         <h2>La semaine type</h2>
-        <p>Créneaux fixés et options encore à confirmer, du lundi au samedi.</p>
+        <p>Créneaux fixés et options encore à confirmer. Le samedi n'apparaît que
+        s'il porte quelque chose.</p>
       </div>
       <div class="stats">
-        <span class="stat"><b>5</b> activités</span>
+        <span class="stat" id="stat-activites"><b>5</b> activités</span>
         <span class="stat" id="stat-options"><b>6</b> créneaux à confirmer</span>
-        <span class="stat">Mardi <b>libre</b></span>
+        <span class="stat" id="stat-libre" hidden></span>
       </div>
     </div>
 
@@ -1167,7 +1167,7 @@ svg{display:block}
           <li><span class="callout__hour">MER 18:00</span> Flûte — Académie des Arts, après le solfège</li>
           <li><span class="callout__hour">JEU 18:20</span> Piano — Mme Jun</li>
           <li><span class="callout__hour">JEU 19:15</span> <span>Théâtre jusqu'à 21:30 <em>(enchaîné juste après le piano)</em></span></li>
-          <li><span class="callout__hour">JEU 18:00</span> <span>Réunion collective du collège pour Annie, le 10 septembre <em>(info obtenue auprès d'autres parents)</em></span></li>
+          <li data-jusqu="2026-09-10"><span class="callout__hour">JEU 18:00</span> <span>Réunion collective du collège pour Annie, le 10 septembre <em>(info obtenue auprès d'autres parents)</em></span></li>
         </ul>
       </div>
     </div>
@@ -1317,7 +1317,6 @@ svg{display:block}
         <li class="ins--n"><b>Narek</b> Jeudi, sortie à 15h35 après l'EPS : le ping-pong de 18h30 est large.</li>
         <li class="ins--a"><b>Annie</b> Jeudi, sortie à 16h50 : piano 18h20 puis théâtre 19h15 → 21h30, la soirée est pleine.</li>
         <li class="ins--a"><b>Annie</b> Mercredi, cours jusqu'à 12h10 : solfège 16h30 puis flûte 18h00.</li>
-        <li><b>Samedi</b> Aucun cours pour les deux : ping-pong 11h30 et danse 17h00 sans contrainte.</li>
       </ul>
     </div>
   </section>
@@ -1348,13 +1347,16 @@ svg{display:block}
 
   <!-- ============ GARDE ============ -->
   <section class="panel" id="panel-garde" role="tabpanel" aria-labelledby="tab-garde" hidden>
-    <div class="banner">
+    <!-- Frise de l'aménagement de septembre : elle s'efface d'elle-même une fois
+         le cadre rétabli (voir `daterLesBlocs`), la liste des semaines prenant
+         le relais. -->
+    <div class="banner" data-jusqu="2026-10-02">
       <span class="banner__tag">Ajustement exceptionnel</span>
       <h2>Garde — septembre 2026</h2>
       <p>Aménagement ponctuel lié au déplacement de la mère du 10 au 22 septembre, puis retour au cadre habituel : une semaine sur deux, relais le vendredi soir.</p>
     </div>
 
-    <div class="card">
+    <div class="card" data-jusqu="2026-10-02">
       <div class="card__body">
         <div class="timeline">
           <div class="period period--pere">
@@ -1435,8 +1437,8 @@ svg{display:block}
     <div class="budget-top">
       <div class="budget-top__fig">
         <span class="eyebrow">Budget annuel estimé</span>
-        <strong>~ 1 655 €</strong>
-        <p>5 activités pour les deux enfants — année scolaire 2026-2027</p>
+        <strong>~ 1 335 €</strong>
+        <p>4 activités pour les deux enfants — année scolaire 2026-2027</p>
       </div>
     </div>
 
@@ -1455,11 +1457,10 @@ svg{display:block}
       <div class="card money money--a">
         <div class="money__head">
           <h3>Annie</h3>
-          <span class="money__sum">~ 990 €</span>
+          <span class="money__sum">~ 670 €</span>
         </div>
         <ul>
           <li><span>Théâtre</span><b>220 €</b></li>
-          <li><span>Danse arménienne</span><b>320 €</b></li>
           <li><span>Musique (solfège, piano, flûte)</span><b>~ 450 €</b></li>
         </ul>
       </div>
@@ -1469,16 +1470,16 @@ svg{display:block}
           <h3>Répartition par poste</h3>
         </div>
         <div class="bar bar--music">
-          <div class="bar__top"><span>Musique &amp; conservatoire</span><b>450 € · 27 %</b></div>
-          <div class="bar__track"><div class="bar__fill" style="width:27%"></div></div>
+          <div class="bar__top"><span>Musique &amp; conservatoire</span><b>450 € · 34 %</b></div>
+          <div class="bar__track"><div class="bar__fill" style="width:34%"></div></div>
         </div>
         <div class="bar bar--sport">
-          <div class="bar__top"><span>Sports</span><b>665 € · 40 %</b></div>
-          <div class="bar__track"><div class="bar__fill" style="width:40%"></div></div>
+          <div class="bar__top"><span>Sports</span><b>665 € · 50 %</b></div>
+          <div class="bar__track"><div class="bar__fill" style="width:50%"></div></div>
         </div>
         <div class="bar bar--arts">
-          <div class="bar__top"><span>Théâtre &amp; danse</span><b>540 € · 33 %</b></div>
-          <div class="bar__track"><div class="bar__fill" style="width:33%"></div></div>
+          <div class="bar__top"><span>Théâtre</span><b>220 € · 16 %</b></div>
+          <div class="bar__track"><div class="bar__fill" style="width:16%"></div></div>
         </div>
       </div>
     </div>
@@ -2125,6 +2126,7 @@ svg{display:block}
   var FMT_JOUR_MOIS = new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' });
   var FMT_LONG = new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' });
   var FMT_MOIS = new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', month: 'long', year: 'numeric' });
+  var FMT_COURT = new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', day: 'numeric', month: 'short' });
 
   function lundiUTC(d) {
     return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
@@ -2149,6 +2151,29 @@ svg{display:block}
 
   function msDeCle(cle) {
     return Date.UTC(+cle.slice(0, 4), +cle.slice(5, 7) - 1, +cle.slice(8, 10));
+  }
+
+  // ---------- Ce qui est daté s'efface tout seul ----------
+  // Une annonce datée écrite en dur reste à l'écran des mois après coup : la
+  // réunion du 10 septembre s'annonçait encore à la Toussaint, et une page qui
+  // a l'air à jour ment d'autant mieux. Un bloc porteur de
+  // `data-jusqu="AAAA-MM-JJ"` s'efface donc le lendemain de ce jour, et
+  // `data-des` ne le montre qu'à partir de celui-là. La date reste dans le
+  // HTML, lisible : c'est elle qu'on corrige, pas du code.
+  function daterLesBlocs(racine) {
+    var ce_jour = jourUTC(new Date());
+    Array.prototype.forEach.call((racine || document).querySelectorAll('[data-des],[data-jusqu]'), function (el) {
+      var des = el.getAttribute('data-des'), jusqu = el.getAttribute('data-jusqu');
+      el.hidden = !!((des && ce_jour < msDeCle(des)) || (jusqu && ce_jour > msDeCle(jusqu)));
+    });
+  }
+
+  // Un créneau qui n'a pas encore commencé le dit ; une fois la date passée,
+  // « Dès le 12 sept. » ne renseigne plus personne et vieillit la page.
+  function badgeDe(a) {
+    return a.des && jourUTC(new Date()) < msDeCle(a.des)
+      ? 'Dès le ' + FMT_COURT.format(msDeCle(a.des))
+      : a.badge;
   }
 
   function vacancesDuJour(ms) {
@@ -2408,7 +2433,7 @@ svg{display:block}
     narek: { nom: 'Narek', naissance: '2014-10-19', classe: '5F', initiale: 'N',
              resume: '2 activités sportives', total: '665 €' },
     annie: { nom: 'Annie', naissance: '2012-07-18', classe: '3F', initiale: 'A',
-             resume: 'théâtre, danse et musique', total: '~ 990 €' }
+             resume: 'théâtre et musique', total: '~ 670 €' }
   };
 
   function age(iso) {
@@ -2426,14 +2451,12 @@ svg{display:block}
   var ACTIVITES = [
     { id: 'tennis', enfant: 'narek', titre: 'Tennis', icone: 'i-ball',
       jour: 'Mercredi', debut: '16:00', fin: '17:00',
-      badge: 'Confirmé', fixe: true, note: 'Dès le mercredi 23 septembre' },
+      badge: 'Confirmé', fixe: true, des: '2026-09-23' },
     { id: 'pp-lundi', groupe: 'pingpong', enfant: 'narek', titre: 'Ping-pong', icone: 'i-paddle',
       jour: 'Lundi', debut: '17:45', fin: '19:00', badge: 'Option A' },
     { id: 'pp-jeudi', groupe: 'pingpong', enfant: 'narek', titre: 'Ping-pong', icone: 'i-paddle',
       jour: 'Jeudi', debut: '18:30', fin: '20:00', badge: 'Option B',
       note: 'Préféré si le mercredi n’est pas possible' },
-    { id: 'pp-samedi', groupe: 'pingpong', enfant: 'narek', titre: 'Ping-pong', icone: 'i-paddle',
-      jour: 'Samedi', debut: '11:30', fin: '12:30', badge: 'Option C' },
 
     { id: 'solfege', enfant: 'annie', titre: 'Solfège', icone: 'i-solfege',
       jour: 'Mercredi', debut: '16:30', badge: 'Confirmé', fixe: true, note: 'Académie des Arts' },
@@ -2446,9 +2469,6 @@ svg{display:block}
     { id: 'theatre', enfant: 'annie', titre: 'Théâtre', icone: 'i-stage',
       jour: 'Jeudi', debut: '19:15', fin: '21:30', badge: 'Confirmé', fixe: true,
       note: 'Tous les jeudis, jusqu’à 21h30' },
-    { id: 'danse', enfant: 'annie', titre: 'Danse arménienne', icone: 'i-dance',
-      court: 'Danse', jour: 'Samedi', debut: '17:00', fin: '18:30', badge: 'Dès le 12 sept.', fixe: true,
-      lieu: 'Cie Yeraz · Alfortville' },
 
     { id: 'garde', enfant: 'tous', titre: 'Changement de garde', icone: 'i-relay',
       jour: 'Vendredi', debut: '19:00', horaire: 'en soirée', jalon: true,
@@ -2460,14 +2480,10 @@ svg{display:block}
     { enfant: 'narek', titre: 'Tennis', icone: 'i-ball', prix: '380 €',
       infos: [['Début', 'Mercredi 23 septembre 2026']], creneaux: ['tennis'] },
     { enfant: 'narek', titre: 'Ping-pong', icone: 'i-paddle', prix: '285 €',
-      infos: [['Début', 'Cette semaine']], groupes: ['pingpong'],
+      infos: [['Début', 'Depuis la rentrée']], groupes: ['pingpong'],
       aide: 'Plusieurs créneaux possibles : Narek peut y aller deux fois par semaine.' },
     { enfant: 'annie', titre: 'Théâtre', icone: 'i-stage', prix: '220 €',
-      infos: [['Début', 'Cette semaine']], creneaux: ['theatre'] },
-    { enfant: 'annie', titre: 'Danse arménienne', icone: 'i-dance', prix: '320 €',
-      infos: [['Début', 'Samedi 12 septembre'],
-              ['Lieu', 'Cie Yeraz — Centre culturel « Le marché du Dahomey », 2 bis rue des Camélias, Alfortville']],
-      creneaux: ['danse'] },
+      infos: [['Début', 'Depuis la rentrée']], creneaux: ['theatre'] },
     { enfant: 'annie', titre: 'Musique — Académie des Arts', icone: 'i-note', prix: '~ 450 €',
       infos: [['Détail', 'Solfège, piano et flûte']],
       creneaux: ['solfege', 'flute', 'piano'],
@@ -2479,6 +2495,19 @@ svg{display:block}
   };
 
   var JOURS_SEMAINE = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+
+  // Le samedi n'a ni cours ni activité depuis qu'Annie a arrêté la danse et que
+  // le créneau de ping-pong du samedi est écarté. Une colonne vide au bout de la
+  // semaine n'apprend rien ; il ne s'affiche donc que s'il porte quelque chose —
+  // une séance que PRONOTE déplacerait là, ou un créneau qu'on y remettrait.
+  function joursAffiches(perturbations) {
+    var actes = activitesRetenues();
+    return JOURS_SEMAINE.filter(function (jour) {
+      if (jour !== 'Samedi') return true;
+      return actes.some(function (a) { return a.jour === jour; })
+        || ((perturbations || {})[jour] || []).length > 0;
+    });
+  }
   var choix = {};
   var filtreEnfant = 'tous';
 
@@ -2575,9 +2604,10 @@ svg{display:block}
     if (!zone) return;
     var dispo = activitesRetenues();
     var perturbations = perturbationsParJour();
+    var libres = [];
     var html = '';
 
-    JOURS_SEMAINE.forEach(function (jour) {
+    joursAffiches(perturbations).forEach(function (jour) {
       var duJour = dispo.filter(function (a) {
         return a.jour === jour
           && (filtreEnfant === 'tous' || a.enfant === filtreEnfant || a.enfant === 'tous');
@@ -2596,6 +2626,8 @@ svg{display:block}
       // une journée sans activité n'a que le collège à annoncer.
       if (ecole.length) note = ecole.length + ' au collège' + (duJour.length ? ' · ' + note : '');
 
+      if (!duJour.length && !ecole.length) libres.push(jour);
+
       html += '<div class="day' + (duJour.length || ecole.length ? '' : ' day--rest') + classeJour(jour) + '"'
         + attrJour(jour) + '>'
         + '<div class="day__head"><span class="day__name"' + libelleJour(jour) + '>' + jour + '</span>'
@@ -2612,8 +2644,9 @@ svg{display:block}
           var classe = a.jalon ? 'ev ev--relay'
             : 'ev ev--' + (a.enfant === 'narek' ? 'n' : 'a') + (option ? ' ev--option' : '');
           var qui = a.enfant === 'narek' ? 'Narek' : a.enfant === 'annie' ? 'Annie' : 'Les deux';
+          var mot = badgeDe(a);
           var badge = choisie ? '<span class="tag tag--fixed">Choisi</span>'
-            : a.badge ? '<span class="tag' + (a.fixe ? ' tag--fixed' : '') + '">' + a.badge + '</span>'
+            : mot ? '<span class="tag' + (a.fixe ? ' tag--fixed' : '') + '">' + mot + '</span>'
             : '';
 
           html += '<article class="' + classe + '">'
@@ -2637,6 +2670,22 @@ svg{display:block}
       stat.innerHTML = ouverts.length
         ? '<b>' + ouverts.length + '</b> créneau' + (ouverts.length > 1 ? 'x' : '') + ' à confirmer'
         : '<b>Tous</b> les créneaux sont choisis';
+    }
+
+    // « Mardi libre » était écrit en dur : un cours annulé le mardi, un créneau
+    // retenu, et l'en-tête affirmait le contraire de la grille juste en dessous.
+    // Il dit maintenant ce que la grille montre, filtre par enfant compris.
+    var vide = document.getElementById('stat-libre');
+    if (vide) {
+      vide.hidden = !libres.length;
+      vide.innerHTML = libres.length === 1 ? libres[0] + ' <b>libre</b>'
+        : '<b>' + libres.length + '</b> jours libres';
+    }
+
+    var combien = document.getElementById('stat-activites');
+    if (combien) {
+      combien.innerHTML = '<b>' + INSCRIPTIONS.length + '</b> activité'
+        + (INSCRIPTIONS.length > 1 ? 's' : '');
     }
   }
 
@@ -2698,7 +2747,7 @@ svg{display:block}
           var a = parId(id);
           if (!a) return;
           html += '<div class="row"><dt>Créneau</dt><dd>' + a.jour + ' ' + horaireDe(a)
-            + ' <span class="tag tag--fixed">' + a.badge + '</span></dd></div>';
+            + ' <span class="tag tag--fixed">' + badgeDe(a) + '</span></dd></div>';
         });
 
         (ins.groupes || []).forEach(function (g) {
@@ -2711,7 +2760,7 @@ svg{display:block}
             html += '<button class="opt-btn" type="button" aria-pressed="' + (pris.indexOf(a.id) !== -1) + '"'
               + ' onclick="toggleChoix(\'' + g + '\', \'' + a.id + '\')">'
               + '<span><b>' + a.jour + ' ' + horaireDe(a) + '</b>'
-              + '<small>' + (a.note || a.badge || '') + '</small></span></button>';
+              + '<small>' + (a.note || badgeDe(a) || '') + '</small></span></button>';
           });
           if (pris.length) {
             html += '<div class="act__foot"><span>Les créneaux non retenus sont masqués du planning.</span>'
@@ -2794,8 +2843,9 @@ svg{display:block}
 
     // La vue ne montre que la fin de journée : l'échelle démarre une heure avant
     // la première sortie de cours ou activité, pas au début des cours.
+    var jours = joursAffiches(perturbationsParJour());
     var bas = [], haut = [];
-    JOURS_SEMAINE.forEach(function (jour) {
+    jours.forEach(function (jour) {
       ['narek', 'annie'].forEach(function (cle) {
         var cours = jour === 'Samedi' ? [] : segmentsCours(cle, week, jour);
         if (cours.length) {
@@ -2823,11 +2873,12 @@ svg{display:block}
       rail += '<span style="top:' + y(h).toFixed(2) + '%">' + enHeures(h) + '</span>';
     }
 
-    var html = '<div class="ovv" style="--pas:' + (100 / (amplitude / 60)).toFixed(3) + '%">'
+    var html = '<div class="ovv" style="--cols:' + jours.length
+      + ';--pas:' + (100 / (amplitude / 60)).toFixed(3) + '%">'
       + '<div class="ovv__rail ovv__rail--global" style="grid-column:1;grid-row:2;height:'
       + haut_px + 'px">' + rail + '</div>';
 
-    JOURS_SEMAINE.forEach(function (jour, index) {
+    jours.forEach(function (jour, index) {
       var col = index + 2;
       var blocs = '', pied = '';
 
@@ -3794,6 +3845,7 @@ svg{display:block}
     } catch (e) {}
     if (panel && PANELS.indexOf(panel) !== -1) showPanel(panel);
 
+    daterLesBlocs();
     renderActivites();
     filterChild(['tous', 'narek', 'annie'].indexOf(child) !== -1 ? child : 'tous');
 
