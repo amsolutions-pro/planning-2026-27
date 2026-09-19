@@ -166,7 +166,11 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
      défilement ni ombre pour le dire — et au rechargement sur « Budget »,
      l'onglet actif était invisible, donc aucun n'avait l'air choisi. Ils
      passent à la ligne : tout est là, tout le temps. */
-  .tabs{flex-wrap:wrap;overflow-x:visible;gap:2px 4px}
+  .tabs{flex-wrap:wrap;overflow-x:visible;gap:0 2px}
+  /* Et les intitulés se raccourcissent : « Activités » au lieu d'« Activités &
+     créneaux ». Six onglets tiennent alors sur deux lignes au lieu de trois —
+     la hauteur reprise à la grille compte, sur un téléphone. */
+  .tab__long{display:none}
 }
 .masthead__inner{
   max-width:1180px;margin:0 auto;padding:16px 20px 0;
@@ -361,24 +365,27 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
   padding:12px 14px;background:var(--surface);border:1px solid var(--line);
   border-radius:var(--radius);box-shadow:var(--shadow);
 }
-.wk{
-  font:inherit;font-size:13px;font-weight:600;cursor:pointer;
-  display:inline-flex;align-items:center;gap:8px;
-  padding:6px 12px;border-radius:8px;
-  border:1px solid var(--edge);background:var(--surface-2);color:var(--ink-soft);
-  transition:all .15s ease;
+/* Deux boutons Papa / Mama ne disaient que la quinzaine : on ne pouvait pas
+   demander « et la semaine du 12 octobre ? ». Ils cèdent la place à une
+   navigation semaine par semaine, qui nomme le parent au lieu de le choisir. */
+.wknav{
+  display:inline-flex;align-items:stretch;
+  border:1px solid var(--edge);border-radius:8px;background:var(--surface-2);overflow:hidden;
 }
-.wk::before{
-  content:"";width:12px;height:12px;flex:none;
-  border:2px solid currentColor;background:currentColor;
+.wknav__pas{
+  font:inherit;font-size:15px;line-height:1;cursor:pointer;
+  padding:0 10px;border:0;background:transparent;color:var(--ink-soft);
 }
-.wk--papa::before{border-radius:3px}
-.wk--mama::before{border-radius:50%;background:transparent}
-.wk[aria-pressed="true"]{border-color:var(--accent);color:var(--ink);background:var(--surface)}
-.wk[aria-pressed="true"]::before{box-shadow:0 0 0 3px var(--accent-soft)}
-.wk small{
+.wknav__pas:hover:not(:disabled){background:var(--accent-soft);color:var(--ink)}
+.wknav__pas:disabled{color:var(--line);cursor:default}
+.wknav__quoi{
+  display:inline-flex;align-items:center;gap:7px;min-width:11.5em;justify-content:center;
+  padding:6px 10px;font-size:13px;font-weight:600;color:var(--ink);
+  border-left:1px solid var(--edge);border-right:1px solid var(--edge);background:var(--surface);
+}
+.wknav__quoi small{
   font-family:"IBM Plex Mono",ui-monospace,monospace;
-  font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;
+  font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);font-weight:500;
 }
 .tt-note{margin-left:auto;font-size:12px;color:var(--muted)}
 
@@ -992,8 +999,9 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
   .filters,.tt-bar{padding:8px 10px;gap:8px;border-radius:8px}
   .filters .filters__label,.tt-bar .filters__label,.tt-note,.legend{display:none}
   .seg button{font-size:11.5px;padding:5px 8px}
-  .filters .chip,.tt-bar .chip,.wk{font-size:11.5px;padding:4px 9px;gap:6px}
-  .wk small{font-size:9px}
+  .filters .chip,.tt-bar .chip{font-size:11.5px;padding:4px 9px;gap:6px}
+  .wknav__quoi{font-size:11.5px;padding:4px 8px;min-width:10em;gap:5px}
+  .wknav__quoi small{font-size:9px}
 
   /* La grille horaire horizontale demandait un long défilement latéral :
      sur petit écran, chaque journée se lit de haut en bas. */
@@ -1186,7 +1194,7 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
   </div>
   <nav class="tabs" role="tablist" aria-label="Sections du planning">
     <button class="tab" role="tab" id="tab-semaine" aria-controls="panel-semaine" aria-selected="true" onclick="showPanel('semaine')">
-      <svg class="icon"><use href="#i-week"></use></svg> Semaine type
+      <svg class="icon"><use href="#i-week"></use></svg> Semaine<span class="tab__long"> type</span>
     </button>
     <button class="tab" role="tab" id="tab-actus" aria-controls="panel-actus" aria-selected="false" onclick="showPanel('actus')">
       <svg class="icon"><use href="#i-bell"></use></svg> Actualités <span class="tab__badge" id="actu-badge" hidden></span>
@@ -1195,10 +1203,10 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
       <svg class="icon"><use href="#i-school"></use></svg> Collège
     </button>
     <button class="tab" role="tab" id="tab-activites" aria-controls="panel-activites" aria-selected="false" onclick="showPanel('activites')">
-      <svg class="icon"><use href="#i-list"></use></svg> Activités &amp; créneaux
+      <svg class="icon"><use href="#i-list"></use></svg> Activités<span class="tab__long"> &amp; créneaux</span>
     </button>
     <button class="tab" role="tab" id="tab-garde" aria-controls="panel-garde" aria-selected="false" onclick="showPanel('garde')">
-      <svg class="icon"><use href="#i-swap"></use></svg> Garde &amp; semaines
+      <svg class="icon"><use href="#i-swap"></use></svg> Garde<span class="tab__long"> &amp; semaines</span>
     </button>
     <button class="tab" role="tab" id="tab-budget" aria-controls="panel-budget" aria-selected="false" onclick="showPanel('budget')">
       <svg class="icon"><use href="#i-money"></use></svg> Budget
@@ -1366,9 +1374,19 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
         <button class="chip chip--a" type="button" id="tt-annie" aria-pressed="false" onclick="pickPupil('annie')">Annie · 3F</button>
       </span>
       <span class="filters__label" style="margin-left:8px">Semaine</span>
-      <!-- Rattachement quinzaine → parent : PARENT_DE_QUINZAINE, dans le script. -->
-      <button class="wk wk--papa" type="button" id="wk-V" aria-pressed="true" onclick="pickWeek('V')">Papa <small id="wk-V-now"></small></button>
-      <button class="wk wk--mama" type="button" id="wk-R" aria-pressed="false" onclick="pickWeek('R')">Mama <small id="wk-R-now"></small></button>
+      <!-- Rattachement quinzaine → parent : PARENT_DE_QUINZAINE, dans le script.
+           Le parent est ici une étiquette, plus un bouton : on avance dans les
+           semaines, et la semaine affichée dit à qui elle est. -->
+      <span class="wknav">
+        <button class="wknav__pas" type="button" id="wk-prec" aria-label="Semaine précédente"
+                onclick="decalerSemaine(-1)">‹</button>
+        <span class="wknav__quoi" id="wk-quoi" aria-live="polite"></span>
+        <button class="wknav__pas" type="button" id="wk-suiv" aria-label="Semaine suivante"
+                onclick="decalerSemaine(1)">›</button>
+      </span>
+      <button class="btn" type="button" id="wk-retour" hidden onclick="allerSemaineCourante()">
+        <svg class="icon"><use href="#i-week"></use></svg> Cette semaine
+      </button>
       <span class="tt-note" id="tt-regime"></span>
     </div>
 
@@ -1776,11 +1794,13 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
   // l'alternance suit ensuite de quinzaine en quinzaine.
   var ANCRAGE = Date.UTC(2026, 8, 7);
 
-  function semaineCourante(today) {
-    return quinzaineDe(lundiUTC(today || new Date()));
-  }
+  // Jusqu'où l'on peut avancer. Le robot publie quatre semaines de séances ; au
+  // delà, la grille retombe sur le décalque de septembre — et le dit.
+  var SEMAINES_AVANT = 5;
 
-  var ttState = { pupil: 'narek', week: semaineCourante() };
+  // `decalage` : le nombre de semaines devant la semaine du repère. `week` en
+  // découle (la quinzaine de la semaine affichée) — elle n'est plus choisie.
+  var ttState = { pupil: 'narek', decalage: 0, week: 'V' };
 
   function pickPupil(who) {
     ttState.pupil = who;
@@ -1792,15 +1812,39 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
     try { localStorage.setItem('planning.pupil', who); } catch (e) {}
   }
 
-  function pickWeek(w) {
-    ttState.week = w;
-    ['V', 'R'].forEach(function (x) {
-      var b = document.getElementById('wk-' + x);
-      if (b) b.setAttribute('aria-pressed', x === w ? 'true' : 'false');
-    });
+  function decalerSemaine(n) {
+    allerSemaine(ttState.decalage + n);
+  }
+
+  function allerSemaineCourante() { allerSemaine(0); }
+
+  function allerSemaine(n) {
+    ttState.decalage = Math.max(0, Math.min(SEMAINES_AVANT, n));
+    ttState.week = quinzaineDe(lundiAffiche());
+    majSemaine();
     drawTimetable();
     renderOverlay();
-    try { localStorage.setItem('planning.week', w); } catch (e) {}
+  }
+
+  // La semaine affichée se nomme : son parent, et ses dates. Rien n'est gardé
+  // d'une visite à l'autre — un coup d'œil dimanche à la semaine suivante
+  // faisait rouvrir l'onglet lundi matin sur la mauvaise.
+  function majSemaine() {
+    var lundi = lundiAffiche();
+    var g = gardeDeLaSemaine(lundi);
+    var quoi = document.getElementById('wk-quoi');
+    if (quoi) {
+      quoi.innerHTML = repereGarde(g.classe) + '<b>' + echap(g.nom) + '</b><small>'
+        + (ttState.decalage === 0 ? 'cette semaine'
+            : FMT_COURT.format(lundi) + ' → ' + FMT_COURT.format(lundi + 4 * MS_JOUR))
+        + '</small>';
+    }
+    var prec = document.getElementById('wk-prec');
+    if (prec) prec.disabled = ttState.decalage <= 0;
+    var suiv = document.getElementById('wk-suiv');
+    if (suiv) suiv.disabled = ttState.decalage >= SEMAINES_AVANT;
+    var retour = document.getElementById('wk-retour');
+    if (retour) retour.hidden = ttState.decalage === 0;
   }
 
   // Ce que PRONOTE annonce pour la semaine affichée, rangé par jour et par
@@ -1815,8 +1859,14 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
   // Le lundi de la semaine que la grille montre — pas forcément celle où l'on
   // est : changer de quinzaine fait regarder la semaine suivante, que PRONOTE
   // couvre aussi (le robot lit quatorze jours).
+  // Le dimanche, la semaine de référence est celle qui commence demain : c'est
+  // elle qu'on vient regarder, pas celle qui vient de finir.
+  function lundiRepere() {
+    return lundiUTC(new Date()) + (estDimanche() ? 7 * MS_JOUR : 0);
+  }
+
   function lundiAffiche() {
-    return lundiUTC(new Date()) + (semaineDecalee() ? 7 * MS_JOUR : 0);
+    return lundiRepere() + ttState.decalage * 7 * MS_JOUR;
   }
 
   // L'emploi du temps tel que PRONOTE le donne pour la semaine affichée. La
@@ -2196,17 +2246,16 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
     }
   }
 
+  // La semaine se pose plus bas, dans `restore` : la nommer demande la table
+  // des parents et le calendrier de garde, qui sont déclarés après ce point.
   (function initTimetable() {
-    var courante = semaineCourante();
-    var marque = document.getElementById('wk-' + courante + '-now');
-    if (marque) marque.textContent = 'en cours';
-    var pupil = null, week = null;
+    var pupil = null;
     try {
       pupil = localStorage.getItem('planning.pupil');
-      week = localStorage.getItem('planning.week');
+      // La semaine n'est plus gardée : on rouvre toujours sur celle en cours.
+      localStorage.removeItem('planning.week');
     } catch (e) {}
     pickPupil(pupil === 'annie' ? 'annie' : 'narek');
-    pickWeek(week === 'R' || week === 'V' ? week : courante);
   })();
 
 
@@ -2818,8 +2867,11 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
 
   function quandDit(ms) {
     var ecart = Math.round((ms - jourUTC(new Date())) / MS_JOUR);
-    var mot = ecart === 0 ? 'Aujourd’hui' : ecart === 1 ? 'Demain' : enJour(ms);
-    return '<b>' + echap(mot) + '</b> · ' + echap(enLong(ms));
+    // Au delà de demain, la date longue se suffit : « lun. 21 · lundi 21
+    // septembre » disait deux fois la même chose.
+    return ecart > 1
+      ? '<b>' + echap(enLong(ms)) + '</b>'
+      : '<b>' + (ecart === 0 ? 'Aujourd’hui' : 'Demain') + '</b> · ' + echap(enLong(ms));
   }
 
   function ligneEcole(l) {
@@ -3281,15 +3333,11 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
   // Quinzaine à laquelle appartient le jour repéré — le dimanche, celle du lundi
   // qui vient. `quinzaineDe`, `ANCRAGE` et `MS_JOUR` sont prêts avant le premier
   // dessin de l'emploi du temps.
-  function quinzaineDuRepere() {
-    var d = new Date();
-    var jour = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate() + (estDimanche() ? 1 : 0));
-    return quinzaineDe(jour - ((new Date(jour).getUTCDay() + 6) % 7) * MS_JOUR);
-  }
+  function quinzaineDuRepere() { return quinzaineDe(lundiRepere()); }
 
   // Vrai quand le collège montre l'autre quinzaine : la colonne du jour n'y est
   // plus celle d'aujourd'hui, mais le même jour d'une autre semaine.
-  function semaineDecalee() { return ttState.week !== quinzaineDuRepere(); }
+  function semaineDecalee() { return ttState.decalage !== 0; }
 
   function classeJour(jour) { return jour === jourRepere() ? ' is-today' : ''; }
   function attrJour(jour, decale) {
@@ -4166,6 +4214,7 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
     if (panel && PANELS.indexOf(panel) !== -1) showPanel(panel);
 
     daterLesBlocs();
+    allerSemaine(0);
     renderActivites();
     filterChild(['tous', 'narek', 'annie'].indexOf(child) !== -1 ? child : 'tous');
 

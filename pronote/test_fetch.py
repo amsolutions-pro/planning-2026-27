@@ -143,6 +143,27 @@ class Classement(unittest.TestCase):
         self.assertEqual(self.par_id["controle:c2"]["type"], "controle")
         self.assertNotIn("cours:c3", self.par_id)
 
+    def test_emploi_du_temps_lu_une_fois_par_enfant(self):
+        """`seances` et `cours` partagent la même lecture.
+
+        pronotepy fait une requête par semaine : les deux fenêtres, qui se
+        recouvrent, en faisaient sept par enfant au lieu de cinq — et pouvaient
+        tomber de part et d'autre d'un changement, la grille et les nouvelles ne
+        disant alors pas la même chose.
+        """
+        client = FauxClient(MAINTENANT)
+        appels = []
+        vrai = client.lessons
+        client.lessons = lambda *a, **k: (appels.append(a) or vrai(*a, **k))
+        fetch.Collecte(client, MAINTENANT).tout()
+        self.assertEqual(len(appels), len(client.children), appels)
+
+    def test_cours_ne_remonte_pas_avant_aujourdhui(self):
+        """La lecture part du lundi, les nouvelles d'aujourd'hui."""
+        for a in self.donnees["actualites"]:
+            if a["type"] in ("cours", "controle") and a.get("heure"):
+                self.assertGreaterEqual(a["date"], MAINTENANT.date().isoformat(), a)
+
     def test_notes(self):
         self.assertEqual(self.par_id["note:n1"]["niveau"], "scolaire")
         self.assertEqual(self.par_id["note:n2"]["niveau"], "info")
