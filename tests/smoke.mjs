@@ -26,7 +26,7 @@ try {
 }
 
 // Chromium fourni par l'image, quand la version de playwright ne le trouve pas seule.
-const CHROME = [process.env.CHROME_PATH, '/opt/pw-browsers/chromium'].find((c) => c && existsSync(c));
+const CHROME = [process.env.CHROMIUM_EPREUVE, '/opt/pw-browsers/chromium'].find((c) => c && existsSync(c));
 const RACINE = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.json': 'application/json; charset=utf-8',
@@ -226,6 +226,14 @@ async function main() {
       JSON.stringify(colonnes));
     await page.click('#vue-grille');
 
+    // --- Accessibilité : ce qui avait été mesuré doit le rester ---
+    verifier('le focus ne peut plus se cacher sous l\'en-tête',
+      (await page.evaluate(() => getComputedStyle(document.documentElement).scrollPaddingTop)) !== '0px',
+      await page.evaluate(() => getComputedStyle(document.documentElement).scrollPaddingTop));
+    const sansTitre = await page.$$eval('.panel', (els) => els
+      .filter((el) => !el.querySelector('h2')).map((el) => el.id));
+    verifier('chaque section porte un titre', sansTitre.length === 0, sansTitre.join(', '));
+
     // --- Accessibilité de base : tout ce qui se clique doit se nommer ---
     const muets = await page.$$eval('button, a[href], input, select', (els) => els
       .filter((el) => {
@@ -257,8 +265,46 @@ async function main() {
       await tel.waitForTimeout(200);
       const trop = await tel.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       verifier(`téléphone · ${onglet} ne déborde pas`, trop <= 1, trop + 'px');
+      // La barre d'onglets ne doit plus déborder : tous les onglets visibles,
+      // sinon l'onglet actif peut être hors écran et rien n'a l'air choisi.
+      const cache = await tel.evaluate(() => {
+        const barre = document.querySelector('.tabs');
+        const b = barre.getBoundingClientRect();
+        return [...barre.children].filter((t) => {
+          const r = t.getBoundingClientRect();
+          return r.right > b.right + 1 || r.left < b.left - 1;
+        }).map((t) => t.id);
+      });
+      verifier(`téléphone · ${onglet} · tous les onglets sont visibles`, cache.length === 0, cache.join(', '));
     }
     await tel.close();
+
+    // --- Thème sombre : la page doit se dessiner sans rien perdre ---
+    const nuit = await navigateur.newContext({
+      viewport: { width: 390, height: 844 }, locale: 'fr-FR',
+      timezoneId: 'Europe/Paris', colorScheme: 'dark',
+    });
+    await nuit.route('**://fonts.{googleapis,gstatic}.com/**', (r) => r.abort());
+    const pn = await nuit.newPage();
+    pn.on('pageerror', (e) => erreurs.push('pageerror (nuit): ' + e.message));
+    await pn.goto(base + 'index.html', { waitUntil: 'load' });
+    await pn.waitForTimeout(400);
+    const fondNuit = await pn.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    verifier('le thème sombre a bien un fond sombre',
+      /^rgb\((\d+), (\d+), (\d+)\)$/.test(fondNuit) &&
+        fondNuit.match(/\d+/g).map(Number).reduce((a, b) => a + b, 0) < 250, fondNuit);
+    verifier('la semaine se dessine aussi de nuit',
+      (await pn.locator('#week-grid .day').count()) > 0);
+    await nuit.close();
+
+    // --- Impression : toutes les sections sortent, pas seulement l'onglet ouvert ---
+    await page.emulateMedia({ media: 'print' });
+    await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+    await page.waitForTimeout(150);
+    const caches = await page.$$eval('.panel', (els) => els.filter((el) => el.hidden).length);
+    verifier('à l\'impression, aucune section ne manque', caches === 0, caches + ' cachée(s)');
+    await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+    await page.emulateMedia({ media: 'screen' });
 
     verifier('aucune erreur de script', erreurs.length === 0, erreurs.slice(0, 6).join(' | '));
   } finally {

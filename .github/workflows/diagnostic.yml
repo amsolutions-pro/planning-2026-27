@@ -11,8 +11,10 @@ on:
       epreuve:
         description: "Laquelle lancer"
         type: choice
-        default: marquage
-        options: [marquage, sources]
+        # `sources` ne fait que lire ; `marquage` écrit sur le vrai compte, même
+        # s'il remet tout en place. Le défaut est celui qui ne touche à rien.
+        default: sources
+        options: [sources, marquage]
 
 permissions:
   contents: read

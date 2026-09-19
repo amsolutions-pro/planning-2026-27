@@ -73,7 +73,13 @@ MAX_DETAILS = 15
 # quinze. Les non lues d'abord, et de la marge.
 MAX_DISCUSSIONS = 60
 
-ITERATIONS_KDF = 200_000
+# Le fichier est public : qui le télécharge peut chercher la phrase de passe
+# hors ligne, sans limite de débit, et il protège aussi le jeton GitHub qu'il
+# transporte. On suit donc la recommandation courante (600 000) plutôt que la
+# moitié. Le changement ne casse rien : chaque fichier porte son propre compte
+# d'itérations, et la page le lit. Mesuré dans Chromium : 95 ms pour dériver la
+# clé, contre 32 ms — sur une page déjà dessinée, cela ne se voit pas.
+ITERATIONS_KDF = 600_000
 # Numéro du format publié, lisible sans le mot de passe : une page restée
 # ouverte s'en sert pour voir qu'elle est plus vieille que le fichier, et
 # proposer de se recharger plutôt que de le lire de travers.
@@ -1050,10 +1056,22 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     passphrase = None if args.clair else (args.passphrase or os.environ.get("PRONOTE_SITE_PASSPHRASE") or None)
+    # Publier en clair le dossier scolaire de deux enfants sur un dépôt public ne
+    # doit jamais être un accident : une faute de frappe en changeant le secret
+    # suffisait, et seul un avertissement le disait. Il faut maintenant le
+    # demander (--clair), ou travailler sur des données fictives (--exemple).
+    if not passphrase and not args.clair and not args.exemple:
+        print("Pas de mot de passe (PRONOTE_SITE_PASSPHRASE) : refus de publier en clair. "
+              "Utilisez --clair si c'est vraiment voulu.", file=sys.stderr)
+        return 2
     maintenant = dt.datetime.now(PARIS)
-    # Le journal de pronotepy dit ce que PRONOTE répond ; GitHub masque les secrets.
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s : %(message)s", stream=sys.stderr)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
+    # pronotepy écrit « successfully logged in as <identifiant> » en INFO. GitHub
+    # masque les secrets qu'il connaît en entier, pas une sous-chaîne : en mode
+    # jeton, l'identifiant vit *dans* PRONOTE_TOKEN_JSON, et s'écrivait donc en
+    # clair dans un journal d'action public. On le tait.
+    logging.getLogger("pronotepy").setLevel(logging.WARNING)
 
     reconnecter = None
     if args.exemple:

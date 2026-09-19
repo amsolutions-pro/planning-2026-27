@@ -1,0 +1,60 @@
+name: Épreuves
+
+# Les deux épreuves du projet, à chaque poussée : la collecte PRONOTE (Python)
+# et la page elle-même, ouverte dans un vrai Chromium.
+#
+# Volontairement séparé de `pages.yml` : le robot republie le site six fois par
+# jour, et la famille ne doit pas attendre une installation de navigateur pour
+# voir ses actualités. Un échec ici prévient par courriel, il ne bloque rien.
+on:
+  push:
+    branches: [claude/deploy-html-page-sdarke, 'claude/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: epreuves-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pronote:
+    name: Collecte PRONOTE
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pronote/requirements.txt
+      - run: pip install -r pronote/requirements.txt
+      - run: python3 -m unittest discover pronote
+
+  page:
+    name: La page, dans un navigateur
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vérifier que index.html est à jour
+        run: |
+          python3 build.py
+          git diff --exit-code index.html \
+            || { echo "::error::index.html n'est pas à jour — lancez 'python3 build.py' et committez le résultat."; exit 1; }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Installer playwright et son Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Éprouver la page
+        run: NODE_PATH="$PWD/node_modules" node tests/smoke.mjs
+
+      - name: Éprouver la page avec des données PRONOTE
+        run: NODE_PATH="$PWD/node_modules" node tests/pronote.mjs
