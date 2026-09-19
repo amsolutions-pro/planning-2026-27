@@ -60,7 +60,10 @@ DEVOIRS_JOURS = 14
 COURS_JOURS = 14
 # La grille montre la semaine en cours et la suivante : trois semaines depuis
 # le lundi couvrent les deux, changement de quinzaine compris.
-SEANCES_JOURS = 21
+# Quatre semaines d'emploi du temps : de quoi regarder la semaine des vacances,
+# le lundi d'un rendez-vous, le prochain contrôle. Cela ne coûte rien de plus
+# qu'avant — voir `lecons`, qui ne lit plus l'emploi du temps qu'une fois.
+SEANCES_JOURS = 28
 NOTES_JOURS = 30
 VIE_SCOLAIRE_JOURS = 30
 INFOS_JOURS = 30
@@ -465,6 +468,7 @@ class Collecte:
         self.enfants: list[dict] = []
         self.actualites: dict[str, dict] = {}  # identité → actualité (dédoublonnée)
         self.connus: dict[str, dict] = {}      # identifiant PRONOTE → son actualité
+        self.edt: dict[str, list] = {}         # enfant → son emploi du temps, lu une fois
 
     # -- squelette
 
@@ -629,10 +633,8 @@ class Collecte:
         # Depuis le LUNDI de la semaine en cours, pas depuis aujourd'hui : la
         # grille montre la semaine entière, et un vendredi il ne resterait
         # sinon qu'un jour à dessiner.
-        debut = self.aujourdhui - dt.timedelta(days=self.aujourdhui.weekday())
-        limite = debut + dt.timedelta(days=SEANCES_JOURS)
         vues, seances = set(), []
-        for lecon in self.client.lessons(debut, limite):
+        for lecon in self.lecons(enfant):
             matiere = lecon.subject.name if lecon.subject else "Cours"
             cle = (iso_date(lecon.start), heure_fr(lecon.start), matiere)
             if cle in vues:
@@ -651,10 +653,31 @@ class Collecte:
         seances.sort(key=lambda c: (c["date"], c["debut"]))
         enfant["seances"] = seances
 
+    def lecons(self, enfant: dict) -> list:
+        """L'emploi du temps de l'enfant, lu une seule fois.
+
+        `seances` et `cours` regardaient la même chose par deux fenêtres qui se
+        recouvrent. Or pronotepy fait **une requête par semaine** : cela en
+        faisait sept par enfant, et les deux lectures pouvaient tomber de part
+        et d'autre d'un changement, si bien que la grille et les nouvelles ne
+        disaient pas la même chose. On lit une fois, du lundi de la semaine en
+        cours jusqu'au bout de la fenêtre, et les deux se servent là-dedans.
+        """
+        cache = self.edt.get(enfant["id"])
+        if cache is None:
+            debut = self.aujourdhui - dt.timedelta(days=self.aujourdhui.weekday())
+            cache = list(self.client.lessons(debut, debut + dt.timedelta(days=SEANCES_JOURS)))
+            self.edt[enfant["id"]] = cache
+        return cache
+
     def cours(self, enfant: dict) -> None:
         limite = self.aujourdhui + dt.timedelta(days=COURS_JOURS)
         vus = set()
-        for lecon in self.client.lessons(self.aujourdhui, limite):
+        for lecon in self.lecons(enfant):
+            # La lecture commune part du lundi ; les nouvelles, d'aujourd'hui.
+            # Un cours annulé lundi dernier n'a plus rien à annoncer.
+            if not (self.aujourdhui <= lecon.start.date() <= limite):
+                continue
             if not (lecon.canceled or lecon.status or lecon.test):
                 continue
             matiere = lecon.subject.name if lecon.subject else "Cours"

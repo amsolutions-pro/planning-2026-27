@@ -12,6 +12,37 @@ navigateur, donc propres à chaque appareil. Les créneaux de musique sont
 arrêtés : solfège mercredi 16h30, flûte mercredi 18h00 → 18h20, piano jeudi
 18h20 → 18h40, puis théâtre jeudi 19h15 → 21h30.
 
+## On avance dans les semaines
+
+Deux boutons Papa / Mama ne disaient que la quinzaine : on ne pouvait pas
+demander « et la semaine du 12 octobre ? ». Ils cèdent la place à une navigation
+semaine par semaine — `‹ Papa · 28 sept. → 2 oct. ›`, avec « Cette semaine » dès
+qu'on s'éloigne. Le parent y est devenu une **étiquette**, plus un choix : la
+semaine affichée dit à qui elle est, exceptions de `GARDE_EXCEPTIONS` comprises
+(en septembre, deux semaines d'affilée chez Papa — la quinzaine alterne, pas le
+parent).
+
+Cinq semaines en avant. Le robot en publie quatre ; au delà, la grille retombe
+sur le décalque de septembre et le dit, comme elle le fait déjà.
+
+Rien n'est gardé d'une visite à l'autre : la page rouvre toujours sur la semaine
+en cours. Auparavant `planning.week` survivait dans le navigateur, si bien qu'un
+coup d'œil dimanche à la quinzaine suivante faisait rouvrir l'onglet lundi matin
+sur l'autre semaine — la colonne du jour surlignée quand même.
+
+### Le robot ne lit l'emploi du temps qu'une fois
+
+`seances` et `cours` regardaient la même chose par deux fenêtres qui se
+recouvrent. Or pronotepy fait **une requête par semaine** (`lessons` boucle sur
+les numéros de semaine) : cela en faisait sept par enfant, et les deux lectures
+pouvaient tomber de part et d'autre d'un changement — la grille et les nouvelles
+ne disant alors pas la même chose.
+
+`lecons` lit une fois, du lundi de la semaine en cours, et les deux se servent
+là-dedans. Cinq requêtes au lieu de sept, **pour quatre semaines au lieu de
+trois** (`SEANCES_JOURS`). Les nouvelles, elles, partent toujours d'aujourd'hui :
+un cours annulé lundi dernier n'a plus rien à annoncer.
+
 ## « Aujourd'hui », en tête de la semaine
 
 Six onglets rangés par sujet, et la question qu'on se pose à 7 h 20 les traverse

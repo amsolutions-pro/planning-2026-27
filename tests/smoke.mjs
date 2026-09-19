@@ -181,6 +181,52 @@ async function main() {
     const badgesFaux = badges.filter((b) => b.avenir !== /^Dès le /.test(b.mot));
     verifier('« Dès le … » ne reste pas après coup', badgesFaux.length === 0, JSON.stringify(badgesFaux));
 
+    // --- La navigation par semaine ---
+    await page.click('#tab-college');
+    await page.waitForTimeout(200);
+    const semaine = () => page.locator('#wk-quoi').innerText();
+    verifier('la semaine affichée est celle en cours',
+      /cette semaine/i.test(await semaine()), await semaine());
+    verifier('on ne recule pas avant la semaine en cours',
+      await page.locator('#wk-prec').isDisabled());
+    verifier('le retour n’est proposé que si l’on s’est éloigné',
+      !(await page.locator('#wk-retour').isVisible()));
+
+    const parentDe = async () => (await semaine()).replace(/\s+/g, ' ').trim();
+    const p0 = await parentDe();
+    const q0 = await page.evaluate(() => window.ttState.week);
+    await page.click('#wk-suiv');
+    await page.waitForTimeout(200);
+    const p1 = await parentDe();
+    verifier('avancer d’une semaine change la semaine', p0 !== p1, p0 + ' / ' + p1);
+    // La quinzaine alterne ; le parent, lui, peut se répéter — c'est le cas de
+    // l'exception de septembre, deux semaines d'affilée chez Papa.
+    verifier('la quinzaine alterne d’une semaine à l’autre',
+      (await page.evaluate(() => window.ttState.week)) !== q0,
+      q0 + ' → ' + (await page.evaluate(() => window.ttState.week)));
+    verifier('la semaine affichée nomme un parent', /Papa|Mama/.test(p1), p1);
+    verifier('la semaine suivante porte ses dates', /\d+\s+\S+\s*→/.test(p1), p1);
+    verifier('le retour apparaît dès qu’on s’éloigne',
+      await page.locator('#wk-retour').isVisible());
+    verifier('le jour n’est plus marqué sur une autre semaine',
+      (await page.locator('#tt-grid .is-today').count()) === 0);
+
+    await page.click('#wk-retour');
+    await page.waitForTimeout(200);
+    verifier('« Cette semaine » ramène bien à la semaine en cours',
+      /cette semaine/i.test(await semaine()), await semaine());
+
+    // On ne garde pas la semaine d'une visite à l'autre : un coup d'œil
+    // dimanche à la suivante faisait rouvrir l'onglet lundi sur la mauvaise.
+    await page.click('#wk-suiv');
+    await page.waitForTimeout(150);
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForTimeout(400);
+    await page.click('#tab-college');
+    await page.waitForTimeout(200);
+    verifier('la page rouvre sur la semaine en cours',
+      /cette semaine/i.test(await semaine()), await semaine());
+
     // --- Le budget doit tomber juste ---
     await page.click('#tab-budget');
     await page.waitForTimeout(150);

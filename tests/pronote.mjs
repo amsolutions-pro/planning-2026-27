@@ -68,6 +68,10 @@ function fabriquerFichier() {
   // sans quoi le bloc « Aujourd'hui » d'un samedi retombe sur le décalque.
   const suivante = seances.map((c) => Object.assign({}, c, { date: cle(Date.parse(c.date) + 7 * MS_JOUR) }));
   seances.push.apply(seances, suivante);
+  // Une matière qui n'existe que la semaine prochaine : elle prouve que la
+  // navigation va bien chercher les séances de cette semaine-là.
+  seances.push({ date: jour(9), debut: '09:05', fin: '10:00', matiere: 'Latin la semaine prochaine',
+                 prof: 'Mme H', salle: 'H08', statut: '', controle: false });
 
   return {
     version: 1, empreinte: 'epreuve', mis_a_jour_le: new Date().toISOString(), chiffre: false,
@@ -172,6 +176,22 @@ async function main() {
     });
     verifier('la colonne du jeudi ne montre plus 17:45',
       blocJeudi === null || !blocJeudi.some((t) => t.includes('17:45')), JSON.stringify(blocJeudi));
+
+    // --- Avancer d'une semaine va chercher les séances de cette semaine-là ---
+    await page.click('#vue-grille');
+    await page.waitForTimeout(200);
+    verifier('la matière de la semaine prochaine n’est pas dans celle-ci',
+      !(await page.locator('#tt-grid').innerText()).includes('Latin la semaine prochaine'));
+    await page.click('#wk-suiv');
+    await page.waitForTimeout(300);
+    verifier('elle apparaît quand on avance d’une semaine',
+      (await page.locator('#tt-grid').innerText()).includes('Latin la semaine prochaine'),
+      (await page.locator('#wk-quoi').innerText()).replace(/\n/g, ' '));
+    verifier('la semaine prochaine vient aussi de PRONOTE',
+      (await page.locator('#tt-regime').innerText()).includes('PRONOTE'),
+      await page.locator('#tt-regime').innerText());
+    await page.click('#wk-retour');
+    await page.waitForTimeout(250);
 
     // --- « Aujourd'hui » lit PRONOTE, pas le décalque ---
     await page.click('#tab-semaine');
