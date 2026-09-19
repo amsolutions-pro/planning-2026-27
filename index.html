@@ -1920,10 +1920,29 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
     return posees && jours >= 3 ? grid : null;
   }
 
+  // Ce que les séances disent d'elles-mêmes. Les nouvelles ne couvrent que
+  // quinze jours ; la grille, elle, se promène sur cinq semaines. Sans cela,
+  // avancer de deux semaines montrait un emploi du temps d'où les annulations
+  // avaient disparu — alors que PRONOTE les avait données avec la séance.
+  function marquesDeLaGrille(grid) {
+    var par = {};
+    DAYS.forEach(function (jour) {
+      (grid[jour] || []).forEach(function (c, i) {
+        if (!c || c === 'occupe' || !c.pronote) return;
+        var liste = [];
+        if (c.controle) liste.push({ type: 'controle', raison: 'Contrôle prévu', matiere: c.matiere });
+        if (c.statut) liste.push({ type: 'cours', raison: c.statut, matiere: c.matiere,
+                                   annule: /annul/i.test(c.statut) });
+        if (liste.length) (par[jour] = par[jour] || {})[i] = liste;
+      });
+    });
+    return par;
+  }
+
   function perturbationsGrille(grid) {
     // La grille est dessinée avant que le bloc des actualités ne soit évalué :
     // `actu` est hissée mais encore vide. On la relit, on ne la suppose pas.
-    var par = {}, d = actu && actu.donnees;
+    var par = marquesDeLaGrille(grid), d = actu && actu.donnees;
     if (!d || !d.actualites) return par;
     var lundi = lundiAffiche(), jourDe = {};
     DAYS.forEach(function (jour, i) { jourDe[cleJour(lundi + i * MS_JOUR)] = jour; });
@@ -1937,7 +1956,15 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
       for (var i = 0; i < SLOTS.length; i++) if (SLOTS[i][0] === a.heure) creneau = i;
       if (creneau === -1) return;              // hors des créneaux du collège
       var cases = (par[jour] = par[jour] || {});
-      (cases[creneau] = cases[creneau] || []).push(a);
+      var liste = (cases[creneau] = cases[creneau] || []);
+      // La séance a déjà parlé pour ce créneau : la nouvelle ne redit pas la
+      // même chose, elle lui prête seulement son détail (professeur, salle).
+      var deja = liste.filter(function (x) { return x.type === a.type; })[0];
+      if (deja) {
+        if (!deja.detail && a.detail) deja.detail = a.detail;
+        return;
+      }
+      liste.push(a);
     });
     perturbationsDesMessages(par, grid, lundi, jourDe);
     return par;

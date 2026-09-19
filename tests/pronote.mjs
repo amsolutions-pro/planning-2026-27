@@ -190,8 +190,21 @@ async function main() {
     verifier('la semaine prochaine vient aussi de PRONOTE',
       (await page.locator('#tt-regime').innerText()).includes('PRONOTE'),
       await page.locator('#tt-regime').innerText());
+    // Les nouvelles ne couvrent que quinze jours : les marques de la semaine
+    // prochaine doivent venir des séances elles-mêmes, sinon la grille
+    // lointaine tait des annulations que PRONOTE a pourtant données.
+    const loin = page.locator('#tt-grid .lesson', { hasText: 'Histoire-géo' }).first();
+    const texteLoin = await loin.innerText();
+    verifier('la semaine prochaine garde ses marques',
+      /Contrôle/.test(texteLoin) && /annul/i.test(texteLoin), texteLoin.replace(/\n/g, ' | '));
     await page.click('#wk-retour');
     await page.waitForTimeout(250);
+
+    // Deux sources pour la même séance ne doivent pas doubler l'étiquette.
+    const doubles = await page.$$eval('#tt-grid .lesson', (els) => els
+      .map((el) => [...el.querySelectorAll('.lesson__flag')].map((f) => f.textContent.trim()))
+      .filter((f) => new Set(f).size !== f.length));
+    verifier('aucune étiquette n’est posée deux fois', doubles.length === 0, JSON.stringify(doubles));
 
     // --- « Aujourd'hui » lit PRONOTE, pas le décalque ---
     await page.click('#tab-semaine');
