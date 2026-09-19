@@ -629,10 +629,14 @@ Elle a besoin de [playwright](https://playwright.dev) et d'un Chromium :
 
 ```
 npm install playwright
-NODE_PATH=$PWD/node_modules CHROME_PATH=/chemin/vers/chromium node tests/smoke.mjs
+NODE_PATH=$PWD/node_modules node tests/smoke.mjs
 ```
 
-`CHROME_PATH` est facultatif si playwright a téléchargé son propre navigateur.
+`CHROMIUM_EPREUVE=/chemin/vers/chromium` sert à désigner un navigateur déjà
+présent ; sans elle, playwright prend le sien. L'action « Épreuves » lance les
+deux épreuves à chaque poussée — elle prévient, elle ne bloque pas le
+déploiement : la famille n'a pas à attendre une installation de navigateur pour
+voir ses actualités.
 C'est un outil d'atelier : rien de tout cela n'est publié, et la page garde son
 zéro dépendance JavaScript.
 

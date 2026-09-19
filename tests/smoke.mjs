@@ -26,7 +26,7 @@ try {
 }
 
 // Chromium fourni par l'image, quand la version de playwright ne le trouve pas seule.
-const CHROME = [process.env.CHROME_PATH, '/opt/pw-browsers/chromium'].find((c) => c && existsSync(c));
+const CHROME = [process.env.CHROMIUM_EPREUVE, '/opt/pw-browsers/chromium'].find((c) => c && existsSync(c));
 const RACINE = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.json': 'application/json; charset=utf-8',
