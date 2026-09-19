@@ -25,6 +25,13 @@ parent).
 Cinq semaines en avant. Le robot en publie quatre ; au delà, la grille retombe
 sur le décalque de septembre et le dit, comme elle le fait déjà.
 
+**Les marques suivent.** Elles venaient des nouvelles, qui ne couvrent que
+quinze jours : avancer de deux semaines montrait un emploi du temps d'où les
+annulations avaient disparu, alors que PRONOTE les avait données **avec la
+séance** (`statut`, `controle`). `marquesDeLaGrille` les lit là, et les
+nouvelles ne font plus que leur prêter leur détail — le professeur, la salle,
+le message d'où elles sortent.
+
 Rien n'est gardé d'une visite à l'autre : la page rouvre toujours sur la semaine
 en cours. Auparavant `planning.week` survivait dans le navigateur, si bien qu'un
 coup d'œil dimanche à la quinzaine suivante faisait rouvrir l'onglet lundi matin
