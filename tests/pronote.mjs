@@ -30,9 +30,15 @@ const MS_JOUR = 86400000;
 // sont lisibles par qui l'a écrit.
 const POISON = '<img src=x onerror="window.__perce=1">B12';
 
+// Le navigateur travaille en heure de Paris, ce script en UTC : passé minuit,
+// ce n'est pas le même jour, et la grille se décalait d'une semaine entière.
+// On refait donc exactement le calcul de la page (`lundiRepere`) : le lundi de
+// la semaine en cours à Paris, et le dimanche celui de la semaine qui commence.
 function lundiCourant() {
-  const d = new Date();
-  return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
+  const iso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
+  const ms = Date.parse(iso + 'T00:00:00Z');
+  const jour = new Date(ms).getUTCDay();
+  return ms - ((jour + 6) % 7) * MS_JOUR + (jour === 0 ? 7 * MS_JOUR : 0);
 }
 const cle = (ms) => new Date(ms).toISOString().slice(0, 10);
 
@@ -216,6 +222,32 @@ async function main() {
       !/emploi du temps de septembre/.test(carte), carte.replace(/\n/g, ' | '));
     verifier('il donne une heure de sortie', /collège\s+\d\d:\d\d\s*→\s*\d\d:\d\d/.test(carte),
       carte.replace(/\n/g, ' | '));
+
+    // --- « Remettre les vues » : une remise à zéro, pas un compteur ---
+    await page.click('#tab-actus');
+    await page.waitForTimeout(300);
+    const remettre = page.locator('#actu-vus');
+    verifier('rien à remettre au départ', !(await remettre.isVisible()));
+
+    await page.locator('#actu-grid .coche input').first().check();
+    await page.waitForTimeout(250);
+    verifier('rien ne s’offre à remettre depuis « L’important »',
+      !(await remettre.isVisible()),
+      'vue ' + (await page.evaluate(() => window.actu.vue)));
+
+    await page.click('#actu-vue-tout');
+    await page.waitForTimeout(250);
+    verifier('le bouton paraît dans « Tout », où l’on voit ce qu’il remettrait',
+      await remettre.isVisible());
+    verifier('il ne porte plus de compte',
+      !/\d/.test(await remettre.innerText()), await remettre.innerText());
+
+    await remettre.click();
+    await page.waitForTimeout(250);
+    verifier('une fois tout remis, il disparaît', !(await remettre.isVisible()));
+    verifier('et plus aucune nouvelle n’est rangée',
+      (await page.evaluate(() => Object.keys(window.actu.vus).length)) === 0);
+    await page.click('#actu-vue-important');
 
     verifier('aucune erreur de script', erreurs.length === 0, erreurs.slice(0, 5).join(' | '));
   } finally {

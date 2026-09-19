@@ -1301,8 +1301,9 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
           <button class="btn" type="button" id="actu-reessayer" onclick="reessayerEnvois()" hidden>
             <svg class="icon"><use href="#i-alert"></use></svg> Réessayer l’envoi
           </button>
-          <button class="btn" type="button" id="actu-vus" onclick="oublierVusActus()" hidden>
-            <svg class="icon"><use href="#i-swap"></use></svg> <span></span>
+          <button class="btn" type="button" id="actu-vus" onclick="oublierVusActus()" hidden
+                  title="Rétablit toutes les nouvelles rangées sur cet appareil, pour les deux enfants.">
+            <svg class="icon"><use href="#i-swap"></use></svg> Remettre les vues
           </button>
           <button class="btn" type="button" id="actu-oublier" onclick="oublierMotDePasseActus()" hidden>
             <svg class="icon"><use href="#i-lock"></use></svg> Oublier le mot de passe
@@ -2156,7 +2157,7 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
 
     var html = '<thead><tr><th class="tt__hour"></th>';
     DAYS.forEach(function (day) {
-      html += '<th class="' + (classeJour(day) ? 'is-today' : '') + '"' + attrJour(day, decale)
+      html += '<th class="' + (classeJour(day, decale) ? 'is-today' : '') + '"' + attrJour(day, decale)
         + '><span class="tt__day"><b' + libelleJour(day, decale) + '>'
         + day + '</b><span>' + bornes[day] + '</span></span></th>';
     });
@@ -2170,7 +2171,7 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
       html += '<tr><th class="tt__hour"><b>' + slot[0] + '</b>' + slot[1] + '</th>';
       DAYS.forEach(function (day) {
         var cell = grid[day][i];
-        var jourJ = classeJour(day) ? ' class="col-today"' : '';
+        var jourJ = classeJour(day, decale) ? ' class="col-today"' : '';
         var m = marquesDuCreneau((perturbations[day] || {})[i]);
         var drapeau = drapeauxDe(m);
         var annule = m.annule;
@@ -2250,7 +2251,7 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
             + (m.detail ? '<span>' + echap(m.detail) + '</span>' : '')
             + noteConflit(m) + '</span></li>';
         });
-        lhtml += '<div class="ttl__day' + classeJour(day) + '"' + attrJour(day, decale) + '>'
+        lhtml += '<div class="ttl__day' + classeJour(day, decale) + '"' + attrJour(day, decale) + '>'
           + '<div class="ttl__head"><b' + libelleJour(day, decale) + '>' + day + '</b>'
           + '<span>' + bornes[day] + '</span></div>'
           + (cours ? '<ul>' + cours + '</ul>' : '<p class="day__empty">Pas de cours</p>')
@@ -3323,10 +3324,10 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
       });
 
       html += '<div class="ovj">'
-        + '<div class="ovv__title' + classeJour(jour) + '"' + attrJour(jour, decale)
+        + '<div class="ovv__title' + classeJour(jour, decale) + '"' + attrJour(jour, decale)
         + ' style="grid-column:' + col + ';grid-row:1"><b' + libelleJour(jour, decale) + '>' + jour + '</b>'
         + '<span>' + (jour === 'Samedi' ? 'sans collège' : '') + '</span></div>'
-        + '<div class="ovv__body' + classeJour(jour)
+        + '<div class="ovv__body' + classeJour(jour, decale)
         + '" style="grid-column:' + col + ';grid-row:2;height:' + haut_px + 'px">'
         + '<div class="ovv__rail ovv__rail--local">' + rail + '</div>'
         + '<div class="ovv__plot">' + blocs + '</div></div>'
@@ -3366,7 +3367,13 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
   // plus celle d'aujourd'hui, mais le même jour d'une autre semaine.
   function semaineDecalee() { return ttState.decalage !== 0; }
 
-  function classeJour(jour) { return jour === jourRepere() ? ' is-today' : ''; }
+  // `decale` : vrai quand la grille montre une autre semaine que celle du
+  // repère. Le surlignage l'ignorait — on avançait d'une semaine et la colonne
+  // du lundi restait marquée « aujourd'hui », sur une semaine où l'on n'est pas.
+  // `attrJour` et `libelleJour` s'en gardaient déjà ; la classe, non.
+  function classeJour(jour, decale) {
+    return (!decale && jour === jourRepere()) ? ' is-today' : '';
+  }
   function attrJour(jour, decale) {
     return (jour === jourRepere() && !estDimanche() && !decale) ? ' aria-current="date"' : '';
   }
@@ -3789,6 +3796,22 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
     montrerActus(actu.donnees);
   }
 
+  // « Remettre les vues » est une remise à zéro, pas une tâche en attente.
+  // Il portait un compte — qui ne pouvait jamais tomber à zéro : la marque d'une
+  // nouvelle vit tant que PRONOTE la publie, et l'on en range de nouvelles
+  // chaque semaine. Un compteur qu'aucun usage normal ne peut éteindre se lit
+  // comme un reproche.
+  //
+  // Il ne s'affiche donc plus que dans « Tout », la seule vue où les nouvelles
+  // rangées sont à l'écran, avec leur étiquette verte et leur propre coche.
+  // Ailleurs, il proposait de rétablir ce qu'on n'avait pas sous les yeux.
+  function majBoutonVus() {
+    var bouton = document.getElementById('actu-vus');
+    if (!bouton) return;
+    var liste = (actu.donnees || {}).actualites || [];
+    bouton.hidden = actu.vue !== 'tout' || !liste.some(estVu);
+  }
+
   function oublierVusActus() {
     if (!actu.donnees) return;
     actu.vus = {};
@@ -4002,10 +4025,6 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
     badge.textContent = importants;
     badge.hidden = importants === 0;
 
-    var nVus = (d.actualites || []).filter(estVu).length;
-    var boutonVus = document.getElementById('actu-vus');
-    boutonVus.hidden = nVus === 0;
-    boutonVus.querySelector('span').textContent = 'Remettre ' + nVus + (nVus > 1 ? ' vues' : ' vue');
 
     document.getElementById('actu-oublier').hidden = !(actu.env && actu.env.chiffre);
     document.getElementById('actu-pied-texte').innerHTML = 'Données PRONOTE du <b>' + echap(dateHeureFr(d.mis_a_jour_le))
@@ -4230,6 +4249,8 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
       '<span class="stat"><b>' + nImp + '</b> important' + (nImp > 1 ? 's' : '') + '</span>'
       + '<span class="stat"><b>' + nSco + '</b> côté travail</span>'
       + (nNouv ? '<span class="stat"><b>' + nNouv + '</b> depuis votre dernière visite</span>' : '');
+
+    majBoutonVus();
   }
 
   (function restore() {

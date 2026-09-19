@@ -446,6 +446,30 @@ sans activité cesse d'être grisée quand elle porte une perturbation. La semai
 est dessinée avant que le fichier chiffré ne soit lu : elle est redessinée quand
 il arrive.
 
+### « Remettre les vues » n'est pas un compteur
+
+Le bouton portait un nombre — « Remettre 23 vues » — et ce nombre ne pouvait
+**jamais tomber à zéro**. La marque d'une nouvelle vit tant que PRONOTE la
+publie, et l'on en range de nouvelles chaque semaine : le compte remontait
+toujours. Un compteur qu'aucun usage normal n'éteint se lit comme un reproche,
+et « Actualiser » n'y changeait rien — il relance le robot, il ne touche pas aux
+marques de l'appareil.
+
+Deux corrections, et c'est la même :
+
+- **le nombre disparaît.** Ce bouton est une remise à zéro, pas une tâche en
+  attente ;
+- **il ne s'affiche plus que dans « Tout »**, la seule vue où les nouvelles
+  rangées sont à l'écran, avec leur étiquette verte et leur propre coche.
+  Ailleurs — « L'important », « + Le travail » — il proposait de rétablir des
+  nouvelles qu'on n'avait précisément pas sous les yeux.
+
+Rien ne s'accumule pour autant : une marque est oubliée dès que PRONOTE cesse de
+publier la nouvelle (après `ACTU_VUS_JOURS`, le temps qu'une liste qui se
+réordonne ne la fasse pas disparaître par erreur), et celle d'une communication
+part dès que PRONOTE la donne pour lue. Pour en reprendre une seule, sa coche
+est là, dans « Tout ».
+
 ### Le bouton « Vu », et le « lu » sur PRONOTE
 
 Chaque nouvelle importante ou scolaire porte un bouton **Vu** : elle sort alors
