@@ -12,6 +12,19 @@ navigateur, donc propres à chaque appareil. Les créneaux de musique sont
 arrêtés : solfège mercredi 16h30, flûte mercredi 18h00 → 18h20, piano jeudi
 18h20 → 18h40, puis théâtre jeudi 19h15 → 21h30.
 
+## Le samedi est sorti de la semaine
+
+Annie a arrêté la danse arménienne, et le créneau de ping-pong du samedi est
+écarté — Narek ne le prendra pas. Le samedi n'a donc plus ni cours ni activité.
+
+Il n'est pas retiré du code : `joursAffiches` le laisse tomber **tant qu'il ne
+porte rien**, et il revient de lui-même si un créneau y est remis ou si PRONOTE
+y déplace une séance. Les journées superposées comptent leurs colonnes de la
+même façon (`--cols`), au lieu des six qu'elles réservaient.
+
+La danse sort aussi du budget : Annie passe à ~ 670 €, le total à ~ 1 335 €, et
+la répartition se recalcule (sports 50 %, musique 34 %, théâtre 16 %).
+
 L'onglet « Collège » propose deux vues : la grille des cours, et « Journées
 superposées », où les jours sont en colonnes et le temps en vertical. L'échelle
 ne couvre que la fin de journée (elle démarre une heure avant la première sortie
@@ -20,6 +33,28 @@ battement entre les deux.
 
 Les âges sont calculés à partir des dates de naissance inscrites dans la
 constante `ENFANTS`, afin de rester justes au fil de l'année.
+
+## Ce qui est daté s'efface tout seul
+
+Une annonce datée écrite en dur reste à l'écran des mois après coup : la réunion
+du 10 septembre s'annonçait encore à la Toussaint, et une page qui a l'air à jour
+ment d'autant mieux.
+
+Un bloc qui porte `data-jusqu="AAAA-MM-JJ"` disparaît donc le lendemain de ce
+jour, `data-des` ne le montre qu'à partir de celui-là (`daterLesBlocs`). La date
+reste dans le HTML, lisible : c'est elle qu'on corrige, pas du code. Deux emplois
+aujourd'hui — la réunion de rentrée d'Annie, et le bandeau de l'aménagement de
+septembre, qui s'efface le 2 octobre avec sa frise, la liste des semaines prenant
+le relais.
+
+Une activité peut de même porter une date d'entrée en vigueur (`des`) : son
+étiquette annonce « Dès le 23 sept. » tant que le jour n'est pas venu, puis
+« Confirmé ». « Dès le 12 sept. » ne renseignait plus personne en octobre.
+
+Enfin, les trois chiffres en tête de la semaine type — nombre d'activités,
+créneaux à confirmer, jours libres — sont **calculés**. « Mardi libre » était
+écrit en dur : un cours annulé le mardi, et l'en-tête affirmait le contraire de
+la grille juste en dessous.
 
 Le jour en cours est signalé dans les trois vues (semaine type, grille des cours
 et sa version en liste, journées superposées) et la page s'y place à l'ouverture
@@ -572,7 +607,34 @@ Index Éducation peut casser la collecte jusqu'à une mise à jour de la
 bibliothèque. Chaque source est lue indépendamment : si l'une échoue, les
 autres s'affichent et l'erreur est notée au bas de l'onglet (`erreurs` du JSON).
 L'action échoue — et GitHub prévient par courriel — si la connexion est refusée.
-Tests : `python3 -m unittest discover pronote`.
+
+## Tests
+
+Deux épreuves, à lancer avant toute livraison :
+
+```
+python3 -m unittest discover pronote        # la collecte PRONOTE
+node tests/smoke.mjs                        # la page, dans un vrai navigateur
+```
+
+La seconde sert le dossier tel qu'il sera publié, ouvre `index.html` dans
+Chromium et vérifie ce qu'aucun test Python ne voit : que la page se dessine sans
+la moindre erreur de script, que chaque onglet s'ouvre, que la semaine montre
+exactement les jours qu'elle dit montrer, que les blocs datés sont cachés ou
+montrés à l'heure, que le budget tombe juste (la somme des postes, les parts, les
+barres), que tout ce qui se clique porte un nom, et qu'à 390 px de large rien ne
+déborde sur le côté.
+
+Elle a besoin de [playwright](https://playwright.dev) et d'un Chromium :
+
+```
+npm install playwright
+NODE_PATH=$PWD/node_modules CHROME_PATH=/chemin/vers/chromium node tests/smoke.mjs
+```
+
+`CHROME_PATH` est facultatif si playwright a téléchargé son propre navigateur.
+C'est un outil d'atelier : rien de tout cela n'est publié, et la page garde son
+zéro dépendance JavaScript.
 
 ## Fichier
 
@@ -583,6 +645,7 @@ Tests : `python3 -m unittest discover pronote`.
 - `pronote/` — collecte PRONOTE : `fetch.py` (script), `configurer.py`
   (préparation des secrets, en local), `exemple.py` (données fictives),
   `test_fetch.py`, et `actualites.json` produit par l'action.
+- `tests/smoke.mjs` — épreuve de la page dans un vrai navigateur (voir « Tests »).
 
 ## Déploiement GitHub Pages
 
