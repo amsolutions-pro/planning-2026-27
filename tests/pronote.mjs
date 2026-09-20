@@ -66,6 +66,12 @@ function fabriquerFichier() {
     { type: 'controle', niveau: 'scolaire', titre: 'Contrôle — Histoire-géo',
       detail: 'Évaluation nationale', matiere: 'Histoire-géo', date: jour(3), heure: '13:45',
       horizon: 'avenir', id: 'controle~aaaa000000000002', enfants: ['narek'], signale_le: new Date().toISOString() },
+    // Une communication que PRONOTE donne déjà pour lue — lue ailleurs, pas par
+    // nous. On doit pouvoir la ranger ici : c'est un geste local.
+    { type: 'message', niveau: 'info', raison: 'Message lu', lu: true,
+      titre: 'Justification d’absence — vendredi 11 septembre, 14h40-15h55',
+      detail: 'Vie scolaire', date: jour(0), horizon: 'recent',
+      id: 'message~bbbb000000000001', enfants: ['narek'], signale_le: new Date().toISOString() },
     { type: 'cours', niveau: 'important', raison: 'Cours annulé', titre: 'Cours annulé — Musique',
       detail: 'M. G · G07', matiere: 'Musique', date: jour(3), heure: '16:50',
       horizon: 'avenir', id: 'cours~aaaa000000000003', enfants: ['narek'], signale_le: new Date().toISOString() },
@@ -223,30 +229,87 @@ async function main() {
     verifier('il donne une heure de sortie', /collège\s+\d\d:\d\d\s*→\s*\d\d:\d\d/.test(carte),
       carte.replace(/\n/g, ' | '));
 
-    // --- « Remettre les vues » : une remise à zéro, pas un compteur ---
+    // --- « Remettre les vues », et « Actualiser » qui vaut validation ---
+    // Tout se passe dans « Tout » : ailleurs, cocher une nouvelle la fait sortir
+    // de la liste, et la case suivante prend sa place sous le curseur.
     await page.click('#tab-actus');
     await page.waitForTimeout(300);
-    const remettre = page.locator('#actu-vus');
-    verifier('rien à remettre au départ', !(await remettre.isVisible()));
-
-    await page.locator('#actu-grid .coche input').first().check();
-    await page.waitForTimeout(250);
-    // Il doit rester à portée depuis n'importe quelle vue : on doit pouvoir
-    // tout remettre d'où l'on est, sans attendre un passage du robot.
-    verifier('le bouton paraît dès qu’une nouvelle est rangée',
-      await remettre.isVisible(), 'vue ' + (await page.evaluate(() => window.actu.vue)));
-    verifier('il ne porte plus de compte',
-      !/\d/.test(await remettre.innerText()), await remettre.innerText());
-
     await page.click('#actu-vue-tout');
     await page.waitForTimeout(250);
-    verifier('il est là aussi dans « Tout »', await remettre.isVisible());
+    const remettre = page.locator('#actu-vus');
+    // Sélecteur par attribut : l'identifiant contient un « ~ », qui en CSS est le
+    // combinateur de frères et casserait « #coche-cours~… ».
+    const coche = (id) => page.locator('[id="coche-' + id + '"]');
+    const propre = () => page.evaluate(() => {
+      window.actu.vus = {}; window.actu.classes = {};
+      localStorage.removeItem('planning.actus.vus');
+      localStorage.removeItem('planning.actus.classes');
+      window.montrerActus(window.actu.donnees);
+    });
+
+    await propre();
+    await page.waitForTimeout(200);
+    verifier('rien à remettre au départ', !(await remettre.isVisible()));
+
+    await coche('cours~aaaa000000000001').click();
+    await page.waitForTimeout(250);
+    verifier('le bouton paraît dès qu’une nouvelle est rangée', await remettre.isVisible());
+    verifier('il ne porte plus de compte',
+      !/\d/.test(await remettre.innerText()), await remettre.innerText());
 
     await remettre.click();
     await page.waitForTimeout(250);
     verifier('une fois tout remis, il disparaît', !(await remettre.isVisible()));
     verifier('et plus aucune nouvelle n’est rangée',
       (await page.evaluate(() => Object.keys(window.actu.vus).length)) === 0);
+
+    // « Actualiser » vaut validation : ce qui est vu passe dans les classées, et
+    // ne revient plus par le bouton — seulement en décochant, une par une.
+    await coche('cours~aaaa000000000001').click();
+    await page.waitForTimeout(250);
+    verifier('une vue attend d’être validée',
+      (await page.evaluate(() => Object.keys(window.actu.vus).length)) === 1);
+
+    await page.click('#actu-actualiser');
+    await page.waitForTimeout(1500);
+    const apres = await page.evaluate(() => ({
+      vus: Object.keys(window.actu.vus).length,
+      classes: Object.keys(window.actu.classes).length,
+    }));
+    verifier('la pile des vues est retombée à zéro', apres.vus === 0, JSON.stringify(apres));
+    verifier('la nouvelle est passée dans les classées', apres.classes === 1, JSON.stringify(apres));
+    verifier('plus rien à remettre en bloc', !(await remettre.isVisible()));
+    verifier('elle reste rangée à l’écran',
+      (await page.locator('#actu-grid .actu--vu').count()) >= 1);
+    verifier('on peut encore la reprendre une par une',
+      await coche('cours~aaaa000000000001').isChecked());
+    await coche('cours~aaaa000000000001').click();
+    await page.waitForTimeout(250);
+    verifier('décocher la reprend bien des classées',
+      (await page.evaluate(() => Object.keys(window.actu.classes).length)) === 0);
+
+    // --- Une communication déjà lue chez PRONOTE doit rester cochable ---
+    await page.evaluate(() => {
+      window.actu.vus = {}; window.actu.classes = {};
+      localStorage.removeItem('planning.actus.vus');
+      localStorage.removeItem('planning.actus.classes');
+      window.montrerActus(window.actu.donnees);
+    });
+    await page.click('#actu-vue-tout');
+    await page.waitForTimeout(250);
+    const dejaLue = page.locator('#actu-grid .actu', { hasText: 'Justification d’absence' }).first();
+    verifier('la communication déjà lue est à l’écran', await dejaLue.count() > 0);
+    // `check()` attendrait que la case reste cochée : on clique, puis on
+    // regarde — c'est le défaut qu'on veut voir décrit, pas une exception.
+    await dejaLue.locator('.coche input').click();
+    await page.waitForTimeout(300);
+    verifier('cocher « Vu » sur une communication déjà lue tient',
+      await dejaLue.locator('.coche input').isChecked(),
+      'la coche est revenue à zéro toute seule');
+    if (await dejaLue.locator('.coche input').isChecked()) {
+      await dejaLue.locator('.coche input').click();
+      await page.waitForTimeout(200);
+    }
     await page.click('#actu-vue-important');
 
     verifier('aucune erreur de script', erreurs.length === 0, erreurs.slice(0, 5).join(' | '));
