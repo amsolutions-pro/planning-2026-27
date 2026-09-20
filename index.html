@@ -1655,7 +1655,9 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
     'Anglais LV1': ['anglais', 'lv1'],
     'Espagnol LV2': ['espagnol'],
     'Allemand LV2': ['allemand'],
-    'SVT': ['svt', 'sciences de la vie'],
+    // PRONOTE écrit « SCIENCES VIE & TERRE », « SCIENCES DE LA VIE ET DE LA
+    // TERRE »… : on reconnaît le début, pas la forme exacte.
+    'SVT': ['svt', 'sciences de la vie', 'sciences vie', 'vie et terre', 'vie & terre'],
     'Physique-chimie': ['physique', 'chimie', 'physique-chimie'],
     'Technologie': ['techno', 'technologie'],
     'Histoire-géo': ['histoire', 'geo', 'geographie', 'histoire-geo'],
@@ -1689,6 +1691,40 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
     // Vie de classe — gris
     'HVC': 'vie'
   };
+
+  // PRONOTE n'écrit pas les matières comme le décalque : « MATHEMATIQUES »,
+  // « HISTOIRE-GEOGRAPHIE », « EDUCATION MUSICALE »… Chercher le libellé tel
+  // quel dans la table ne trouvait donc rien dès que la grille venait de
+  // PRONOTE, et toutes les cases retombaient sur la même couleur — la couleur
+  // disparaissait au rechargement, quand le fichier arrivait.
+  //
+  // `ALIAS_MATIERE` dit déjà, pour les messages, à quels mots se reconnaît une
+  // matière. On s'en sert ici aussi, plutôt que d'entretenir deux tables.
+  var DOMAINE_PAR_MOT = (function () {
+    var t = {};
+    Object.keys(ALIAS_MATIERE).forEach(function (nom) {
+      var domaine = FAMILLES[nom];
+      if (!domaine) return;
+      t[sansAccents(nom)] = domaine;
+      ALIAS_MATIERE[nom].forEach(function (mot) { t[mot] = domaine; });
+    });
+    return t;
+  })();
+
+  function domaineDe(matiere) {
+    if (FAMILLES[matiere]) return FAMILLES[matiere];
+    var m = sansAccents(matiere);
+    if (DOMAINE_PAR_MOT[m]) return DOMAINE_PAR_MOT[m];
+    // Les libellés de PRONOTE sont plus longs que nos mots : on retient le plus
+    // long qui s'y trouve, pour qu'« espagnol » l'emporte sur « eps ».
+    var trouve = '', domaine = '';
+    Object.keys(DOMAINE_PAR_MOT).forEach(function (mot) {
+      if (mot.length > trouve.length && m.indexOf(mot) !== -1) {
+        trouve = mot; domaine = DOMAINE_PAR_MOT[mot];
+      }
+    });
+    return domaine || 'vie';
+  }
 
   var PUPILS = {
     narek: {
@@ -2202,7 +2238,7 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
             : '') + '</td>';
           return;
         }
-        var famille = FAMILLES[cell.matiere] || 'vie';
+        var famille = domaineDe(cell.matiere);
         var plage = cell.span > 1 ? SLOTS[i][0] + ' – ' + SLOTS[i + cell.span - 1][1] : '';
         html += '<td' + jourJ + (cell.span > 1 ? ' rowspan="' + cell.span + '"' : '') + '>'
           + '<div class="lesson m-' + famille + marque + (annule ? ' lesson--annule' : '') + '">'
@@ -2234,7 +2270,7 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
         var cours = '', vus = perturbations[day] || {};
         grid[day].forEach(function (cell, i) {
           if (!cell || cell === 'occupe') return;
-          var famille = FAMILLES[cell.matiere] || 'vie';
+          var famille = domaineDe(cell.matiere);
           var fin = SLOTS[i + (cell.span || 1) - 1][1];
           // Sous 720 px la grille devient cette liste : elle doit dire la même
           // chose qu'elle. Sans cela, un cours annulé était invisible sur

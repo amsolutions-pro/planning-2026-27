@@ -902,7 +902,19 @@ l'identité ne tient jamais à la couleur seule — c'est le nom de la matière 
 est peint. Contraste du texte mesuré dans le navigateur, sur le fond réel de la
 case : 4,55 à 5,41 en thème clair, 4,58 à 6,21 en sombre.
 
-Deux épreuves le gardent : toute matière de la grille doit avoir son domaine
+### PRONOTE n'écrit pas les matières comme le décalque
+
+« MATHEMATIQUES », « HISTOIRE-GEOGRAPHIE », « SCIENCES VIE & TERRE », « EDUCATION
+MUSICALE »… Chercher ces libellés tels quels dans la table des domaines ne
+trouvait rien : **la couleur disparaissait au rechargement**, au moment précis où
+le fichier arrivait et où la grille de PRONOTE remplaçait le décalque.
+
+`domaineDe` reconnaît donc la matière à ses mots, en s'appuyant sur
+`ALIAS_MATIERE` — la table que les messages utilisent déjà — plutôt que d'en
+entretenir une seconde. Le mot le plus long l'emporte, pour qu'« espagnol »
+gagne sur « eps ».
+
+Trois épreuves le gardent : toute matière de la grille doit avoir son domaine
 (une matière ajoutée sans être rattachée fait échouer les tests), deux domaines
 ne peuvent pas porter la même teinte, et le nom de chaque matière doit se lire
 sur sa case.

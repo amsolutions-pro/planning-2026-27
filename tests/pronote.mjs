@@ -48,23 +48,23 @@ function fabriquerFichier() {
   // Quatre jours garnis : au-dessus du garde-fou des trois jours, donc la page
   // doit préférer cette grille-là au décalque de septembre.
   const seances = [
-    { date: jour(0), debut: '08:10', fin: '09:05', matiere: 'Mathématiques', prof: 'Mme A', salle: 'A01', statut: '', controle: false },
-    { date: jour(0), debut: '16:50', fin: '17:45', matiere: 'Anglais', prof: 'M. B', salle: POISON, statut: '', controle: false },
-    { date: jour(1), debut: '10:20', fin: '11:15', matiere: 'Français', prof: 'Mme C', salle: 'C03', statut: '', controle: false },
-    { date: jour(2), debut: '08:10', fin: '09:05', matiere: 'SVT', prof: 'M. D', salle: 'D04', statut: '', controle: false },
+    { date: jour(0), debut: '08:10', fin: '09:05', matiere: 'MATHEMATIQUES', prof: 'Mme A', salle: 'A01', statut: '', controle: false },
+    { date: jour(0), debut: '16:50', fin: '17:45', matiere: 'ANGLAIS LV1', prof: 'M. B', salle: POISON, statut: '', controle: false },
+    { date: jour(1), debut: '10:20', fin: '11:15', matiere: 'FRANCAIS', prof: 'Mme C', salle: 'C03', statut: '', controle: false },
+    { date: jour(2), debut: '08:10', fin: '09:05', matiere: 'SCIENCES VIE & TERRE', prof: 'M. D', salle: 'D04', statut: '', controle: false },
     // Jeudi : un contrôle annoncé ET la séance annulée, au même créneau. C'est
     // le cas qui rendait la grille muette sur l'un des deux.
-    { date: jour(3), debut: '13:45', fin: '14:40', matiere: 'Histoire-géo', prof: 'M. E', salle: 'E05', statut: 'Cours annulé', controle: true },
+    { date: jour(3), debut: '13:45', fin: '14:40', matiere: 'HISTOIRE-GEOGRAPHIE', prof: 'M. E', salle: 'E05', statut: 'Cours annulé', controle: true },
     // Et la dernière heure du jeudi saute aussi : la sortie doit avancer.
-    { date: jour(3), debut: '15:55', fin: '16:50', matiere: 'Technologie', prof: 'M. F', salle: 'F06', statut: '', controle: false },
-    { date: jour(3), debut: '16:50', fin: '17:45', matiere: 'Musique', prof: 'M. G', salle: 'G07', statut: 'Cours annulé', controle: false },
+    { date: jour(3), debut: '15:55', fin: '16:50', matiere: 'TECHNOLOGIE', prof: 'M. F', salle: 'F06', statut: '', controle: false },
+    { date: jour(3), debut: '16:50', fin: '17:45', matiere: 'EDUCATION MUSICALE', prof: 'M. G', salle: 'G07', statut: 'Cours annulé', controle: false },
   ];
   const actualites = [
-    { type: 'cours', niveau: 'important', raison: 'Cours annulé', titre: 'Cours annulé — Histoire-géo',
-      detail: 'M. E · E05', matiere: 'Histoire-géo', date: jour(3), heure: '13:45',
+    { type: 'cours', niveau: 'important', raison: 'Cours annulé', titre: 'Cours annulé — HISTOIRE-GEOGRAPHIE',
+      detail: 'M. E · E05', matiere: 'HISTOIRE-GEOGRAPHIE', date: jour(3), heure: '13:45',
       horizon: 'avenir', id: 'cours~aaaa000000000001', enfants: ['narek'], signale_le: new Date().toISOString() },
-    { type: 'controle', niveau: 'scolaire', titre: 'Contrôle — Histoire-géo',
-      detail: 'Évaluation nationale', matiere: 'Histoire-géo', date: jour(3), heure: '13:45',
+    { type: 'controle', niveau: 'scolaire', titre: 'Contrôle — HISTOIRE-GEOGRAPHIE',
+      detail: 'Évaluation nationale', matiere: 'HISTOIRE-GEOGRAPHIE', date: jour(3), heure: '13:45',
       horizon: 'avenir', id: 'controle~aaaa000000000002', enfants: ['narek'], signale_le: new Date().toISOString() },
     // Une communication que PRONOTE donne déjà pour lue — lue ailleurs, pas par
     // nous. On doit pouvoir la ranger ici : c'est un geste local.
@@ -73,7 +73,7 @@ function fabriquerFichier() {
       detail: 'Vie scolaire', date: jour(0), horizon: 'recent',
       id: 'message~bbbb000000000001', enfants: ['narek'], signale_le: new Date().toISOString() },
     { type: 'cours', niveau: 'important', raison: 'Cours annulé', titre: 'Cours annulé — Musique',
-      detail: 'M. G · G07', matiere: 'Musique', date: jour(3), heure: '16:50',
+      detail: 'M. G · G07', matiere: 'EDUCATION MUSICALE', date: jour(3), heure: '16:50',
       horizon: 'avenir', id: 'cours~aaaa000000000003', enfants: ['narek'], signale_le: new Date().toISOString() },
   ];
   // Le robot publie trois semaines : la semaine qui vient doit l'être aussi,
@@ -82,7 +82,7 @@ function fabriquerFichier() {
   seances.push.apply(seances, suivante);
   // Une matière qui n'existe que la semaine prochaine : elle prouve que la
   // navigation va bien chercher les séances de cette semaine-là.
-  seances.push({ date: jour(9), debut: '09:05', fin: '10:00', matiere: 'Latin la semaine prochaine',
+  seances.push({ date: jour(9), debut: '09:05', fin: '10:00', matiere: 'LCA LATIN',
                  prof: 'Mme H', salle: 'H08', statut: '', controle: false });
 
   return {
@@ -154,7 +154,7 @@ async function main() {
       'texte absent de la grille');
 
     // --- Contrôle et annulation au même créneau : les deux se lisent ---
-    const caseJeudi = page.locator('#tt-grid .lesson', { hasText: 'Histoire-géo' }).first();
+    const caseJeudi = page.locator('#tt-grid .lesson', { hasText: 'HISTOIRE-GEOGRAPHIE' }).first();
     const texteCase = await caseJeudi.innerText();
     verifier('le contrôle est annoncé sur la case', /Contrôle/.test(texteCase), texteCase.replace(/\n/g, ' | '));
     verifier('l’annulation est annoncée sur la même case', /annul/i.test(texteCase), texteCase.replace(/\n/g, ' | '));
@@ -193,11 +193,11 @@ async function main() {
     await page.click('#vue-grille');
     await page.waitForTimeout(200);
     verifier('la matière de la semaine prochaine n’est pas dans celle-ci',
-      !(await page.locator('#tt-grid').innerText()).includes('Latin la semaine prochaine'));
+      !(await page.locator('#tt-grid').innerText()).includes('LCA LATIN'));
     await page.click('#wk-suiv');
     await page.waitForTimeout(300);
     verifier('elle apparaît quand on avance d’une semaine',
-      (await page.locator('#tt-grid').innerText()).includes('Latin la semaine prochaine'),
+      (await page.locator('#tt-grid').innerText()).includes('LCA LATIN'),
       (await page.locator('#wk-quoi').innerText()).replace(/\n/g, ' '));
     verifier('la semaine prochaine vient aussi de PRONOTE',
       (await page.locator('#tt-regime').innerText()).includes('PRONOTE'),
@@ -205,8 +205,20 @@ async function main() {
     // Les nouvelles ne couvrent que quinze jours : les marques de la semaine
     // prochaine doivent venir des séances elles-mêmes, sinon la grille
     // lointaine tait des annulations que PRONOTE a pourtant données.
-    const loin = page.locator('#tt-grid .lesson', { hasText: 'Histoire-géo' }).first();
+    const loin = page.locator('#tt-grid .lesson', { hasText: 'HISTOIRE-GEOGRAPHIE' }).first();
     const texteLoin = await loin.innerText();
+    // La grille vient de PRONOTE : ses libellés doivent quand même trouver leur
+    // domaine, sinon la couleur des matières disparaît au rechargement.
+    const sansDomaine = await page.evaluate(() => [...document.querySelectorAll('#tt-grid .lesson')]
+      .filter((l) => /(^| )m-vie( |$)/.test(l.className))
+      .map((l) => l.querySelector('b') && l.querySelector('b').textContent.trim()));
+    verifier('les libellés de PRONOTE trouvent leur domaine',
+      sansDomaine.length === 0, sansDomaine.join(' · '));
+    const domaines = await page.evaluate(() => new Set([...document.querySelectorAll('#tt-grid .lesson')]
+      .map((l) => (l.className.match(/m-\w+/) || [''])[0])).size);
+    verifier('plusieurs domaines se lisent sur la grille PRONOTE',
+      domaines >= 3, String(domaines));
+
     verifier('la semaine prochaine garde ses marques',
       /Contrôle/.test(texteLoin) && /annul/i.test(texteLoin), texteLoin.replace(/\n/g, ' | '));
     await page.click('#wk-retour');
