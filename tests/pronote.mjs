@@ -231,16 +231,16 @@ async function main() {
 
     await page.locator('#actu-grid .coche input').first().check();
     await page.waitForTimeout(250);
-    verifier('rien ne s’offre à remettre depuis « L’important »',
-      !(await remettre.isVisible()),
-      'vue ' + (await page.evaluate(() => window.actu.vue)));
+    // Il doit rester à portée depuis n'importe quelle vue : on doit pouvoir
+    // tout remettre d'où l'on est, sans attendre un passage du robot.
+    verifier('le bouton paraît dès qu’une nouvelle est rangée',
+      await remettre.isVisible(), 'vue ' + (await page.evaluate(() => window.actu.vue)));
+    verifier('il ne porte plus de compte',
+      !/\d/.test(await remettre.innerText()), await remettre.innerText());
 
     await page.click('#actu-vue-tout');
     await page.waitForTimeout(250);
-    verifier('le bouton paraît dans « Tout », où l’on voit ce qu’il remettrait',
-      await remettre.isVisible());
-    verifier('il ne porte plus de compte',
-      !/\d/.test(await remettre.innerText()), await remettre.innerText());
+    verifier('il est là aussi dans « Tout »', await remettre.isVisible());
 
     await remettre.click();
     await page.waitForTimeout(250);
