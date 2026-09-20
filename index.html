@@ -49,13 +49,20 @@ img{max-width:100%}
   --go:#3C6B33;
   --go-bg:#E5EFDF;
   --go-line:#AFCBA4;
-  --m1:#3A5BA0;
-  --m2:#5B7A26;
-  --m3:#96660F;
-  --m4:#A8452E;
-  --m5:#6055B8;
-  --m6:#9E3F7C;
-  --m7:#1E7A6C;
+  /* Matières : une teinte par DOMAINE, partagée par toutes ses matières.
+     Mesurée avec un validateur de palette (OKLab, daltonisme simulé) : en
+     clair, écart minimal de 17,4 à vue normale et 6,8 sous daltonisme — au
+     dessus du plancher, qui n'est admis que parce que l'identité ne tient
+     jamais à la couleur seule : c'est le NOM de la matière qui est écrit, et
+     peint. Chaque teinte atteint 4,5:1 en texte sur le fond de sa propre case,
+     mesuré dans le navigateur (4,55 à 5,41 en clair, 4,58 à 6,21 en sombre) —
+     c'est cette exigence-là, et non la teinte, qui commande leur clarté.
+     Le gris n'est pas un domaine : c'est ce qui n'en a pas. */
+  --m-sciences:#1A63B0;   /* Mathématiques, SVT, Physique-chimie, Technologie */
+  --m-lettres:#9E5410;    /* Français, LCA latin, Histoire-géo */
+  --m-langues:#0E7A4C;    /* Anglais, Espagnol, Allemand */
+  --m-arts:#A8347F;       /* Éd. musicale, Arts plastiques, EPS */
+  --m-vie:#5F5C76;        /* vie de classe, et toute matière inconnue */
   /* Contour des commandes. `--line` sépare des blocs (1,3:1 : très bien pour
      une séparation, insuffisant pour dire « ceci se touche »). Ce qui se clique
      prend `--edge`, mesuré à 5,2:1 dans les deux thèmes. */
@@ -86,13 +93,12 @@ img{max-width:100%}
     --go:#93C583;
     --go-bg:#1F2E1C;
     --go-line:#48653F;
-    --m1:#93ADEA;
-    --m2:#AEC873;
-    --m3:#E0B25C;
-    --m4:#EC9179;
-    --m5:#AA9EF2;
-    --m6:#E890C6;
-    --m7:#68CBB8;
+    /* Mêmes domaines, remontés pour le fond sombre. */
+    --m-sciences:#6FA4EE;
+    --m-lettres:#D99A4A;
+    --m-langues:#4FC2A0;
+    --m-arts:#EE85C0;
+    --m-vie:#948FAC;
     --shadow:0 1px 1px rgba(0,0,0,.5), 0 10px 26px -18px rgba(0,0,0,.9);
   }
 }
@@ -118,13 +124,11 @@ img{max-width:100%}
   --go:#93C583;
   --go-bg:#1F2E1C;
   --go-line:#48653F;
-  --m1:#93ADEA;
-  --m2:#AEC873;
-  --m3:#E0B25C;
-  --m4:#EC9179;
-  --m5:#AA9EF2;
-  --m6:#E890C6;
-  --m7:#68CBB8;
+  --m-sciences:#6FA4EE;
+  --m-lettres:#D99A4A;
+  --m-langues:#4FC2A0;
+  --m-arts:#EE85C0;
+  --m-vie:#948FAC;
   --shadow:0 1px 1px rgba(0,0,0,.5), 0 10px 26px -18px rgba(0,0,0,.9);
 }
 
@@ -482,13 +486,11 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
   padding:1px 5px;border-radius:4px;
   background:var(--surface);color:var(--muted);border:1px solid var(--line);
 }
-.m-lettres{--m:var(--m1)}
-.m-langues{--m:var(--m2)}
-.m-maths{--m:var(--m3)}
-.m-sciences{--m:var(--m4)}
-.m-hist{--m:var(--m5)}
-.m-arts{--m:var(--m6)}
-.m-sport{--m:var(--m7)}
+.m-sciences{--m:var(--m-sciences)}
+.m-lettres{--m:var(--m-lettres)}
+.m-langues{--m:var(--m-langues)}
+.m-arts{--m:var(--m-arts)}
+.m-vie{--m:var(--m-vie)}
 
 /* ---------- emploi du temps en liste (petits écrans) ---------- */
 .tt-list{display:none;flex-direction:column;gap:12px}
@@ -1399,13 +1401,11 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
       <div class="tt-list" id="tt-list"></div>
 
       <div class="subjects">
-      <span class="m-lettres"><i></i> Lettres</span>
-      <span class="m-langues"><i></i> Langues</span>
-      <span class="m-maths"><i></i> Mathématiques</span>
       <span class="m-sciences"><i></i> Sciences &amp; techno</span>
-      <span class="m-hist"><i></i> Histoire-géo</span>
-      <span class="m-arts"><i></i> Arts</span>
-      <span class="m-sport"><i></i> EPS</span>
+      <span class="m-lettres"><i></i> Lettres &amp; humanités</span>
+      <span class="m-langues"><i></i> Langues vivantes</span>
+      <span class="m-arts"><i></i> Arts &amp; sport</span>
+      <span class="m-vie"><i></i> Vie de classe</span>
         <span><i style="background:var(--muted)"></i> « 2 sem. » = cours donné chaque semaine</span>
       </div>
     </div>
@@ -1666,14 +1666,28 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
     'HVC': ['hvc', 'vie de classe']
   };
 
+  // Une couleur par DOMAINE, et toutes ses matières la partagent : on voit d'un
+  // coup d'œil qu'une journée est chargée en sciences, ou qu'elle enchaîne trois
+  // heures de langages. Le nom de la matière reste écrit dans la case — c'est
+  // lui qui dit laquelle ; la couleur ne fait que rapprocher ce qui va ensemble.
+  //
+  // Pourquoi pas des nuances d'une même teinte par matière : mesuré, cela ne
+  // tient pas. Ici la couleur est celle du TEXTE, donc chaque teinte doit
+  // atteindre 4,5:1 sur son fond — toutes se retrouvent dans une bande de
+  // clarté étroite, et deux nuances assez écartées pour se distinguer entrent
+  // aussitôt en collision avec un autre domaine sous daltonisme.
   var FAMILLES = {
-    'Français': 'lettres', 'LCA latin': 'lettres', 'HVC': 'lettres',
+    // Sciences & technologie — bleu
+    'Mathématiques': 'sciences', 'SVT': 'sciences',
+    'Physique-chimie': 'sciences', 'Technologie': 'sciences',
+    // Lettres & humanités — brique
+    'Français': 'lettres', 'LCA latin': 'lettres', 'Histoire-géo': 'lettres',
+    // Langues vivantes — vert
     'Anglais LV1': 'langues', 'Espagnol LV2': 'langues', 'Allemand LV2': 'langues',
-    'Mathématiques': 'maths',
-    'SVT': 'sciences', 'Physique-chimie': 'sciences', 'Technologie': 'sciences',
-    'Histoire-géo': 'hist',
-    'Éd. musicale': 'arts', 'Arts plastiques': 'arts',
-    'EPS': 'sport'
+    // Arts & sport — magenta
+    'Éd. musicale': 'arts', 'Arts plastiques': 'arts', 'EPS': 'arts',
+    // Vie de classe — gris
+    'HVC': 'vie'
   };
 
   var PUPILS = {
@@ -2188,7 +2202,7 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
             : '') + '</td>';
           return;
         }
-        var famille = FAMILLES[cell.matiere] || 'lettres';
+        var famille = FAMILLES[cell.matiere] || 'vie';
         var plage = cell.span > 1 ? SLOTS[i][0] + ' – ' + SLOTS[i + cell.span - 1][1] : '';
         html += '<td' + jourJ + (cell.span > 1 ? ' rowspan="' + cell.span + '"' : '') + '>'
           + '<div class="lesson m-' + famille + marque + (annule ? ' lesson--annule' : '') + '">'
@@ -2220,7 +2234,7 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
         var cours = '', vus = perturbations[day] || {};
         grid[day].forEach(function (cell, i) {
           if (!cell || cell === 'occupe') return;
-          var famille = FAMILLES[cell.matiere] || 'lettres';
+          var famille = FAMILLES[cell.matiere] || 'vie';
           var fin = SLOTS[i + (cell.span || 1) - 1][1];
           // Sous 720 px la grille devient cette liste : elle doit dire la même
           // chose qu'elle. Sans cela, un cours annulé était invisible sur

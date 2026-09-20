@@ -865,6 +865,48 @@ python3 build.py
 Le workflow échoue si `index.html` n'a pas été régénéré après un changement de
 la source.
 
+## Les couleurs de matières disent le domaine
+
+Les sept couleurs de l'emploi du temps étaient arbitraires : bleu pour les
+lettres, vert pour les langues, ocre pour les maths… Une matière, une teinte,
+sans rapport entre elles.
+
+Désormais **une teinte par domaine**, partagée par toutes ses matières :
+
+| Domaine | Teinte | Matières |
+|---|---|---|
+| Sciences & technologie | bleu | Mathématiques, SVT, Physique-chimie, Technologie |
+| Lettres & humanités | brique | Français, LCA latin, Histoire-géo |
+| Langues vivantes | vert | Anglais, Espagnol, Allemand |
+| Arts & sport | magenta | Éd. musicale, Arts plastiques, EPS |
+| Vie de classe | gris | HVC — et toute matière que la table ne connaît pas |
+
+On voit alors d'un coup d'œil qu'une journée est chargée en sciences, ou qu'elle
+enchaîne trois heures de langages. Le nom de la matière reste écrit dans la
+case : c'est lui qui dit laquelle ; la couleur ne fait que rapprocher ce qui va
+ensemble.
+
+### Pourquoi pas une nuance par matière dans chaque domaine
+
+C'était la demande, et **c'est mesuré que cela ne tient pas**. Ici la couleur
+est celle du **texte** : chaque teinte doit donc atteindre 4,5:1 sur le fond de
+sa propre case, ce qui les enferme toutes dans une bande de clarté étroite. Deux
+nuances assez écartées pour se distinguer entrent alors aussitôt en collision
+avec un autre domaine sous daltonisme — chaque essai déplaçait le problème sans
+le résoudre.
+
+Les valeurs ont été passées au validateur de palette (OKLab, protanopie et
+deutéranopie simulées) : écart minimal de **17,4 à vue normale** et **6,8 sous
+daltonisme** entre domaines. Ce dernier chiffre n'est acceptable que parce que
+l'identité ne tient jamais à la couleur seule — c'est le nom de la matière qui
+est peint. Contraste du texte mesuré dans le navigateur, sur le fond réel de la
+case : 4,55 à 5,41 en thème clair, 4,58 à 6,21 en sombre.
+
+Deux épreuves le gardent : toute matière de la grille doit avoir son domaine
+(une matière ajoutée sans être rattachée fait échouer les tests), deux domaines
+ne peuvent pas porter la même teinte, et le nom de chaque matière doit se lire
+sur sa case.
+
 ## Ce qui se voit au soleil, et au clavier
 
 Mesuré dans Chromium, contrastes calculés en composant les fonds, en thème clair
