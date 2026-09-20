@@ -277,6 +277,26 @@ async function main() {
     });
     verifier('chaque matière de la grille a son domaine',
       domaines.orphelines.length === 0, domaines.orphelines.join(', '));
+
+    // PRONOTE n'écrit pas les matières comme le décalque. Le rattachement doit
+    // tenir sur ses libellés à lui, sans quoi la couleur disparaît dès que la
+    // grille vient de PRONOTE — c'est-à-dire au premier rechargement.
+    const pronote = await page.evaluate(() => {
+      const essais = {
+        'MATHEMATIQUES': 'sciences', 'SCIENCES VIE & TERRE': 'sciences',
+        'PHYSIQUE-CHIMIE': 'sciences', 'TECHNOLOGIE': 'sciences',
+        'FRANCAIS': 'lettres', 'HISTOIRE-GEOGRAPHIE': 'lettres', 'LCA LATIN': 'lettres',
+        'ANGLAIS LV1': 'langues', 'ESPAGNOL LV2': 'langues', 'ALLEMAND LV2': 'langues',
+        'EDUCATION MUSICALE': 'arts', 'ARTS PLASTIQUES': 'arts',
+        'EDUCATION PHYSIQUE ET SPORTIVE': 'arts', 'EPS': 'arts',
+        'HEURE DE VIE DE CLASSE': 'vie',
+      };
+      return Object.keys(essais)
+        .map((l) => ({ libelle: l, attendu: essais[l], obtenu: window.domaineDe(l) }))
+        .filter((r) => r.attendu !== r.obtenu);
+    });
+    verifier('les libellés de PRONOTE trouvent leur domaine',
+      pronote.length === 0, JSON.stringify(pronote));
     verifier('chaque domaine a sa teinte',
       Object.values(domaines.teinte).every((c) => /^(#|rgb)/.test(c)),
       JSON.stringify(domaines.teinte));
