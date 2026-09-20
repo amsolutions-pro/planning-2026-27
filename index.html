@@ -3499,6 +3499,10 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
   var ACTU_VUES = ['important', 'scolaire', 'tout'];
   var ACTU_NIVEAUX = { important: ['important'], scolaire: ['important', 'scolaire'], tout: null };
   var ACTU_VUS = 'planning.actus.vus';
+  // « Actualiser » vaut validation : ce qui était vu passe ici, et n'est plus
+  // repris par « Remettre les vues ». La pile des vues ne grossit donc plus sans
+  // fin — elle se vide à chaque actualisation.
+  var ACTU_CLASSES = 'planning.actus.classes';
   // Une nouvelle peut sortir d'un passage du robot puis revenir au suivant :
   // on garde sa marque quelques semaines même quand elle n'est plus là.
   var ACTU_VUS_JOURS = 45;
@@ -3534,7 +3538,7 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
   var ACTU_ATTENTE_MAX = 180000;
   var actu = {
     env: null, donnees: null, enfant: 'tous', vue: 'important', visitePrecedente: null,
-    vus: {}, envois: {}, jeton: '', minuteur: null
+    vus: {}, classes: {}, envois: {}, jeton: '', minuteur: null
   };
   try {
     actu.visitePrecedente = localStorage.getItem(ACTU_VISITE);
@@ -3542,6 +3546,7 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
       ? localStorage.getItem('planning.actus.vue') : 'important';
     actu.enfant = localStorage.getItem('planning.actus.enfant') || 'tous';
     actu.vus = JSON.parse(localStorage.getItem(ACTU_VUS) || '{}') || {};
+    actu.classes = JSON.parse(localStorage.getItem(ACTU_CLASSES) || '{}') || {};
     actu.envois = JSON.parse(localStorage.getItem(ACTU_ENVOIS) || '{}') || {};
     actu.jeton = localStorage.getItem(ACTU_JETON) || '';
   } catch (e) {}
@@ -3553,7 +3558,8 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
   // robot à l'autre, alors que les numéros de PRONOTE changent à chaque session.
   function estVu(a) {
     return clesActu(a).some(function (id) {
-      return Object.prototype.hasOwnProperty.call(actu.vus, id);
+      return Object.prototype.hasOwnProperty.call(actu.vus, id)
+        || Object.prototype.hasOwnProperty.call(actu.classes, id);
     });
   }
 
@@ -3590,12 +3596,19 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
   // Remettre la nouvelle ne la repasse pas en « non lu » sur PRONOTE : ce
   // chemin n'existe pas ici. On oublie l'envoi, en attente comme échoué : il
   // n'y a plus rien à réessayer pour une nouvelle qu'on veut revoir.
+  // Décocher une nouvelle la reprend des deux piles : le geste individuel reste
+  // toujours possible, même sur une nouvelle déjà classée.
   function retirerVu(item) {
-    clesActu(item).forEach(function (c) { delete actu.vus[c]; delete actu.envois[c]; });
+    clesActu(item).forEach(function (c) {
+      delete actu.vus[c]; delete actu.classes[c]; delete actu.envois[c];
+    });
   }
 
   function enregistrerVus() {
-    try { localStorage.setItem(ACTU_VUS, JSON.stringify(actu.vus)); } catch (e) {}
+    try {
+      localStorage.setItem(ACTU_VUS, JSON.stringify(actu.vus));
+      localStorage.setItem(ACTU_CLASSES, JSON.stringify(actu.classes));
+    } catch (e) {}
     noteEnvois();
     if (enAttente().length) programmerEnvoi();
     montrerActus(actu.donnees);
@@ -3702,6 +3715,9 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
     // robot demande un appareil relié, et le jeton vit par navigateur. Sur un
     // téléphone qui ne l'a pas, le bouton ne faisait rien, sans un mot — il
     // passait pour cassé. Il rend compte, et ouvre la marche à suivre.
+    // Le geste vaut validation : ce qui est vu est classé tout de suite, qu'on
+    // soit relié ou non. La pile des vues retombe donc à zéro sous les yeux.
+    classerVus();
     if (!relie()) {
       bouton.disabled = true;
       etatActualisation('Relecture du fichier publié…');
@@ -3718,12 +3734,25 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
     }
     bouton.disabled = true;
     etatActualisation('Le robot est lancé…');
-    reveillerRobot([]).then(function (ok) {
+    // Ce qui attendait d'être transmis part **avec** lui : le groupage de quatre
+    // secondes n'a plus de raison d'être quand on demande expressément un
+    // passage, et un « Vu » sur un message doit sortir pour de bon, y compris
+    // chez PRONOTE.
+    clearTimeout(actu.minuteur);
+    var ids = enAttente();
+    ids.forEach(function (id) { actu.envois[id] = 'envoi'; });
+    noteEnvois();
+    reveillerRobot(ids).then(function (ok) {
+      var quand = new Date().toISOString();
+      ids.forEach(function (id) { actu.envois[id] = ok ? 'ok|' + quand : 'echec'; });
+      noteEnvois();
       if (!ok) {
         bouton.disabled = false;
         etatActualisation('GitHub a refusé le lancement — le jeton est-il toujours valable ?');
+        montrerActus(actu.donnees);
         return;
       }
+      renderActus();
       guetterNouvelleVersion(versionPubliee(actu.env), Date.now() + ACTU_ATTENTE_MAX);
     });
   }
@@ -3808,16 +3837,31 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
   function majBoutonVus() {
     var bouton = document.getElementById('actu-vus');
     if (!bouton) return;
-    var liste = (actu.donnees || {}).actualites || [];
-    bouton.hidden = !liste.some(estVu);
+    // Seul ce qui n'est pas encore validé se remet en bloc.
+    bouton.hidden = !Object.keys(actu.vus).length;
   }
 
+  // Ne reprend que ce qui n'a pas encore été validé par une actualisation : la
+  // pile est donc celle de la session, et elle tombe vraiment à zéro.
   function oublierVusActus() {
     if (!actu.donnees) return;
+    Object.keys(actu.vus).forEach(function (id) { delete actu.envois[id]; });
     actu.vus = {};
-    actu.envois = {};
-    try { localStorage.removeItem(ACTU_VUS); localStorage.removeItem(ACTU_ENVOIS); } catch (e) {}
+    try { localStorage.removeItem(ACTU_VUS); } catch (e) {}
+    noteEnvois();
     montrerActus(actu.donnees);
+  }
+
+  // « Actualiser » vaut validation : ce qui est vu ici passe dans les classées.
+  // Il n'en sort plus par « Remettre les vues » — seulement une par une, en
+  // décochant.
+  function classerVus() {
+    Object.keys(actu.vus).forEach(function (id) { actu.classes[id] = actu.vus[id]; });
+    actu.vus = {};
+    try {
+      localStorage.setItem(ACTU_CLASSES, JSON.stringify(actu.classes));
+      localStorage.removeItem(ACTU_VUS);
+    } catch (e) {}
   }
 
   function echap(s) {
@@ -3975,16 +4019,27 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
     (d.actualites || []).forEach(function (a) {
       clesActu(a).forEach(function (c) {
         courant[c] = a.id;
-        if (a.lu) transmises[c] = true;
+        // « Transmise » veut dire : c'est nous qui l'avons fait passer en lu, et
+        // PRONOTE le confirme. Une communication lue ailleurs n'en est pas une —
+        // la marque y était alors retirée à l'instant même où on la posait, et
+        // sa case à cocher revenait à zéro toute seule : on ne pouvait
+        // littéralement pas ranger un message déjà lu.
+        if (a.lu && etatEnvoi(a.id) === 'ok') transmises[c] = true;
       });
     });
     var perime = Date.now() - ACTU_VUS_JOURS * 86400000;
-    var vivants = {}, envois = {};
-    Object.keys(actu.vus).forEach(function (id) {
-      if (transmises[id]) return;
-      var quand = Date.parse(actu.vus[id]);
-      if (courant[id] || !(quand < perime)) vivants[courant[id] || id] = actu.vus[id];
-    });
+    var envois = {};
+    function purger(marques) {
+      var vivants = {};
+      Object.keys(marques).forEach(function (id) {
+        if (transmises[id]) return;
+        var quand = Date.parse(marques[id]);
+        if (courant[id] || !(quand < perime)) vivants[courant[id] || id] = marques[id];
+      });
+      return vivants;
+    }
+    var vivants = purger(actu.vus);
+    actu.classes = purger(actu.classes);
     // Le robot a republié depuis l'envoi, et la communication est toujours non
     // lue chez PRONOTE : la demande est partie, le marquage n'a pas pris. On le
     // dit au lieu de laisser un « lu sur PRONOTE » qui n'est pas vrai — le
@@ -4000,7 +4055,10 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
     });
     actu.vus = vivants;
     actu.envois = envois;
-    try { localStorage.setItem(ACTU_VUS, JSON.stringify(vivants)); } catch (e) {}
+    try {
+      localStorage.setItem(ACTU_VUS, JSON.stringify(vivants));
+      localStorage.setItem(ACTU_CLASSES, JSON.stringify(actu.classes));
+    } catch (e) {}
     noteEnvois();
 
     var echecs = Object.keys(envois).filter(function (id) { return String(envois[id]).indexOf('echec') === 0; }).length;

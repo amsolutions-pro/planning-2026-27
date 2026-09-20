@@ -446,6 +446,28 @@ sans activité cesse d'être grisée quand elle porte une perturbation. La semai
 est dessinée avant que le fichier chiffré ne soit lu : elle est redessinée quand
 il arrive.
 
+### Une communication déjà lue restait incochable
+
+Un message que PRONOTE donnait déjà pour lu — lu ailleurs, dans l'espace du
+collège — ne pouvait **pas** être rangé ici : la case se cochait, puis revenait
+à zéro toute seule. La règle « une communication que PRONOTE dit lue n'a plus
+besoin de sa marque » retirait la marque à l'instant même où on la posait.
+
+Elle ne vaut désormais que si **c'est nous qui l'avons transmise** (`a.lu` et un
+envoi abouti). Lue ailleurs, la marque est un simple rangement, et elle tient.
+
+### « Actualiser » vaut validation
+
+Ce qui est vu passe alors dans les **classées** : cela ne revient plus par
+« Remettre les vues », seulement en décochant la nouvelle une par une. La pile
+des vues est donc celle de la session en cours, et elle retombe vraiment à zéro
+— c'est la réponse au compteur qui ne pouvait pas s'éteindre.
+
+Et ce qui attendait d'être transmis part **avec** la demande : le groupage de
+quatre secondes n'a plus de raison d'être quand on réclame expressément un
+passage. Un « Vu » posé sur un message sort donc pour de bon, y compris chez
+PRONOTE, dans le même geste.
+
 ### « Remettre les vues » n'est pas un compteur
 
 Le bouton portait un nombre — « Remettre 23 vues » — et ce nombre ne pouvait
