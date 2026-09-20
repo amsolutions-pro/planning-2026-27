@@ -3802,14 +3802,14 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
   // chaque semaine. Un compteur qu'aucun usage normal ne peut éteindre se lit
   // comme un reproche.
   //
-  // Il ne s'affiche donc plus que dans « Tout », la seule vue où les nouvelles
-  // rangées sont à l'écran, avec leur étiquette verte et leur propre coche.
-  // Ailleurs, il proposait de rétablir ce qu'on n'avait pas sous les yeux.
+  // Il reste en revanche disponible partout : on doit pouvoir tout remettre
+  // d'où l'on est, sans passer par « Tout » et sans attendre un passage du
+  // robot. Le retirer des deux premières vues n'a fait qu'enlever un recours.
   function majBoutonVus() {
     var bouton = document.getElementById('actu-vus');
     if (!bouton) return;
     var liste = (actu.donnees || {}).actualites || [];
-    bouton.hidden = actu.vue !== 'tout' || !liste.some(estVu);
+    bouton.hidden = !liste.some(estVu);
   }
 
   function oublierVusActus() {

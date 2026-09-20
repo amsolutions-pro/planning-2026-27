@@ -459,10 +459,10 @@ Deux corrections, et c'est la même :
 
 - **le nombre disparaît.** Ce bouton est une remise à zéro, pas une tâche en
   attente ;
-- **il ne s'affiche plus que dans « Tout »**, la seule vue où les nouvelles
-  rangées sont à l'écran, avec leur étiquette verte et leur propre coche.
-  Ailleurs — « L'important », « + Le travail » — il proposait de rétablir des
-  nouvelles qu'on n'avait précisément pas sous les yeux.
+- **il reste disponible partout.** Je l'avais d'abord réservé à « Tout », la
+  seule vue où les nouvelles rangées sont à l'écran. C'était une erreur : on
+  doit pouvoir tout remettre d'où l'on est, sans changer de vue et sans
+  attendre un passage du robot. Le déplacer n'a fait qu'enlever un recours.
 
 Rien ne s'accumule pour autant : une marque est oubliée dès que PRONOTE cesse de
 publier la nouvelle (après `ACTU_VUS_JOURS`, le temps qu'une liste qui se
