@@ -257,6 +257,58 @@ async function main() {
         .startsWith(String(await page.evaluate(() => window.INSCRIPTIONS.length)) + ' activités'),
       await page.locator('.budget-top__fig p').innerText());
 
+    // --- Les couleurs de matières : un domaine, une teinte ---
+    const domaines = await page.evaluate(() => {
+      const connus = [...new Set(Object.values(window.FAMILLES))];
+      const matieres = new Set();
+      Object.keys(window.PUPILS).forEach((k) => {
+        const jours = window.PUPILS[k].jours || {};
+        Object.keys(jours).forEach((j) => (jours[j] || []).forEach((e) => matieres.add(e[2])));
+      });
+      const sonde = document.createElement('div');
+      document.body.appendChild(sonde);
+      const teinte = {};
+      connus.concat(['vie']).forEach((f) => {
+        sonde.className = 'm-' + f;
+        teinte[f] = getComputedStyle(sonde).getPropertyValue('--m').trim();
+      });
+      sonde.remove();
+      return { connus, teinte, orphelines: [...matieres].filter((m) => !window.FAMILLES[m]) };
+    });
+    verifier('chaque matière de la grille a son domaine',
+      domaines.orphelines.length === 0, domaines.orphelines.join(', '));
+    verifier('chaque domaine a sa teinte',
+      Object.values(domaines.teinte).every((c) => /^(#|rgb)/.test(c)),
+      JSON.stringify(domaines.teinte));
+    const teintes = Object.values(domaines.teinte);
+    verifier('deux domaines ne portent jamais la même teinte',
+      new Set(teintes).size === teintes.length, JSON.stringify(domaines.teinte));
+
+    // Le nom de la matière est écrit AVEC la couleur du domaine : c'est du
+    // texte, il lui faut donc 4,5:1 sur le fond teinté de sa propre case.
+    await page.click('#tab-college');
+    await page.waitForTimeout(250);
+    const contrastes = await page.$$eval('#tt-grid .lesson b', (els) => {
+      // Le navigateur rend un `color-mix` en `color(srgb 0.88 0.93 0.91)` et
+      // une couleur simple en `rgb(0, 105, 60)` : deux échelles, 0–1 et 0–255.
+      const lum = (c) => {
+        const n = (c.match(/-?[\d.]+/g) || []).slice(0, 3).map(Number);
+        const e = /^color\(/.test(c) ? 1 : 255;
+        const [r, g, b] = n.map((v) => (v /= e) <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      return els.map((el) => {
+        const a = lum(getComputedStyle(el).color);
+        const b = lum(getComputedStyle(el.closest('.lesson')).backgroundColor);
+        const r = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+        return { texte: el.textContent.trim(), ratio: Math.round(r * 100) / 100 };
+      });
+    });
+    const faibles = contrastes.filter((c) => c.ratio < 4.5);
+    verifier('le nom de chaque matière se lit sur sa case',
+      contrastes.length > 0 && faibles.length === 0,
+      JSON.stringify(faibles.slice(0, 5)));
+
     // --- Journées superposées : autant de colonnes que de jours ---
     await page.click('#tab-college');
     await page.click('#vue-super');
