@@ -59,7 +59,7 @@ function verifier(nom, condition, detail) {
   return false;
 }
 
-const ONGLETS = ['semaine', 'actus', 'college', 'activites', 'garde', 'budget'];
+const ONGLETS = ['semaine', 'actus', 'college', 'activites', 'garde', 'budget', 'tante'];
 
 async function main() {
   const serveur = await servir();

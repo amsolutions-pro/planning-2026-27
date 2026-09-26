@@ -1143,6 +1143,31 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
   *{transition:none !important;animation:none !important}
 }
 
+/* ---------- tante ---------- */
+.tante-next{
+  padding:12px 16px;border-radius:var(--radius);border:1px solid var(--go-line);
+  background:var(--go-bg);color:var(--ink);font-size:14px;
+}
+.tante-next b{color:var(--go)}
+.tante{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+@media (max-width:900px){.tante{grid-template-columns:minmax(0,1fr)}}
+.tc{padding:14px 16px;gap:10px}
+.tc__jour{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.tc__jour h3{font-size:17px}
+.tc__compte{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;color:var(--muted)}
+.tc__quand{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-size:13px;color:var(--ink-soft);
+}
+.tc__quoi{font-size:12.5px;color:var(--muted)}
+.tc__dates{display:flex;flex-wrap:wrap;gap:4px}
+.tc__dates span{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;
+  font-size:12px;padding:2px 6px;border-radius:5px;border:1px solid var(--line);color:var(--ink-soft);
+}
+.tc__dates .passe{opacity:.45;text-decoration:line-through}
+.tc__dates .proche{background:var(--go-bg);border-color:var(--go-line);color:var(--go);font-weight:600}
+
 /* ---------- print ---------- */
 @media print{
   :root{
@@ -1212,6 +1237,9 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
     </button>
     <button class="tab" role="tab" id="tab-budget" aria-controls="panel-budget" aria-selected="false" onclick="showPanel('budget')">
       <svg class="icon"><use href="#i-money"></use></svg> Budget
+    </button>
+    <button class="tab" role="tab" id="tab-tante" aria-controls="panel-tante" aria-selected="false" onclick="showPanel('tante')">
+      <svg class="icon"><use href="#i-school"></use></svg> Tante<span class="tab__long"> Roza</span>
     </button>
   </nav>
 </header>
@@ -1590,6 +1618,20 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
     </div>
   </section>
 
+  <!-- ============ TANTE ============ -->
+  <!-- Recopié de la feuille papier de l'université (imprimée le 24.08.2026) :
+       les séances et leurs dates vivent dans TANTE_COURS, dans le script. -->
+  <section class="panel" id="panel-tante" role="tabpanel" aria-labelledby="tab-tante" hidden>
+    <div class="section-head">
+      <div>
+        <h2>Cours de Roza — semestre 1</h2>
+        <p>Français à des fins de communication · Faculté des langues européennes · septembre → décembre 2026</p>
+      </div>
+    </div>
+    <div class="tante-next" id="tante-next"></div>
+    <div class="tante" id="tante-cours"></div>
+  </section>
+
   <p class="footnote">Planning des enfants · année scolaire 2026-2027</p>
 
   <button class="today-fab" type="button" id="today-fab" hidden onclick="allerAujourdhui()">
@@ -1598,7 +1640,7 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
 </main>
 
 <script>
-  var PANELS = ['semaine', 'actus', 'college', 'activites', 'garde', 'budget'];
+  var PANELS = ['semaine', 'actus', 'college', 'activites', 'garde', 'budget', 'tante'];
 
   function showPanel(id) {
     PANELS.forEach(function (p) {
@@ -4402,6 +4444,56 @@ html{scroll-padding-top:calc(var(--entete, 0px) + 8px)}
       });
     }
   })();
+
+  // ---------- Cours de la tante (semestre 1, 2026) ----------
+  // Recopié de la feuille de l'université. « 1-2 », « 3-4 » : les heures
+  // académiques de la journée, telles que la feuille les donne.
+  var TANTE_COURS = [
+    { jour: 'Lundi', heures: '3-4', salle: '526', cours: 'Français -3', groupe: 'B2 · Français 2',
+      dates: '07.09 14.09 21.09 28.09 05.10 12.10 19.10 26.10 09.11 16.11 23.11 30.11 07.12 14.12 21.12' },
+    { jour: 'Mercredi', heures: '1-2', salle: '526', cours: 'Français -3', groupe: 'B2 · Français 1',
+      dates: '02.09 09.09 16.09 23.09 30.09 07.10 14.10 21.10 04.11 11.11 18.11 25.11 02.12 09.12 16.12' },
+    { jour: 'Vendredi', heures: '1-2', salle: '120', cours: 'Français -5', groupe: 'B3 · Anglais-français 1',
+      dates: '09.10 16.10 23.10 06.11 13.11 20.11 27.11 04.12 11.12 18.12' }
+  ];
+
+  function dessinerTante() {
+    var zone = document.getElementById('tante-cours');
+    var bandeau = document.getElementById('tante-next');
+    if (!zone || !bandeau) return;
+    var auj = new Date(); auj.setHours(0, 0, 0, 0);
+    var prochain = null;
+    zone.innerHTML = TANTE_COURS.map(function (c) {
+      var faits = 0, vu = false;
+      var liste = c.dates.split(' ').map(function (d) {
+        var jm = d.split('.');
+        var date = new Date(2026, +jm[1] - 1, +jm[0]);
+        var cls = '';
+        if (date < auj) { cls = 'passe'; faits++; }
+        else if (!vu) {
+          cls = 'proche'; vu = true;
+          if (!prochain || date < prochain.date) prochain = { date: date, c: c };
+        }
+        return '<span class="' + cls + '">' + d + '</span>';
+      }).join('');
+      var total = c.dates.split(' ').length;
+      return '<div class="card tc"><div class="tc__jour"><h3>' + c.jour + '</h3>'
+        + '<span class="tc__compte">' + faits + ' / ' + total + '</span></div>'
+        + '<div class="tc__quand">Heures ' + c.heures + ' · salle ' + c.salle + '</div>'
+        + '<div class="tc__quoi">' + c.cours + ' · ' + c.groupe + '</div>'
+        + '<div class="tc__dates">' + liste + '</div></div>';
+    }).join('');
+    if (prochain) {
+      var dit = prochain.date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+      var ecart = Math.round((prochain.date - auj) / 864e5);
+      var quand = ecart === 0 ? 'aujourd’hui' : ecart === 1 ? 'demain' : dit;
+      bandeau.innerHTML = 'Prochain cours : <b>' + quand + '</b> — heures ' + prochain.c.heures
+        + ', salle ' + prochain.c.salle + ' (' + prochain.c.groupe + ')';
+    } else {
+      bandeau.textContent = 'Semestre terminé.';
+    }
+  }
+  dessinerTante();
 
   window.addEventListener('beforeprint', function () {
     PANELS.forEach(function (p) {
