@@ -100,7 +100,9 @@ MOTS_CONTROLE = (
 MOTS_INFO_IMPORTANTE = (
     "réunion", "reunion", "sortie", "voyage", "autorisation", "conseil de classe",
     "orientation", "stage", "brevet", "bourse", "inscription", "urgent", "rappel",
-    "annul", "grève", "greve", "fermeture", "modification", "changement", "santé",
+    "annul", "grève", "greve", "mouvement social", "préavis", "preavis",
+    "perturbation", "service minimum", "accueil minimum", "fermeture",
+    "modification", "changement", "santé",
     "sante", "vaccin", "pai ", "photo de classe", "paiement", "facture",
     "carnet", "signature", "signer", "rendez-vous", "convocation", "absence du prof",
     "professeur absent", "remplacement", "portes ouvertes", "bulletin", "examen",
@@ -844,7 +846,11 @@ class Collecte:
     def informations(self, enfant: dict) -> None:
         depuis = (self.maintenant - dt.timedelta(days=INFOS_JOURS)).replace(tzinfo=None)
         details = 0
-        for i in self.client.information_and_surveys():
+        # Comme pour la messagerie : le descriptif ne se lit que pour les
+        # premières, et c'est souvent lui seul qui dit « grève ». Les non lues
+        # d'abord, pour que le plafond ne tombe jamais sur elles.
+        infos = sorted(self.client.information_and_surveys(), key=lambda i: bool(i.read))
+        for i in infos:
             if getattr(i, "template", False):
                 continue
             quand = i.start_date or i.creation_date

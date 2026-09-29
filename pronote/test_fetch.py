@@ -217,6 +217,33 @@ class Classement(unittest.TestCase):
         donnees, par_id = collecte_indexee(client)
         self.assertIn(f"message:{fetch.id_discussion(neuve)}", par_id)
 
+    def test_une_greve_dite_dans_le_descriptif_est_importante(self):
+        """Le titre dit « Mouvement social », le descriptif seul dit « grève ».
+
+        Le descriptif n'est lu que pour les premières informations : une non lue
+        placée en queue, derrière des lues, restait « sans urgence » et
+        n'apparaissait pas dans la vue « Important ».
+        """
+        client = FauxClient(MAINTENANT)
+        hier = MAINTENANT.replace(tzinfo=None) - dt.timedelta(days=1)
+        lues = [exemple._info(id=f"lue-{n}", title=f"Info {n}", author="Direction", read=True,
+                              creation_date=hier, start_date=None, category="Information",
+                              survey=False, template=False, content=lambda: "Pour information.")
+                for n in range(fetch.MAX_DETAILS + 3)]
+        greve = exemple._info(id="greve", title="Collège : information aux familles", author="Direction",
+                              read=False, creation_date=hier, start_date=None, category="Information",
+                              survey=False, template=False,
+                              content=lambda: "En raison d'un préavis, les cours pourraient être perturbés jeudi.")
+        client._donnees["E1"]["infos"] = lues + [greve]   # la non lue en queue
+        client._donnees["E2"]["infos"] = []
+        donnees, par_id = collecte_indexee(client)
+        self.assertEqual(par_id["info:greve"]["niveau"], "important")
+        self.assertIn("préavis", par_id["info:greve"]["detail"])
+
+    def test_mouvement_social_est_important(self):
+        self.assertEqual(fetch.contient("Mouvement social du 2 octobre", fetch.MOTS_INFO_IMPORTANTE),
+                         "mouvement social")
+
     def test_meme_message_sous_deux_identifiants(self):
         """Le collège écrit aux deux enfants : une seule nouvelle, un seul clic."""
         client = FauxClient(MAINTENANT)
