@@ -244,6 +244,18 @@ class Classement(unittest.TestCase):
         self.assertEqual(fetch.contient("Mouvement social du 2 octobre", fetch.MOTS_INFO_IMPORTANTE),
                          "mouvement social")
 
+    def test_une_information_signalee_par_pronote_est_importante(self):
+        """« Très signalé » dans la catégorie suffit, sans autre mot-clé."""
+        client = FauxClient(MAINTENANT)
+        hier = MAINTENANT.replace(tzinfo=None) - dt.timedelta(days=1)
+        client._donnees["E1"]["infos"] = [exemple._info(
+            id="sig", title="Information aux familles", author="Direction", read=False,
+            creation_date=hier, start_date=None, category="Très signalé", survey=False,
+            template=False, content=lambda: "Voir le détail sur le site du collège.")]
+        client._donnees["E2"]["infos"] = []
+        donnees, par_id = collecte_indexee(client)
+        self.assertEqual(par_id["info:sig"]["niveau"], "important")
+
     def test_meme_message_sous_deux_identifiants(self):
         """Le collège écrit aux deux enfants : une seule nouvelle, un seul clic."""
         client = FauxClient(MAINTENANT)
